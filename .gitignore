@@ -1,0 +1,11 @@
+# Data: kept local, never committed. schemas/, config/ and golden/ ARE committed.
+inputs/
+outputs/
+samples/
+work/
+.DS_Store
+
+# Python
+.venv/
+__pycache__/
+.pytest_cache/

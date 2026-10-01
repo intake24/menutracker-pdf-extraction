@@ -1,0 +1,14 @@
+# Column dictionary shared by every chain CSV. Order here = column order in every CSV.
+# A chain CSV contains only the columns that have a value for that chain.
+# Names start from samples/3_CostaCoffee.csv. Add a column here before any parser emits it.
+version: 1
+text_columns: [Product_Name, Product_Description, Size, Milk, CoffeeType, Ingredients,
+               Category, Serving_Size, Serving_Size_Unit, Diet, notes]
+bases: ["Per 100g/ml", "Per Portion", "Per Pizza", "Per Slice", "Per Product As Sold"]
+nutrients: [carbohydrates, energykCal, energykJ, fat, fibre, protein, salt, saturates, sugars,
+            vitaminB6, vitaminB12, vitaminC, zinc, sodium, caffeine]
+# A nutrient cell holds the PDF's value as printed: a number, "<number", or one of these words.
+nutrient_words: [Negligible, Trace, Traces, Tr]
+allergens: [gluten, wheat, rye, barley, oats, spelt, kamut, celery, crustacean, egg, fish, lupin,
+            milk, mollusc, mustard, peanut, sesame, soya, sulphite, treeNuts]
+trailing_text_columns: [treeNutSource]
