@@ -1,6 +1,6 @@
 # Menu PDF → Nutrition & Allergen CSV: Pipeline Design
 
-Status: draft v2 · 2026-10-01 (decisions from the 2026-10-01 design review are folded in; see §12)
+Status: draft v3 · 2026-10-01 (design-review decisions in §12; Phase 2 survey findings in §2 and §10)
 
 ## 1. Goal
 
@@ -42,6 +42,20 @@ Principles, agreed in the design review:
 
 - **Text in nutrient cells.** `Negligible`, `trace`, `Traces`, `Tr`, `<0.1`, and stray `.` printing glitches.
 - **Grids are the biggest files.** The grid-style `SUM25_…_CORE_BEVERAGE` (390k chars) and `nutrition_pizzas` (268k chars) are the most expensive and least reliable to send to an LLM, and the easiest to parse in code.
+
+### Text-layer reliability (surveyed 2026-10-01)
+
+For each PDF, the share of Pearl Scan's numeric cells that appear as tokens in the PDF's text layer. Cells that Pearl Scan rewrote (`5.0` → `5`) count against it, so ~80–90% is not by itself a problem. Single-digit shares are.
+
+| Text layer | PDFs | What to do |
+|---|---|---|
+| ~100% | Starbucks (2), Coffee #1 beverages, Pizza Hut, Pizza Express (2), Five Guys, Odeon pre-packed matrices (3), Top Golf, Cineworld, Cookhouse kids, Brewhouse menus (4) | Parsers (Phase 2), or LLM text for menu layouts (Phase 3) |
+| Visibly corrupt | **Vue (3 PDFs).** The embedded font drops characters: `197` extracts as `19`, `17` as `1`, `7.7` as `.`. The page image and Pearl Scan agree; the text does not. | **Vision only** (Phase 3). A text parser would write wrong numbers without any warning. |
+| ~0% | Papa John's (0%, image-only), Krispy Kreme "Minions" (2.7%, icon font) | Vision (Phase 3) |
+
+Two further findings:
+- **12 of the Pearl Scan CSVs are Windows-1252, not UTF-8** (Excel exports). Readers must fall back to cp1252.
+- **Some tables print neighbouring cells almost touching.** In the Pizza Express PDFs `1232` and `11.1` are 0.8 pt apart, and poppler returns them as one word, `123211.1`. Word-level extraction can't split these; character-level extraction can.
 
 ## 3. Architecture
 
@@ -168,7 +182,8 @@ A chain's CSV contains only the dictionary columns that have a value for that ch
 | Concern | Choice | Why |
 |---|---|---|
 | Language | Python 3.12, `uv` | Both already installed; the PDF tooling is best in Python |
-| Text, coordinates, render | poppler: `pdftotext -layout`, `pdftotext -bbox`, `pdftoppm`, `pdfinfo` | Already installed; `-bbox` gives word coordinates for grids with no new dependency |
+| Text, coordinates, render | poppler: `pdftotext -layout`, `pdftotext -bbox`, `pdftoppm`, `pdfinfo` | Already installed; `-bbox` gives word coordinates for grids with no new dependency. Five Guys needs nothing more. |
+| Character-level cells (Phase 2b) | `pdfplumber` (likely) | Needed for tables whose cells touch, e.g. Pizza Express (§2). Not added until slice 2b is planned. |
 | Row model + JSON Schema | `pydantic` v2 | One definition drives both extraction and validation |
 | Config | `pyyaml` | Human-edited, version-controlled config |
 | LLM (Phase 3) | `anthropic` SDK, Message Batches + prompt caching | 50% batch discount; prefix cached. Alternatives in §8 |
@@ -195,7 +210,7 @@ pipeline/
   allergens.py                     # "Contains / May contain" text → allergen cells
   validate.py, export.py           # checks, flags, per-chain CSV
   evaluate.py                      # ground truth + golden comparison
-  parsers/<layout>.py
+  parsers/<layout>.py              # premier_inn_breakfast, whitbread_drinks_grid, numeric_table
   extract.py                       # Phase 3: LLM routes + cache
 inputs/                            # gitignored: PDFs; inputs/ground-truth/ = Pearl Scan CSVs
 outputs/<id>_<Key>.csv             # gitignored
@@ -253,7 +268,9 @@ Rules:
 - **Which file.** The newest version (`_v0.1` beats the original; `Previous/` is ignored).
 - **Matching.** Rows match on the normalised name: Pearl Scan's `item_name` vs our `Product_Name + Size`. Matching is case- and punctuation-insensitive.
 - **Cells compared.** Every mapped nutrient cell, plus serving size. Numbers are compared as numbers and words case-insensitively. `menu_section` isn't compared, because sections follow our naming rules (§4).
-- **Gate.** At least 99% of ground-truth rows matched, and 100% of matched cells agreeing, apart from `ground_truth_errata.yaml` entries.
+- **Source inconsistencies are flagged, not fixed.** Pearl Scan's values match the PDF cell for cell, yet some PDFs print figures that fail the arithmetic checks (Five Guys: Lettuce is 58 kJ but 19 kcal; Relish has 0.2 saturates but 0 fat). The row is flagged and the value kept. Treat `flags` as a data-quality report on the source, not only on our extraction.
+
+**Gate.** At least 99% of ground-truth rows matched, and 100% of matched cells agreeing, apart from `ground_truth_errata.yaml` entries.
 - **Why 100%.** Values are copied, not calculated, so any difference is either our bug or a Pearl Scan error. The ground truth does contain errors: Vue `_v0.1` has kJ `82` next to 197 kcal, and Odeon had 73 typos before review. A person confirms each one against the PDF before adding it to the errata file.
 
 **Allergens vs golden rows** (`golden/<pdf-stem>.csv`):
@@ -264,15 +281,23 @@ Rules:
 
 ## 10. Rollout
 
-1. **Phase 1 (current plan):** the pipeline core plus the first layouts, the Premier Inn breakfast guide and the Whitbread drinks grid. That gives three complete chain CSVs (Beefeater, Brewers Fayre, Table Table) checked against Pearl Scan and golden rows.
-2. **Phase 2:** the remaining digital table layouts, one parser per layout, largest first. Add the per-portion vs per-100 g ratio check with the first layout that has both.
-3. **Phase 3:** the LLM routes. 2b for the menu-layout PDFs, 2c for Papa John's and icon-font glyphs, then repair.
+1. **Phase 1 (done):** the pipeline core plus the Premier Inn breakfast and Whitbread drinks layouts: three complete chain CSVs (Beefeater, Brewers Fayre, Table Table).
+2. **Phase 2: remaining text-layer layouts, in slices.** One slice per layout or chain, each ending with a chain CSV that passes `eval`.
+   - **2a: `numeric_table` + Five Guys.** A generic "name followed by a row of numbers" parser; columns found by position, configured per source. Also reads Windows-1252 ground truth.
+   - **2b: Pizza Express (PEX UK + BEL NI).** Same layout, but several tables per page with different column positions, touching cells (§2) and section names printed beside the column header. Needs character-level extraction (`pdfplumber`) and per-table anchors.
+   - **2c onward:** Starbucks (2), Coffee #1, Pizza Hut (`●`/`○` matrix), Odeon (nutrition and pre-packed matrices, three regions), Cineworld (`✓`/`▲` matrix), Domino's sides and pizzas.
+3. **Phase 3: LLM routes.**
+   - Vision first for what text can't give: **Vue, Papa John's, Krispy Kreme** (§2).
+   - Then 2b-style LLM text for menu layouts (Brewhouse, Cookhouse, Top Golf), then repair.
 4. **Phase 4:** a review loop for flagged rows (review file → overrides), if flag volume justifies it.
 
 ## 11. Open questions
 
-None blocking Phase 1. To revisit later:
+To decide before slice 2b: add `pdfplumber` (and its dependencies: pdfminer.six, pypdfium2, pillow, cryptography)? The alternative is an LLM vision pass for Pizza Express, which would cost tokens on every run for a layout a parser can handle.
+
+To revisit later:
 - Menu-wide disclaimers are config-only for now. Revisit if Menu Tracker users need them in the CSV.
+- Section names in `numeric_table`: a heading is a leading ALL-CAPS run followed by nothing or a `- note`. Pearl Scan's section names for Five Guys include artifacts (`MILKSHAKES (MIX-INS) amount of`), so `menu_section` is not compared in `eval`.
 - The heading-nesting heuristic in grid layouts joins consecutive headings ("SPIRITS - GIN"). A single heading after an item doesn't inherit its parent ("VODKA", not "SPIRITS - VODKA"). Revisit if users need the full hierarchy.
 
 ## 12. Decision log (2026-10-01 design review)
