@@ -72,9 +72,13 @@ def test_two_chains_sharing_a_pdf_each_get_their_own_column_mapping(tmp_path):
 
 
 def test_run_skips_unapproved_chains_with_a_notice_but_refuses_when_asked_for_one(tmp_path, capsys):
-    text = (ROOT / "config" / "chains.yaml").read_text()   # Five Guys is committed unapproved
+    import yaml
+    chains = yaml.safe_load((ROOT / "config" / "chains.yaml").read_text())
+    for key, chain in chains.items():   # whatever is committed, Five Guys is the only unapproved chain here
+        for source in chain["sources"]:
+            source["approved"] = key != "52_FiveGuys"
     cf = tmp_path / "chains.yaml"
-    cf.write_text(text)
+    cf.write_text(yaml.safe_dump(chains))
     written = run(ROOT / "inputs", cf, tmp_path / "out")
     assert sorted(p.stem for p in written) == ["16_Beefeater", "17_Brewersfayre", "21_TableTable"]
     assert "skipped 52_FiveGuys: not approved" in capsys.readouterr().err
