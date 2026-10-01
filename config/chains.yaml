@@ -1,0 +1,101 @@
+# Every chain Menu Tracker extracts, keyed by its Menu Tracker script key (menutracker.ipynb).
+# Output: outputs/<key>.csv, one CSV per chain, merging all of its sources.
+#
+# Per source:
+#   pdf       file name in inputs/
+#   parser    name in pipeline/parsers/__init__.py PARSERS (one layout can serve many chains)
+#   region    UK | NI | ROI
+#   markers   the PDF's allergen key: printed marker -> Yes | May contain | No.
+#             "" = what an allergen with no marker means for this PDF ("No" only if the PDF says so).
+#   disclaimer  menu-wide allergen statement, kept here (not in the CSV)
+#   approved  set to true by a person after checking markers/disclaimer against the PDF
+
+16_Beefeater:
+  chain: Beefeater
+  sources:
+    - pdf: beefeater_ss25_breakfast_menu_allergy_nutrition_v1.pdf
+      parser: premier_inn_breakfast
+      region: UK
+      category: breakfast
+      # The guide "covers the following major allergens" and lists each item's Contains / May Contain.
+      markers: {"": "No"}
+      disclaimer: >-
+        We take great care to prevent cross-contamination when preparing your order in our kitchens.
+        However, due to the layout and operation of our kitchens we do not have specific allergen free
+        zones and it is therefore not possible to fully guarantee separation of allergens. There is
+        significant risk of cross-contamination in our buffet areas and deep fat fryers.
+      approved: false
+    - pdf: beefeater_ss25_drinks_menu_allergy_nutrition_v1.pdf
+      parser: whitbread_drinks_grid
+      region: UK
+      category: drinks
+      # Key: "Y  The allergen is present". The guide "declares allergens intentionally added only"
+      # and "does not include any 'may contains'", so no mark = not an ingredient.
+      markers: {"Y": "Yes", "": "No"}
+      disclaimer: >-
+        Our allergen information sheet does not include any “may contains” information where provided by
+        our suppliers. Our kitchens also handle numerous ingredients and allergens and whilst we have
+        strict controls in place to reduce the risk of contamination, unfortunately, it is not possible
+        for us to guarantee that our dishes will be 100% allergen free. There is also significant risk
+        of cross contamination from our fryers.
+      approved: false
+
+17_Brewersfayre:
+  chain: Brewers Fayre
+  sources:
+    - pdf: brewers_fayre_allergy_nutrition_ss25_breakfast_menu.pdf
+      parser: premier_inn_breakfast
+      region: UK
+      category: breakfast
+      # The guide "covers the following major allergens" and lists each item's Contains / May Contain.
+      markers: {"": "No"}
+      disclaimer: >-
+        We take great care to prevent cross-contamination when preparing your order in our kitchens.
+        However, due to the layout and operation of our kitchens we do not have specific allergen free
+        zones and it is therefore not possible to fully guarantee separation of allergens. There is
+        significant risk of cross-contamination in our buffet areas and deep fat fryers.
+      approved: false
+    - pdf: brewers_fayre_allergy_nutrition_ss25_drinks_menu.pdf
+      parser: whitbread_drinks_grid
+      region: UK
+      category: drinks
+      # Key: "Y  The allergen is present". The guide "declares allergens intentionally added only"
+      # and "does not include any 'may contains'", so no mark = not an ingredient.
+      markers: {"Y": "Yes", "": "No"}
+      disclaimer: >-
+        Our allergen information sheet does not include any “may contains” information where provided by
+        our suppliers. Our kitchens also handle numerous ingredients and allergens and whilst we have
+        strict controls in place to reduce the risk of contamination, unfortunately, it is not possible
+        for us to guarantee that our dishes will be 100% allergen free. There is also significant risk
+        of cross contamination from our fryers.
+      approved: false
+
+21_TableTable:
+  chain: Table Table
+  sources:
+    - pdf: table_table_allergy_nutrition_ss25_breakfast_menu.pdf
+      parser: premier_inn_breakfast
+      region: UK
+      category: breakfast
+      # The guide "covers the following major allergens" and lists each item's Contains / May Contain.
+      markers: {"": "No"}
+      disclaimer: >-
+        We take great care to prevent cross-contamination when preparing your order in our kitchens.
+        However, due to the layout and operation of our kitchens we do not have specific allergen free
+        zones and it is therefore not possible to fully guarantee separation of allergens. There is
+        significant risk of cross-contamination in our buffet areas and deep fat fryers.
+      approved: false
+    - pdf: table_table_allergy_nutrition_ss25_drinks_menu.pdf
+      parser: whitbread_drinks_grid
+      region: UK
+      category: drinks
+      # Key: "Y  The allergen is present". The guide "declares allergens intentionally added only"
+      # and "does not include any 'may contains'", so no mark = not an ingredient.
+      markers: {"Y": "Yes", "": "No"}
+      disclaimer: >-
+        Our allergen information sheet does not include any “may contains” information where provided by
+        our suppliers. Our kitchens also handle numerous ingredients and allergens and whilst we have
+        strict controls in place to reduce the risk of contamination, unfortunately, it is not possible
+        for us to guarantee that our dishes will be 100% allergen free. There is also significant risk
+        of cross contamination from our fryers.
+      approved: false
