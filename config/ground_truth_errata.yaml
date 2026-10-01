@@ -1,0 +1,7 @@
+# Known errors in the Pearl Scan ground truth, each confirmed by a person against the PDF.
+# `eval` skips these cells. column: a Pearl Scan column name, or "*" for a whole row.
+# - file: m19968-nutritional-info-ice-cream_v0.1.csv
+#   item: Fairtrade Vanilla 1 Scoop Tub
+#   column: kj
+#   reason: Pearl Scan wrote 82; the PDF says ...
+[]

@@ -1,0 +1,28 @@
+# Pearl Scan (ground truth) column -> our column. Used only by `eval`, which checks nutrition and
+# serving size. menu_section is not compared: sections follow our own naming rules.
+item_name: Product_Name
+servingsize: Serving_Size
+servingsizeunit: Serving_Size_Unit
+kj: energykJ_Per Portion
+kcal: energykCal_Per Portion
+fat: fat_Per Portion
+satfat: saturates_Per Portion
+carb: carbohydrates_Per Portion
+sugar: sugars_Per Portion
+fibre: fibre_Per Portion
+protein: protein_Per Portion
+salt: salt_Per Portion
+sodium: sodium_Per Portion
+caffeine: caffeine_Per Portion
+vitaminC: vitaminC_Per Portion
+vitaminB12: vitaminB12_Per Portion
+kj_100: energykJ_Per 100g/ml
+kcal_100: energykCal_Per 100g/ml
+fat_100: fat_Per 100g/ml
+satfat_100: saturates_Per 100g/ml
+carb_100: carbohydrates_Per 100g/ml
+sugar_100: sugars_Per 100g/ml
+fibre_100: fibre_Per 100g/ml
+protein_100: protein_Per 100g/ml
+salt_100: salt_Per 100g/ml
+sodium_100: sodium_Per 100g/ml
