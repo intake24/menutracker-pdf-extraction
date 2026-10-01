@@ -16,7 +16,7 @@ uv run python -m pipeline.cli run          # -> outputs/<id>_<Chain>.csv
 uv run python -m pipeline.cli eval         # compare outputs with Pearl Scan and golden rows; exit 1 on failure
 ```
 
-`run` only builds a chain whose sources are all `approved: true` in `config/chains.yaml`.
+`run` only builds chains whose sources are all `approved: true` in `config/chains.yaml`; any other chain is skipped with a notice on stderr, or refused with an error if you name it with `--chain`. `eval` skips unapproved chains too.
 
 ## Where things live
 

@@ -54,4 +54,30 @@ def test_five_guys_flags_are_arithmetic_inconsistencies_in_the_source(tmp_path):
 
 def test_run_refuses_unapproved_sources(tmp_path):
     with pytest.raises(SourceNotApproved):
-        run(ROOT / "inputs", chains_file(tmp_path, approved=False), tmp_path / "out")
+        run(ROOT / "inputs", chains_file(tmp_path, approved=False), tmp_path / "out", "16_Beefeater")
+
+
+def test_two_chains_sharing_a_pdf_each_get_their_own_column_mapping(tmp_path):
+    import yaml
+    chains = yaml.safe_load((ROOT / "config" / "chains.yaml").read_text())
+    five = chains["52_FiveGuys"]["sources"][0] | {"approved": True}
+    reverse = dict(five, columns=list(reversed(five["columns"])))
+    cf = tmp_path / "chains.yaml"
+    cf.write_text(yaml.safe_dump({"52_FiveGuys": {"chain": "A", "sources": [five]},
+                                  "99_Reversed": {"chain": "B", "sources": [reverse]}}))
+    written = run(ROOT / "inputs", cf, tmp_path / "out")
+    by_chain = {p.stem: {r["Product_Name"]: r for r in rows} for p, rows in written.items()}
+    assert by_chain["52_FiveGuys"]["Bacon"]["energykJ_Per Portion"] == "323"
+    assert by_chain["99_Reversed"]["Bacon"]["energykJ_Per Portion"] == "6.6"   # the last printed cell
+
+
+def test_run_skips_unapproved_chains_with_a_notice_but_refuses_when_asked_for_one(tmp_path, capsys):
+    text = (ROOT / "config" / "chains.yaml").read_text()   # Five Guys is committed unapproved
+    cf = tmp_path / "chains.yaml"
+    cf.write_text(text)
+    written = run(ROOT / "inputs", cf, tmp_path / "out")
+    assert sorted(p.stem for p in written) == ["16_Beefeater", "17_Brewersfayre", "21_TableTable"]
+    assert "skipped 52_FiveGuys: not approved" in capsys.readouterr().err
+    with pytest.raises(SourceNotApproved):
+        run(ROOT / "inputs", cf, tmp_path / "out", "52_FiveGuys")
+    assert evaluate(cf, tmp_path / "out", ROOT / "inputs" / "ground-truth", ROOT / "golden", ROOT / "config") == []

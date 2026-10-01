@@ -30,10 +30,15 @@ def manifest(inputs: Path, chains_file: Path, out: Path) -> list[dict]:
     return rows
 
 
+def approved(chain: dict) -> bool:
+    return all(source.get("approved") for source in chain["sources"])
+
+
 def run(inputs: Path, chains_file: Path, outputs: Path, only: str | None = None) -> dict[Path, list[dict]]:
     """Write outputs/<chain key>.csv for every chain whose sources are all approved.
 
-    PDFs with identical text and the same parser and markers are parsed once.
+    Chains with an unapproved source are skipped with a notice on stderr; asking for one by name (`only`)
+    raises instead. PDFs with identical text, the same parser, markers and columns are parsed once.
     """
     chains = load_chains(chains_file)
     columns = load_columns()
@@ -42,12 +47,16 @@ def run(inputs: Path, chains_file: Path, outputs: Path, only: str | None = None)
     for key, chain in chains.items():
         if only and key != only:
             continue
+        if not approved(chain):
+            if only:
+                raise SourceNotApproved(f"{key}: has a source that is not approved in {chains_file.name}")
+            print(f"skipped {key}: not approved in {chains_file.name}", file=sys.stderr)
+            continue
         rows: list[dict] = []
         for source in chain["sources"]:
-            if not source.get("approved"):
-                raise SourceNotApproved(f"{key}: {source['pdf']} is not approved in {chains_file.name}")
             pdf = inputs / source["pdf"]
-            cache_key = (text_sha(page_texts(pdf)), source["parser"], repr(sorted(source.get("markers", {}).items())))
+            cache_key = (text_sha(page_texts(pdf)), source["parser"], repr(sorted(source.get("markers", {}).items())),
+                         tuple(source.get("columns", [])))   # column order matters: do not sort
             if cache_key not in parsed:
                 parsed[cache_key] = PARSERS[source["parser"]](pdf, source)
             rows += [r | {"region": source["region"], "source_file": pdf.name, "method": "parser"}
@@ -65,6 +74,8 @@ def evaluate(chains_file: Path, outputs: Path, ground_truth: Path, golden: Path,
     errata_rows = yaml.safe_load((config / "ground_truth_errata.yaml").read_text()) or []
     failures = []
     for key, chain in load_chains(chains_file).items():
+        if not approved(chain):
+            continue   # `run` skips these, so there is nothing to compare
         out = outputs / f"{key}.csv"
         if not out.exists():
             failures.append(f"{key}: {out.name} missing, run `run` first")

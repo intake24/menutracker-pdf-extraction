@@ -98,3 +98,58 @@ def test_heading_with_a_trailing_note_keeps_only_the_heading():
     bacon, shake = parse_pages([line(100, "MEAT", {}) + line(110, "Bacon", FULL)
                                 + line(120, "MILKSHAKES", {}) + note + line(130, "Shake", FULL)], COLUMNS)
     assert bacon["Category"] == "MEAT" and shake["Category"] == "MILKSHAKES"
+
+
+def test_a_minority_width_second_table_raises_instead_of_snapping_to_the_nearest_column():
+    other = [Word(5, 140, 35, 148, "Coffee")] + [Word(x - 25, 140, x, 148, v) for x, v in
+                                                  zip((225, 315, 410), ("12", "50", "3.1"))]
+    page = line(100, "A", FULL) + line(110, "B", FULL) + line(120, "C", FULL) + other
+    with pytest.raises(ValueError, match="Coffee.*no column"):
+        parse_pages([page], COLUMNS)
+
+
+def test_two_cells_in_one_column_raise():
+    page = line(100, "A", FULL) + line(110, "B", FULL) + line(120, "C", FULL) + line(130, "Tea", {2: "9", 3: "5", 4: "4"}) \
+        + [Word(269, 130, 274, 138, "7")]
+    with pytest.raises(ValueError, match="two cells.*Tea"):
+        parse_pages([page], COLUMNS)
+
+
+@pytest.mark.parametrize("cell", ["-", "N/A", "0.", ".5", "1,234", "93*", "tr", "<0.5g"])
+def test_a_cell_that_is_not_a_known_value_raises_instead_of_leaking_into_the_name(cell):
+    page = line(100, "A", FULL) + line(110, "Odd", FULL | {1: cell})
+    with pytest.raises(ValueError, match="unreadable cell"):
+        parse_pages([page], COLUMNS)
+
+
+def test_a_less_than_sign_extracted_as_its_own_word_raises():
+    odd = line(110, "Odd", {k: v for k, v in FULL.items() if k != 5}) + [Word(392, 110, 397, 118, "<"), Word(400, 110, 420, 118, "0.1")]
+    with pytest.raises(ValueError, match="unreadable cell"):
+        parse_pages([line(100, "A", FULL) + odd], COLUMNS)
+
+
+def test_a_footnote_marker_on_the_last_cell_does_not_make_the_row_vanish():
+    page = line(100, "A", FULL) + line(110, "Odd", FULL | {5: "39*"})
+    with pytest.raises(ValueError, match="unreadable cell"):
+        parse_pages([page], COLUMNS)
+
+
+def test_numbers_without_a_name_raise():
+    with pytest.raises(ValueError, match="without a name"):
+        parse_pages([line(100, "A", FULL) + [w for w in line(110, "", FULL) if w.text]], COLUMNS)
+
+
+def test_text_between_rows_that_is_not_a_heading_or_note_raises():
+    page = (line(100, "MEAT", {}) + line(110, "Bacon", FULL) + line(120, "Double Bacon", {})
+            + line(130, "Cheeseburger", FULL) + line(140, "Beef", FULL))
+    with pytest.raises(ValueError, match="between rows.*Double Bacon"):
+        parse_pages([page], COLUMNS)
+    page = line(100, "MEAT", {}) + line(110, "Cheeseburger", FULL) + line(120, "Drinks", {}) + line(130, "Bacon", FULL)
+    with pytest.raises(ValueError, match="between rows.*Drinks"):
+        parse_pages([page], COLUMNS)
+
+
+def test_a_note_between_rows_is_not_an_error():
+    note = [Word(70, 115, 76, 123, "-"), Word(80, 115, 120, 123, "amount")]
+    rows = parse_pages([line(100, "MEAT", {}) + line(110, "Bacon", FULL) + note + line(130, "Beef", FULL)], COLUMNS)
+    assert [r["Product_Name"] for r in rows] == ["Bacon", "Beef"]

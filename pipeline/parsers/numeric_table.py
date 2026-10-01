@@ -13,6 +13,8 @@ from pipeline.ingest import Word, page_words
 NUMBER = re.compile(r"^(?:<\s?)?\d+(?:\.\d+)?$|^(?:Negligible|Traces?|Tr)$")
 MIN_NUMBERS = 3          # a line needs this many trailing numeric cells to be a data row
 SECTION_INDENT = 12      # section headings start at the left margin; wrapped text and notes are indented more
+VALUELIKE = re.compile(r"\d|^(?:-|–|N/?A)$", re.I)   # a token that looks like a cell value, readable or not
+NOTE_START = ("-", "*", "†")                          # a line starting like this is a note, not a name
 LINE_GAP = 3             # words whose vertical centres are this close are on one line
 COLUMN_GAP = 9           # right edges further apart than this (pt) belong to different columns
 
@@ -67,28 +69,53 @@ def parse_pages(pages: list[list[Word]], columns: list[str]) -> list[dict]:
     category = ""
     for page_no, words in enumerate(pages, start=1):
         lines = _lines(words)
-        split = [_split(line) for line in lines]
-        data = [(name, cells) for name, cells in split if name and len(cells) >= MIN_NUMBERS]
-        if not data:
+        found = [(name, cells) for name, cells in map(_split, lines) if name and len(cells) >= MIN_NUMBERS]
+        if not found:
             continue
-        # Columns come from the most common row width, so a name that ends in a number
-        # ("Peroni Nastro Azzurro 0.0") or a row with blank cells can't create or hide a column.
-        usual = Counter(len(cells) for _, cells in data).most_common(1)[0][0]
-        anchors = _anchors([c for _, cells in data if len(cells) == usual for c in cells])
+        # Columns come from the most common row width, so a row with blank cells can't create or hide a column.
+        usual = Counter(len(cells) for _, cells in found).most_common(1)[0][0]
+        anchors = _anchors([c for _, cells in found if len(cells) == usual for c in cells])
         if len(anchors) != len(columns):
             raise ValueError(f"page {page_no}: found {len(anchors)} numeric columns, config names {len(columns)}")
-        left = min(name[0].x0 for name, _ in data)
-        for line, (name, cells) in zip(lines, split):
-            if not (name and len(cells) >= MIN_NUMBERS):
-                if not cells and (heading := _heading(line, left)):
+        edge = anchors[0] - COLUMN_GAP                        # words wholly left of this are the name
+        left = min(name[0].x0 for name, _ in found)
+        # Classify every line by position: a data row has at least MIN_NUMBERS value-like words in the columns.
+        kinds = []
+        for line in lines:
+            cells = [w for w in line if w.x1 >= edge]
+            kinds.append("data" if sum(bool(VALUELIKE.search(w.text)) for w in cells) >= MIN_NUMBERS else "other")
+        first_row = kinds.index("data")
+        last_row = max(i for i, kind in enumerate(kinds) if kind == "data")
+        start = first_row   # the table starts at the headings and notes directly above its first row
+        while start > 0 and kinds[start - 1] == "other" and (
+                _heading(lines[start - 1], left) or " ".join(w.text for w in lines[start - 1]).startswith(NOTE_START)):
+            start -= 1
+        for i, (line, kind) in enumerate(zip(lines, kinds)):
+            if i < start:
+                continue   # page title, column headers
+            text = " ".join(w.text for w in line)
+            if kind == "other":
+                if heading := _heading(line, left):
                     category = heading
+                elif i < last_row and not text.startswith(NOTE_START):
+                    raise ValueError(f"page {page_no}: text between rows that is not a heading or note "
+                                     f"(a wrapped name?): {text!r}")
                 continue
-            while cells and cells[0].x1 < anchors[0] - COLUMN_GAP:   # left of the first column: part of the name
-                name, cells = name + cells[:1], cells[1:]
-            row = {"Product_Name": " ".join(w.text for w in name), "Category": category, "source_page": page_no}
+            name = [w for w in line if w.x1 < edge]
+            cells = [w for w in line if w.x1 >= edge]
+            if not name:
+                raise ValueError(f"page {page_no}: numbers without a name: {text!r}")
+            product = " ".join(w.text for w in name)
+            row = {"Product_Name": product, "Category": category, "source_page": page_no}
             for w in cells:
-                col = columns[min(range(len(anchors)), key=lambda i: abs(anchors[i] - w.x1))]
-                row[col] = w.text
+                if not NUMBER.match(w.text):
+                    raise ValueError(f"page {page_no}: unreadable cell {w.text!r} in row {product!r}")
+                nearest = min(range(len(anchors)), key=lambda j: abs(anchors[j] - w.x1))
+                if abs(anchors[nearest] - w.x1) > COLUMN_GAP:
+                    raise ValueError(f"page {page_no}: {w.text!r} in row {product!r} is under no column")
+                if columns[nearest] in row:
+                    raise ValueError(f"page {page_no}: two cells in column {columns[nearest]!r} in row {product!r}")
+                row[columns[nearest]] = w.text
             rows.append(row)
     return rows
 
