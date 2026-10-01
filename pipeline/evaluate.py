@@ -1,5 +1,6 @@
 """Compare our output with Pearl Scan ground truth (nutrition) and hand-verified golden rows (allergens)."""
 import csv
+import io
 import re
 from pathlib import Path
 
@@ -7,8 +8,13 @@ ROW_RECALL_MIN = 0.99
 
 
 def read_csv(path: Path) -> list[dict]:
-    with path.open(newline="", encoding="utf-8-sig") as f:
-        return list(csv.DictReader(f))
+    """Read a CSV as UTF-8, or as Windows-1252 when it isn't (Pearl Scan files exported from Excel)."""
+    raw = path.read_bytes()
+    try:
+        text = raw.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        text = raw.decode("cp1252")
+    return list(csv.DictReader(io.StringIO(text, newline="")))
 
 
 def same(want: str, got: str) -> bool:

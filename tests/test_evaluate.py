@@ -45,3 +45,12 @@ def test_blank_golden_cell_matches_a_column_the_chain_csv_left_out():
     ours = [{"Product_Name": "Croissant", "Category": "BAKERY", "milk": "Yes"}]
     assert compare_golden(golden, ours) == []
     assert compare_golden([golden[0] | {"spelt": "No"}], ours) == ["Croissant: column 'spelt' not in output"]
+
+
+def test_read_csv_falls_back_to_windows_1252(tmp_path):
+    from pipeline.evaluate import read_csv
+    path = tmp_path / "pearl.csv"
+    path.write_bytes("item_name,kcal\nJalapeño Peppers,4\n".encode("cp1252"))
+    assert read_csv(path) == [{"item_name": "Jalapeño Peppers", "kcal": "4"}]
+    path.write_bytes("item_name,kcal\nJalapeño Peppers,4\n".encode("utf-8-sig"))
+    assert read_csv(path)[0]["item_name"] == "Jalapeño Peppers"
