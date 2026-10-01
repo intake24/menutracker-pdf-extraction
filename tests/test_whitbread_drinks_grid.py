@@ -67,3 +67,49 @@ def test_mark_outside_any_column_raises():
     page = grid_page((220, [(400, "BEERS")]), (230, [(61, "ODD ALE"), (500, "Y")]))
     with pytest.raises(ValueError, match="under no allergen column"):
         parse_pages([page], MARKERS)
+
+
+def real_pages(pdf: str) -> list[list[Word]]:
+    from pipeline.ingest import page_words
+    return page_words(INPUTS / pdf)
+
+
+def yes_cells(rows: list[dict]) -> int:
+    return sum(v == "Yes" for r in rows for k, v in r.items() if k != "gluten")
+
+
+def test_mark_drifted_between_columns_raises():
+    pages = real_pages("beefeater_ss25_drinks_menu_allergy_nutrition_v1.pdf")
+    drifted = [[w._replace(x0=w.x0 + 14, x1=w.x1 + 14) if w.text == "Y" and i >= 2 else w for w in page]
+               for i, page in enumerate(pages)]
+    with pytest.raises(ValueError, match="under no allergen column"):
+        parse_pages(drifted, MARKERS)
+
+
+@pytest.mark.parametrize("dy", [0.15, 0.35, 0.55, 0.75])
+def test_sub_point_vertical_offsets_keep_marks_on_their_line(dy):
+    pages = real_pages("brewers_fayre_allergy_nutrition_ss25_drinks_menu.pdf")
+    shifted = [[w._replace(y0=w.y0 + dy, y1=w.y1 + dy) for w in page] for page in pages]
+    rows = parse_pages(shifted, MARKERS)
+    assert len(rows) == 148 and yes_cells(rows) == 83
+    assert "Y" not in {r["Category"] for r in rows}
+
+
+def test_marker_only_line_raises():
+    page = grid_page((220, [(400, "BEERS")]), (230, [(61, "ODD ALE")]), (240, [(555, "Y")]))
+    with pytest.raises(ValueError, match="marker"):
+        parse_pages([page], MARKERS)
+
+
+def test_label_and_footer_words_in_the_body_do_not_drop_rows():
+    pages = real_pages("beefeater_ss25_drinks_menu_allergy_nutrition_v1.pdf")
+    # below the last item of page 5: a stray label word and a footer-like word
+    pages[4] = pages[4] + [Word(757, 540, 766, 548, "Source"), Word(772, 545, 785, 551, "Page")]
+    rows = parse_pages(pages, MARKERS)
+    assert len(rows) == 148 and yes_cells(rows) == 82
+
+
+def test_unrecognised_see_label_wording_raises():
+    page = grid_page((220, [(300, "PACKAGED DRINKS - SEE PACKAGING FOR ALLERGEN INFORMATION")]), (230, [(61, "TONIC")]))
+    with pytest.raises(ValueError, match="allergen heading"):
+        parse_pages([page], MARKERS)

@@ -131,6 +131,7 @@ A chain's CSV contains only the dictionary columns that have a value for that ch
 | Nutrient values | Exactly as printed: a number, `<number`, or a dictionary word (`Negligible`, `Trace`, `Traces`, `Tr`). Anything else, e.g. a stray `.`, is flagged. |
 | Basis names | Different wording for the same basis maps to one dictionary basis ("Per Serving" → `Per Portion`). That's renaming only; values are untouched. A basis not in the dictionary stops the run. |
 | Allergen values | `Yes` (contains), `May contain` (traces or cross-contamination), `No` (**the PDF declares** it absent), blank (the PDF doesn't say). |
+| Spelt / kamut | Blank unless the PDF names them separately. Guides that fold them into "Wheat" never declare them absent. |
 | Allergen markers | Each source's `markers` key maps printed markers to the vocabulary, e.g. `{"✓": "Yes", "▲": "May contain"}`. `""` is what "no marker" means for that PDF. Unknown markers stop the run. |
 | Menu-wide disclaimers | E.g. "Some dishes may contain traces of nuts". Stored once per source in `chains.yaml`. **Not** in the CSV, and never copied onto rows as `May contain`. |
 | Item-level footnotes | `*may contain nuts` maps through the key to that allergen. Non-allergen notes (bones, alcohol) go into `notes` exactly as printed. |

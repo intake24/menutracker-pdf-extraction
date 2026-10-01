@@ -83,3 +83,52 @@ def test_unknown_allergen_names_item():
     page = "\n".join([HEADING, "      Mystery Pie", contains_line("Lupine", "No major allergens"), ENERGY, NUTRITION])
     with pytest.raises(UnknownAllergen, match="Mystery Pie"):
         parse_pages([page], "No")
+
+
+def test_heading_ends_an_item_without_nutrition():
+    page = "\n".join([
+        HEADING,
+        "      Lonely Toast - V",
+        contains_line("Egg", "No major allergens"),
+        "UNLIMITED CONTINENTAL - DRINKS (per serving)",
+        "      Apple Juice - VE",
+        contains_line("No major allergens", "No major allergens"),
+        ENERGY, "   Per Portion:", NUTRITION,
+    ])
+    first, second = parse_pages([page], "No")
+    assert first["Product_Name"] == "Lonely Toast" and first["egg"] == "Yes"
+    assert first["flags"] == "error: no nutrition line found"
+    assert second["Category"] == "PREMIER INN BREAKFAST - UNLIMITED CONTINENTAL - DRINKS (per serving)"
+
+
+def test_trace_values_in_the_nutrition_line_are_kept_as_printed():
+    trace = "                 16 kJ / 4 kcal      Trace g      0.0 g      0.9 g      0.0 g      0.0 g      <0.1 g"
+    page = "\n".join([HEADING, "      Sugar Sachet - VE", contains_line("No major allergens", "No major allergens"),
+                      ENERGY, trace])
+    [row] = parse_pages([page], "No")
+    assert row["fat_Per Portion"] == "Trace" and row["salt_Per Portion"] == "<0.1" and "flags" not in row
+
+
+def test_unreadable_nutrition_line_raises():
+    bad = "                 16 kJ / 4 kcal      ? g      0.0 g      0.9 g      0.0 g      0.0 g      0.1 g"
+    page = "\n".join([HEADING, "      Sugar Sachet - VE", contains_line("No major allergens", "No major allergens"),
+                      ENERGY, bad])
+    with pytest.raises(ValueError, match="Sugar Sachet"):
+        parse_pages([page], "No")
+
+
+def test_wrapped_item_name_is_rejoined():
+    page = "\n".join([
+        HEADING,
+        "      Garden Gourmet Vegan Sausage with Extra",
+        "      Long Name (per piece) - VE           V",
+        contains_line("Soya", "No major allergens"),
+        ENERGY, "   Per Portion:", NUTRITION,
+    ])
+    [row] = parse_pages([page], "No")
+    assert row["Product_Name"] == "Garden Gourmet Vegan Sausage with Extra Long Name (per piece)"
+
+
+def test_spelt_and_kamut_are_not_stated(rows):
+    # The guide folds spelt and khorasan into "Wheat", so it never declares them absent.
+    assert {r["spelt"] for r in rows} == {""} and {r["kamut"] for r in rows} == {""}

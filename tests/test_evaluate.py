@@ -38,3 +38,10 @@ def test_golden_rows_must_match_exactly():
     ours = [{"Product_Name": "Croissant", "Category": "BAKERY", "milk": "May contain"}]
     assert compare_golden(golden, ours) == ["Croissant.milk: expected 'Yes', got 'May contain'"]
     assert compare_golden(golden, []) == ["missing row: Croissant (BAKERY)"]
+
+
+def test_blank_golden_cell_matches_a_column_the_chain_csv_left_out():
+    golden = [{"Product_Name": "Croissant", "Category": "BAKERY", "spelt": "", "milk": "Yes"}]
+    ours = [{"Product_Name": "Croissant", "Category": "BAKERY", "milk": "Yes"}]
+    assert compare_golden(golden, ours) == []
+    assert compare_golden([golden[0] | {"spelt": "No"}], ours) == ["Croissant: column 'spelt' not in output"]

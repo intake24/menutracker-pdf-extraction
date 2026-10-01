@@ -28,11 +28,18 @@ def _lookup(table: dict[str, str], term: str) -> str:
 def _terms(text: str) -> list[tuple[str, list[str]]]:
     """'Cereals (Wheat, Oats), Egg' -> [('cereals', ['wheat', 'oats']), ('egg', [])]"""
     out = []
-    for m in re.finditer(r"([^,(]+?)\s*(?:\(([^)]*)\))?\s*(?:,|$)", text.strip()):
+    text = text.strip()
+    consumed = 0
+    for m in re.finditer(r"([^,(]+?)\s*(?:\(([^)]*)\))?\s*(?:,|$)", text):
+        if text[consumed:m.start()].strip(" ,"):
+            break   # the regex skipped something (e.g. an unclosed bracket)
+        consumed = m.end()
         head = m.group(1).strip().lower()
         if head:
             subs = [s.strip().lower() for s in (m.group(2) or "").split(",") if s.strip()]
             out.append((head, subs))
+    if text[consumed:].strip(" ,"):
+        raise UnknownAllergen(f"cannot read allergen text {text!r}")
     return out
 
 
@@ -54,6 +61,8 @@ def parse_allergens(contains: str, may_contain: str, unlisted: str) -> dict[str,
             elif head in NUT_HEADS:
                 keys = ["treeNuts"]
                 nuts[level] += [s.title() for s in subs]
+            elif subs:
+                raise UnknownAllergen(f"unexpected detail {subs!r} after allergen {head!r}")
             else:
                 keys = [_lookup(SIMPLE, head)]
             for k in keys:

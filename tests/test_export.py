@@ -24,3 +24,9 @@ def test_finalise_flags_without_changing_values_then_write(tmp_path):
     with (tmp_path / "16_Test.csv").open(newline="") as f:
         written = list(csv.DictReader(f))
     assert written[0]["egg"] == "No" and written[0]["source_page"] == "2" and written[1]["milk"] == ""
+
+
+def test_unknown_column_stops_the_run():
+    import pytest
+    with pytest.raises(ValueError, match="energykJ_Per Serving"):
+        finalise([{"Product_Name": "x", "energykJ_Per Serving": "100"}], load_columns())

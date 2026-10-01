@@ -37,3 +37,9 @@ def test_tree_nut_sources_both_levels():
 def test_unknown_term_raises(text):
     with pytest.raises(UnknownAllergen):
         parse_allergens(text, "", "No")
+
+
+@pytest.mark.parametrize("contains", ["Celery (", "Milk, Cereals containing Gluten (", "Soya (traces)", "Milk (per 100ml)"])
+def test_text_that_does_not_parse_completely_raises(contains):
+    with pytest.raises(UnknownAllergen):
+        parse_allergens(contains, "", "No")

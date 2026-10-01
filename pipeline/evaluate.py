@@ -69,7 +69,7 @@ def compare_golden(golden: list[dict], ours: list[dict]) -> list[str]:
             failures.append(f"missing row: {g['Product_Name']} ({g['Category']})")
             continue
         for col, want in g.items():
-            got = o.get(col)
+            got = o.get(col, "" if want == "" else None)   # chain CSVs omit columns that are blank throughout
             if got is None:
                 failures.append(f"{g['Product_Name']}: column {col!r} not in output")
             elif not same(want, got):

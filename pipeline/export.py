@@ -12,6 +12,9 @@ def finalise(rows: list[dict], columns: Columns) -> list[dict]:
 
     Values are never changed: rows that fail keep what the source said so a reviewer can see it.
     """
+    unknown = sorted({k for r in rows for k in r} - set(columns.types) - set(PROVENANCE))
+    if unknown:   # a CSV can't carry it, so stop rather than drop the value
+        raise ValueError(f"columns not in schemas/columns.yaml: {unknown}")
     model = build_row_model(columns)
     dupes = duplicate_issues(rows)
     out = []
