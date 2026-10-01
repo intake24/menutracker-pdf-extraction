@@ -151,7 +151,7 @@ A chain's CSV contains only the dictionary columns that have a value for that ch
 | Item-level footnotes | `*may contain nuts` maps through the key to that allergen. Non-allergen notes (bones, alcohol) go into `notes` exactly as printed. |
 | Names | Reviewer comments in `PDF_list_June25_check.xlsx` come first (e.g. Vue: remove `cont.`; Pizza Hut: pizza name in `item_name`). Otherwise names are as printed, minus layout artifacts: diet markers move to `Diet`, footnote marks move to `notes`, wrapped lines are rejoined. Typos in the source are kept; extraction must add none. |
 | Sizes | An amount with a unit (`(per 45g)`, a weight column) goes into `Serving_Size` + `Serving_Size_Unit` and is removed from the name. Named sizes (`Small`, `Large`, `1 Scoop`) go into `Size`. Descriptive portions (`(per slice)`) stay in the name. Section bases (`MILK (per 100ml)`) stay in `Category`. |
-| Category | The section heading path as printed, joined with ` - `. A menu title that applies to every section (e.g. `PREMIER INN BREAKFAST`) prefixes every section. |
+| Category | The section heading path as printed, joined with ` - `. A menu title that applies to every section (e.g. `PREMIER INN BREAKFAST`) prefixes every section. A page title above a table (e.g. Pizza Express's `Breakfast (selected restaurants only)`) is a parent that persists until the next title: `parent - section`. Where a table has a column-header block, the section name is the block's text left of the numeric columns. |
 | Region | `UK`, `NI` or `ROI`, set per source. |
 
 ## 5. Configuration (`config/`)
@@ -183,7 +183,7 @@ A chain's CSV contains only the dictionary columns that have a value for that ch
 |---|---|---|
 | Language | Python 3.12, `uv` | Both already installed; the PDF tooling is best in Python |
 | Text, coordinates, render | poppler: `pdftotext -layout`, `pdftotext -bbox`, `pdftoppm`, `pdfinfo` | Already installed; `-bbox` gives word coordinates for grids with no new dependency. Five Guys needs nothing more. |
-| Character-level cells (Phase 2b) | `pdfplumber` (likely) | Needed for tables whose cells touch, e.g. Pizza Express (§2). Not added until slice 2b is planned. |
+| Character-level cells | `pdfplumber` | Approved 2026-10-01. Splits cells that are printed almost touching (Pizza Express, §2). `numeric_table` takes its words from it for every table PDF; poppler's `-bbox` stays for the grid parsers. |
 | Row model + JSON Schema | `pydantic` v2 | One definition drives both extraction and validation |
 | Config | `pyyaml` | Human-edited, version-controlled config |
 | LLM (Phase 3) | `anthropic` SDK, Message Batches + prompt caching | 50% batch discount; prefix cached. Alternatives in §8 |
@@ -284,7 +284,7 @@ Rules:
 1. **Phase 1 (done):** the pipeline core plus the Premier Inn breakfast and Whitbread drinks layouts: three complete chain CSVs (Beefeater, Brewers Fayre, Table Table).
 2. **Phase 2: remaining text-layer layouts, in slices.** One slice per layout or chain, each ending with a chain CSV that passes `eval`.
    - **2a: `numeric_table` + Five Guys.** A generic "name followed by a row of numbers" parser; columns found by position, configured per source. Also reads Windows-1252 ground truth.
-   - **2b: Pizza Express (PEX UK + BEL NI).** Same layout, but several tables per page with different column positions, touching cells (§2) and section names printed beside the column header. Needs character-level extraction (`pdfplumber`) and per-table anchors.
+   - **2b: Pizza Express (PEX UK + BEL NI).** Same layout, but several tables per page with different column positions, touching cells (§2), wrapped names and section names printed in the column-header block. Uses `pdfplumber` and per-table column positions.
    - **2c onward:** Starbucks (2), Coffee #1, Pizza Hut (`●`/`○` matrix), Odeon (nutrition and pre-packed matrices, three regions), Cineworld (`✓`/`▲` matrix), Domino's sides and pizzas.
 3. **Phase 3: LLM routes.**
    - Vision first for what text can't give: **Vue, Papa John's, Krispy Kreme** (§2).
@@ -293,7 +293,7 @@ Rules:
 
 ## 11. Open questions
 
-To decide before slice 2b: add `pdfplumber` (and its dependencies: pdfminer.six, pypdfium2, pillow, cryptography)? The alternative is an LLM vision pass for Pizza Express, which would cost tokens on every run for a layout a parser can handle.
+Decided 2026-10-01: add `pdfplumber` (with pdfminer.six, pypdfium2, pillow, cryptography) rather than an LLM vision pass for Pizza Express, which would cost tokens on every run for a layout a parser can handle.
 
 To revisit later:
 - Menu-wide disclaimers are config-only for now. Revisit if Menu Tracker users need them in the CSV.
@@ -316,3 +316,4 @@ To revisit later:
 | Q10 | Menu-wide disclaimers in config only, not in the CSV |
 | Q11 | Ground-truth gate: ≥99% rows matched, 100% cells agree apart from confirmed errata; golden rows for allergens |
 | Q12 | Phase 1 delivers complete chains: breakfast + drinks for Beefeater, Brewers Fayre, Table Table |
+| Q13 | `pdfplumber` added for character-level cells (slice 2b); `numeric_table` uses it for every table PDF |
