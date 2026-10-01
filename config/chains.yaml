@@ -18,27 +18,27 @@
       region: UK
       category: breakfast
       # The guide "covers the following major allergens" and lists each item's Contains / May Contain.
-      markers: {"": "No"}
+      markers: { '': 'No' }
       disclaimer: >-
         We take great care to prevent cross-contamination when preparing your order in our kitchens.
         However, due to the layout and operation of our kitchens we do not have specific allergen free
         zones and it is therefore not possible to fully guarantee separation of allergens. There is
         significant risk of cross-contamination in our buffet areas and deep fat fryers.
-      approved: false
+      approved: true
     - pdf: beefeater_ss25_drinks_menu_allergy_nutrition_v1.pdf
       parser: whitbread_drinks_grid
       region: UK
       category: drinks
       # Key: "Y  The allergen is present". The guide "declares allergens intentionally added only"
       # and "does not include any 'may contains'", so no mark = not an ingredient.
-      markers: {"Y": "Yes", "": "No"}
+      markers: { 'Y': 'Yes', '': 'No' }
       disclaimer: >-
         Our allergen information sheet does not include any “may contains” information where provided by
         our suppliers. Our kitchens also handle numerous ingredients and allergens and whilst we have
         strict controls in place to reduce the risk of contamination, unfortunately, it is not possible
         for us to guarantee that our dishes will be 100% allergen free. There is also significant risk
         of cross contamination from our fryers.
-      approved: false
+      approved: true
 
 17_Brewersfayre:
   chain: Brewers Fayre
@@ -48,27 +48,27 @@
       region: UK
       category: breakfast
       # The guide "covers the following major allergens" and lists each item's Contains / May Contain.
-      markers: {"": "No"}
+      markers: { '': 'No' }
       disclaimer: >-
         We take great care to prevent cross-contamination when preparing your order in our kitchens.
         However, due to the layout and operation of our kitchens we do not have specific allergen free
         zones and it is therefore not possible to fully guarantee separation of allergens. There is
         significant risk of cross-contamination in our buffet areas and deep fat fryers.
-      approved: false
+      approved: true
     - pdf: brewers_fayre_allergy_nutrition_ss25_drinks_menu.pdf
       parser: whitbread_drinks_grid
       region: UK
       category: drinks
       # Key: "Y  The allergen is present". The guide "declares allergens intentionally added only"
       # and "does not include any 'may contains'", so no mark = not an ingredient.
-      markers: {"Y": "Yes", "": "No"}
+      markers: { 'Y': 'Yes', '': 'No' }
       disclaimer: >-
         Our allergen information sheet does not include any “may contains” information where provided by
         our suppliers. Our kitchens also handle numerous ingredients and allergens and whilst we have
         strict controls in place to reduce the risk of contamination, unfortunately, it is not possible
         for us to guarantee that our dishes will be 100% allergen free. There is also significant risk
         of cross contamination from our fryers.
-      approved: false
+      approved: true
 
 21_TableTable:
   chain: Table Table
@@ -78,24 +78,24 @@
       region: UK
       category: breakfast
       # The guide "covers the following major allergens" and lists each item's Contains / May Contain.
-      markers: {"": "No"}
+      markers: { '': 'No' }
       disclaimer: >-
         We take great care to prevent cross-contamination when preparing your order in our kitchens.
         However, due to the layout and operation of our kitchens we do not have specific allergen free
         zones and it is therefore not possible to fully guarantee separation of allergens. There is
         significant risk of cross-contamination in our buffet areas and deep fat fryers.
-      approved: false
+      approved: true
     - pdf: table_table_allergy_nutrition_ss25_drinks_menu.pdf
       parser: whitbread_drinks_grid
       region: UK
       category: drinks
       # Key: "Y  The allergen is present". The guide "declares allergens intentionally added only"
       # and "does not include any 'may contains'", so no mark = not an ingredient.
-      markers: {"Y": "Yes", "": "No"}
+      markers: { 'Y': 'Yes', '': 'No' }
       disclaimer: >-
         Our allergen information sheet does not include any “may contains” information where provided by
         our suppliers. Our kitchens also handle numerous ingredients and allergens and whilst we have
         strict controls in place to reduce the risk of contamination, unfortunately, it is not possible
         for us to guarantee that our dishes will be 100% allergen free. There is also significant risk
         of cross contamination from our fryers.
-      approved: false
+      approved: true
