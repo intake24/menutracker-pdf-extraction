@@ -106,7 +106,7 @@
   sources:
     - pdf: nutrition.pdf
       parser: numeric_table
-      region: UK                # "UK LOCATIONS ONLY"
+      region: UK # "UK LOCATIONS ONLY"
       category: food
       # No allergen information in this PDF, so no `markers` and the CSV has no allergen columns.
       # Columns left to right: nine values per serving, then the same nine per 100g.
@@ -129,4 +129,4 @@
         - fibre_Per 100g/ml
         - protein_Per 100g/ml
         - salt_Per 100g/ml
-      approved: false
+      approved: true
