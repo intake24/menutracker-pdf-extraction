@@ -5,7 +5,8 @@
 #   pdf       file name in inputs/
 #   parser    name in pipeline/parsers/__init__.py PARSERS (one layout can serve many chains)
 #   region    UK | NI | ROI
-#   markers   the PDF's allergen key: printed marker -> Yes | May contain | No.
+#   columns   (numeric_table only) the dictionary column of each numeric column, left to right
+#   markers   the PDF's allergen key: printed marker -> Yes | May contain | No. Omit when the PDF has none.
 #             "" = what an allergen with no marker means for this PDF ("No" only if the PDF says so).
 #   disclaimer  menu-wide allergen statement, kept here (not in the CSV)
 #   approved  set to true by a person after checking markers/disclaimer against the PDF
@@ -99,3 +100,33 @@
         for us to guarantee that our dishes will be 100% allergen free. There is also significant risk
         of cross contamination from our fryers.
       approved: true
+
+52_FiveGuys:
+  chain: Five Guys
+  sources:
+    - pdf: nutrition.pdf
+      parser: numeric_table
+      region: UK                # "UK LOCATIONS ONLY"
+      category: food
+      # No allergen information in this PDF, so no `markers` and the CSV has no allergen columns.
+      # Columns left to right: nine values per serving, then the same nine per 100g.
+      columns:
+        - energykJ_Per Portion
+        - energykCal_Per Portion
+        - fat_Per Portion
+        - saturates_Per Portion
+        - carbohydrates_Per Portion
+        - sugars_Per Portion
+        - fibre_Per Portion
+        - protein_Per Portion
+        - salt_Per Portion
+        - energykJ_Per 100g/ml
+        - energykCal_Per 100g/ml
+        - fat_Per 100g/ml
+        - saturates_Per 100g/ml
+        - carbohydrates_Per 100g/ml
+        - sugars_Per 100g/ml
+        - fibre_Per 100g/ml
+        - protein_Per 100g/ml
+        - salt_Per 100g/ml
+      approved: false

@@ -47,7 +47,7 @@ def run(inputs: Path, chains_file: Path, outputs: Path, only: str | None = None)
             if not source.get("approved"):
                 raise SourceNotApproved(f"{key}: {source['pdf']} is not approved in {chains_file.name}")
             pdf = inputs / source["pdf"]
-            cache_key = (text_sha(page_texts(pdf)), source["parser"], repr(sorted(source["markers"].items())))
+            cache_key = (text_sha(page_texts(pdf)), source["parser"], repr(sorted(source.get("markers", {}).items())))
             if cache_key not in parsed:
                 parsed[cache_key] = PARSERS[source["parser"]](pdf, source)
             rows += [r | {"region": source["region"], "source_file": pdf.name, "method": "parser"}
