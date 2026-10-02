@@ -181,13 +181,21 @@
       parser: allergen_matrix
       region: UK
       category: food
-      approved: false
+      approved: true
       # Key (page 1 and every page header): "✓ - Contains", "▲ - May Contain". It does not say what a blank cell
       # means, so a blank is "not stated". The PDF is an allergen matrix with calories only.
-      markers: {"✓": "Yes", "▲": "May contain", "": ""}
-      disclaimer: "We cannot guarantee that any of our products are free of a particular allergen due to the use of shared equipment, utensils, cooking methods and open product handling on site."
+      markers: { '✓': 'Yes', '▲': 'May contain', '': '' }
+      disclaimer: 'We cannot guarantee that any of our products are free of a particular allergen due to the use of shared equipment, utensils, cooking methods and open product handling on site.'
       sizes: [Large, Regular, Small, Medium, Pint, Half Pint, Splash, Munchbox]
-      variants: [Semi-Skimmed Milk, Soya Milk, Sugar Free Caramel, Sugar Free Vanilla, Chocolate, Hazelnut]
+      variants:
+        [
+          Semi-Skimmed Milk,
+          Soya Milk,
+          Sugar Free Caramel,
+          Sugar Free Vanilla,
+          Chocolate,
+          Hazelnut,
+        ]
       units: [g, ml]
       note_labels: [Pick and Mix, Ice Cream]
       group_column_end: 92 # the left-most column (item group names, sub-sections) ends here
