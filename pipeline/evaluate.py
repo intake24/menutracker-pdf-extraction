@@ -2,6 +2,7 @@
 import csv
 import io
 import re
+import unicodedata
 from pathlib import Path
 
 ROW_RECALL_MIN = 0.99
@@ -28,10 +29,18 @@ def norm(text: str) -> str:
     return re.sub(r"[^a-z0-9]", "", text.casefold())
 
 
+def _stem_key(stem: str) -> str:
+    """File-name stem without soft hyphens, zero-width characters or `%20`/`_20` for spaces (Pearl Scan names vary)."""
+    stem = unicodedata.normalize("NFKC", stem)
+    stem = re.sub("[\u00ad\u200b\u200c\u200d\ufeff]", "", stem)
+    return re.sub(r"%20|_20", " ", stem)
+
+
 def ground_truth_file(gt_dir: Path, pdf_stem: str) -> Path | None:
     """Newest Pearl Scan CSV for a PDF: `<stem>_v0.1.csv` beats `<stem>.csv`; `Previous/` is ignored."""
+    want = _stem_key(pdf_stem)
     found = [p for p in gt_dir.rglob("*.csv")
-             if "Previous" not in p.parts and p.stem in (pdf_stem, f"{pdf_stem}_v0.1")]
+             if "Previous" not in p.parts and _stem_key(p.stem) in (want, f"{want}_v0.1")]
     return max(found, key=lambda p: p.stem.endswith("_v0.1"), default=None)
 
 

@@ -69,13 +69,16 @@ def run(inputs: Path, chains_file: Path, outputs: Path, only: str | None = None)
     return written
 
 
-def evaluate(chains_file: Path, outputs: Path, ground_truth: Path, golden: Path, config: Path) -> list[str]:
-    """Nutrition vs Pearl Scan ground truth, allergens vs hand-verified golden rows. Returns failure lines."""
+def evaluate(chains_file: Path, outputs: Path, ground_truth: Path, golden: Path, config: Path,
+             only: str | None = None, strict: bool = False) -> list[str]:
+    """Nutrition vs Pearl Scan ground truth, allergens vs hand-verified golden rows. Returns failure lines.
+
+    A source with neither is reported as "not evaluated"; `strict` makes that a failure."""
     mapping = yaml.safe_load((config / "pearlscan_columns.yaml").read_text())
     errata_rows = yaml.safe_load((config / "ground_truth_errata.yaml").read_text()) or []
     failures = []
     for key, chain in load_chains(chains_file).items():
-        if not approved(chain):
+        if not approved(chain) or (only and key != only):
             continue   # `run` skips these, so there is nothing to compare
         out = outputs / f"{key}.csv"
         if not out.exists():
@@ -86,6 +89,11 @@ def evaluate(chains_file: Path, outputs: Path, ground_truth: Path, golden: Path,
             stem = Path(source["pdf"]).stem
             ours = [r for r in ours_all if r["source_file"] == source["pdf"]]
             gt = ground_truth_file(ground_truth, stem)
+            gold = golden / f"{stem}.csv"
+            if gt is None and not gold.exists():
+                print(f"{key} {stem}: not evaluated")
+                if strict:
+                    failures.append(f"{key} {stem}: not evaluated (no ground truth, no golden rows)")
             if gt is not None:
                 errata = {(e["item"], e["column"]) for e in errata_rows if e["file"] == gt.name}
                 r = compare_ground_truth(read_csv(gt), ours, mapping, errata)
@@ -94,7 +102,6 @@ def evaluate(chains_file: Path, outputs: Path, ground_truth: Path, golden: Path,
                 if not r["passed"]:
                     failures += [f"{key} {stem}: unmatched row {n}" for n in r["unmatched"]]
                     failures += [f"{key} {stem}: {m}" for m in r["mismatches"]]
-            gold = golden / f"{stem}.csv"
             if gold.exists():
                 msgs = compare_golden(read_csv(gold), ours)
                 print(f"{key} {stem}: golden {len(read_csv(gold))} rows, {len(msgs)} failures")
@@ -108,7 +115,8 @@ def main(argv: list[str] | None = None) -> None:
     sub.add_parser("manifest", help="page/text/parser report for every PDF -> work/manifest.csv")
     run_p = sub.add_parser("run", help="extract every approved chain -> outputs/<key>.csv")
     run_p.add_argument("--chain", help="only this chain key, e.g. 16_Beefeater")
-    sub.add_parser("eval", help="compare outputs with ground truth and golden rows; exit 1 on any failure")
+    eval_p = sub.add_parser("eval", help="compare outputs with ground truth and golden rows; exit 1 on any failure")
+    eval_p.add_argument("--strict", action="store_true", help="a source with nothing to compare against fails")
     args = parser.parse_args(argv)
     chains_file = ROOT / "config" / "chains.yaml"
 
@@ -122,7 +130,7 @@ def main(argv: list[str] | None = None) -> None:
             print(f"{path.relative_to(ROOT)}: {len(rows)} rows, {errors} with errors, {warns} with warnings")
     elif args.cmd == "eval":
         failures = evaluate(chains_file, ROOT / "outputs", ROOT / "inputs" / "ground-truth",
-                            ROOT / "golden", ROOT / "config")
+                            ROOT / "golden", ROOT / "config", strict=args.strict)
         print("\n".join(failures) or "eval: all checks passed")
         sys.exit(1 if failures else 0)
 

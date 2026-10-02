@@ -110,3 +110,15 @@ def test_two_sources_on_one_pdf_with_different_parser_options_are_not_parsed_onc
     cf.write_text(yaml.safe_dump({"98_Cache": {"chain": "X", "sources": [pex, pex | {"wrapped_names": False}]}}))
     with pytest.raises(ValueError, match="text between rows"):
         run(ROOT / "inputs", cf, tmp_path / "out")
+
+
+def test_eval_says_what_it_did_not_evaluate_and_strict_fails_on_it(tmp_path, capsys):
+    cf = chains_file(tmp_path, approved=True)
+    run(ROOT / "inputs", cf, tmp_path / "out", only="52_FiveGuys")
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    args = (cf, tmp_path / "out", empty, empty, ROOT / "config")
+    assert evaluate(*args, only="52_FiveGuys") == []
+    assert "52_FiveGuys nutrition: not evaluated" in capsys.readouterr().out
+    failures = evaluate(*args, only="52_FiveGuys", strict=True)
+    assert failures and all("not evaluated" in f for f in failures)

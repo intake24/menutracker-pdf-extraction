@@ -17,6 +17,14 @@ def test_ground_truth_file_prefers_corrected_version(tmp_path):
     assert ground_truth_file(tmp_path, "other") is None
 
 
+def test_ground_truth_file_ignores_soft_hyphens_and_escaped_spaces(tmp_path):
+    (tmp_path / "Dominos").mkdir()
+    (tmp_path / "Dominos" / "nutrition_pizzas\u00ad_v0.1.csv").write_text("item_name\n")
+    (tmp_path / "Dominos" / "my_20menu.csv").write_text("item_name\n")
+    assert ground_truth_file(tmp_path, "nutrition_pizzas").name == "nutrition_pizzas\u00ad_v0.1.csv"
+    assert ground_truth_file(tmp_path, "my%20menu").name == "my_20menu.csv"
+
+
 def test_rows_match_on_name_plus_size_and_cells_compare():
     truth = [{"item_name": "Sweet Popcorn - Large", "kcal": "958.9", "fat": "Negligible"},
              {"item_name": "Croissant", "kcal": "167", "fat": "7.7"}]
