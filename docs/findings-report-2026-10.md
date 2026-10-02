@@ -17,7 +17,7 @@ Status date 2026-10-02. This report records what was found when every extracted 
 | Papa John's | 1 (image pages) | 435 | 434 rows, 6,943 cells, 0 mismatches after 7 errata | 1 critical + 4 important (review) | Approved |
 | Krispy Kreme, Domino's pizzas, Pizza Hut, Coffee #1, Starbucks, Brewhouse, Cookhouse, Top Golf | not done | | | | Surveyed or not started, see section 4 |
 
-Totals in `outputs/`: 10 chain CSVs, 5,364 rows. Pearl Scan agreement is exact on every compared cell once the 63 confirmed Pearl Scan mistakes are excused. Allergen data has no ground truth anywhere; it is checked by hand-verified golden rows only.
+Totals in `outputs/`: 10 chain CSVs, 5,364 rows. Pearl Scan agreement is exact on every compared cell once the 66 confirmed Pearl Scan mistakes are excused. Allergen data has no ground truth anywhere; it is checked by hand-verified golden rows only.
 
 ## 2. How the checks worked and who decides
 
@@ -30,7 +30,7 @@ Every mismatch was settled by looking at the page. In every case so far one of f
 | Cause | Count found | Example |
 |---|---|---|
 | PDF prints something odd; we keep it and flag it | many (hundreds of flagged rows) | kJ printed as 5 x kcal on Odeon drinks; `1,75` with a decimal comma; `2.7g` with a stray unit |
-| Pearl Scan mistake or convention (errata or `eval` rule) | 63 errata entries plus 6 evaluator rules | `Diet Pepsi` filed under the wrong item; `1/2` turned into the date `01-Feb` |
+| Pearl Scan mistake or convention (errata or `eval` rule) | 66 errata entries plus 6 evaluator rules | `Diet Pepsi` filed under the wrong item; `1/2` turned into the date `01-Feb` |
 | Model misread (vision) | 2 cells in about 3,600 (Vue, 110 dpi) | `1.4` read as `0.4`; fixed at 150 dpi |
 | Pipeline defect | about 40 found by reviews and checks | marks landing in the wrong column; a wheat-free row marked gluten "No" |
 
@@ -115,7 +115,7 @@ Every mismatch was settled by looking at the page. In every case so far one of f
 | Dropped characters | accents (`BACARDI`), `™` | evaluator ignores both |
 | Conventions, not errors | per-100g row written as a 100 g serving; amount moved from name into serving size; name = group - sub-group - size | `eval` rules; we keep what the PDF prints |
 
-Rule applied throughout: Pearl Scan is a useful second reader, not the authority. Pearl Scan was wrong in a large share of the discrepancies (63 confirmed entries). We never changed our value to match Pearl Scan without reading the page.
+Rule applied throughout: Pearl Scan is a useful second reader, not the authority. Pearl Scan was wrong in a large share of the discrepancies (66 confirmed entries). We never changed our value to match Pearl Scan without reading the page.
 
 ## 6. Errors by the pipeline (found by review and by comparison) and their fixes
 
