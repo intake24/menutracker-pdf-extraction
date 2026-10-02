@@ -339,3 +339,16 @@ def test_name_amount_moves_a_trailing_amount_into_the_serving_size():
         ("BBQ Dip", "25", "g"), ("Tub", "330", "ml"), ("Chicken Kickers (4)", None, None)]
     plain = parse_pages([[w for r in rows for w in r]], COLUMNS)
     assert plain[0]["Product_Name"] == "BBQ Dip 25g" and "Serving_Size" not in plain[0]
+
+
+def test_name_amount_handles_a_dash_before_the_amount_oz_and_trailing_words():
+    rows = [line(100, "Bacon Bits - 18g", FULL), line(112, "Lemonade - 22oz Freestyle", FULL)]
+    out = parse_pages([[w for r in rows for w in r]], COLUMNS, name_amount=True)
+    assert [(r["Product_Name"], r["Serving_Size"], r["Serving_Size_Unit"]) for r in out] == [
+        ("Bacon Bits", "18", "g"), ("Lemonade Freestyle", "22", "oz")]
+
+
+def test_a_ruler_line_of_consecutive_column_numbers_is_page_furniture():
+    ruler = [Word(RIGHT_EDGES[i] - 5, 60, RIGHT_EDGES[i], 68, str(i + 4)) for i in range(6)]
+    rows = [w for y in (100, 112, 124) for w in line(y, "Item", FULL)]
+    assert len(parse_pages([ruler + rows], COLUMNS)) == 3

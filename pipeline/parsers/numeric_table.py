@@ -26,7 +26,7 @@ from pathlib import Path
 from pipeline.ingest import Word, page_words_fine
 
 NUMBER = re.compile(r"^(?:<\s?)?\d+(?:\.\d+)?$|^(?:Negligible|Traces?|Tr)$")
-AMOUNT = re.compile(r"^(.*\S)\s+(\d+(?:\.\d+)?)\s?(g|ml)$")
+AMOUNT = re.compile(r"^(.*?\S)(?:\s+-)?\s+(\d+(?:\.\d+)?)\s?(g|ml|oz)(\s+[A-Za-z].*)?$")
 MIN_NUMBERS = 3          # a line needs this many trailing numeric cells to be a data row
 SECTION_INDENT = 12      # section headings start at the left margin; wrapped text and notes are indented more
 VALUELIKE = re.compile(r"\d|^(?:-|–|N/?A)$", re.I)   # a token that looks like a cell value, readable or not
@@ -46,6 +46,15 @@ def _lines(words: list[Word]) -> list[list[Word]]:
         else:
             lines.append([w])
     return [sorted(line, key=lambda w: w.x0) for line in lines]
+
+
+def _is_ruler(line: list[Word]) -> bool:
+    """Column numbers printed above a table (4 5 6 7 ...): consecutive integers and nothing else."""
+    try:
+        n = [int(w.text) for w in line]
+    except ValueError:
+        return False
+    return len(n) >= MIN_NUMBERS and n == list(range(n[0], n[0] + len(n)))
 
 
 def _split(line: list[Word], number: re.Pattern) -> tuple[list[Word], list[Word]]:
@@ -130,7 +139,7 @@ def _row(line: list[Word], lead: list[Word], anchors: list[float], columns: list
                          f"{product!r}")
     row = {"Product_Name": product, "Category": category, "source_page": page_no}
     if name_amount and (m := AMOUNT.match(product)):   # "BBQ Dip 25g": the amount is the serving size
-        row |= {"Product_Name": m.group(1), "Serving_Size": m.group(2), "Serving_Size_Unit": m.group(3)}
+        row |= {"Product_Name": m.group(1) + (m.group(4) or ""), "Serving_Size": m.group(2), "Serving_Size_Unit": m.group(3)}
     for w in (w for w in line if w.x1 >= edge):
         if not number.match(w.text):
             raise ValueError(f"page {page_no}: unreadable cell {w.text!r} in row {product!r}")
@@ -152,7 +161,7 @@ def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None 
     rows = []
     parent = section = ""   # parent: a page title that persists ("Breakfast (selected restaurants only)")
     for page_no, words in enumerate(pages, start=1):
-        lines = _lines(words)
+        lines = [l for l in _lines(words) if not _is_ruler(l)]
         split = [_split(line, number) for line in lines]
         found = [(i, cells) for i, (name, cells) in enumerate(split) if name and len(cells) >= MIN_NUMBERS]
         if not found:
