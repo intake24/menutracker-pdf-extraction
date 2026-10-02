@@ -282,14 +282,10 @@ Rules:
 ## 10. Rollout
 
 1. **Phase 1 (done):** the pipeline core plus the Premier Inn breakfast and Whitbread drinks layouts: three complete chain CSVs (Beefeater, Brewers Fayre, Table Table).
-2. **Phase 2: remaining text-layer layouts, in slices.** One slice per layout or chain, each ending with a chain CSV that passes `eval`.
-   - **2a: `numeric_table` + Five Guys.** A generic "name followed by a row of numbers" parser; columns found by position, configured per source. Also reads Windows-1252 ground truth.
-   - **2b: Pizza Express (PEX UK + BEL NI).** Same layout, but several tables per page with different column positions, touching cells (§2), wrapped names and section names printed in the column-header block. Uses `pdfplumber` and per-table column positions.
-   - **2c onward:** Starbucks (2), Coffee #1, Pizza Hut (`●`/`○` matrix), Odeon (nutrition and pre-packed matrices, three regions), Cineworld (`✓`/`▲` matrix), Domino's sides and pizzas.
+2. **Phase 2: remaining text-layer layouts, in slices.** 2a (`numeric_table`, Five Guys) and 2b (Pizza Express, `pdfplumber`) are done. The rest, and Phase 3, are sequenced in [the roadmap plan](superpowers/plans/2026-10-02-complete-the-pipeline.md): foundations, the allergen-matrix parser (Cineworld, Pizza Hut), Domino's, Odeon, Coffee #1 and Starbucks.
 3. **Phase 3: LLM routes.**
-   - Vision first for what text can't give: **Vue, Papa John's, Krispy Kreme** (§2).
-   - Then 2b-style LLM text for menu layouts (Brewhouse, Cookhouse, Top Golf), then repair.
-4. **Phase 4:** a review loop for flagged rows (review file → overrides), if flag volume justifies it.
+   - The backend, cache, token budget guard and repair loop, then vision for what text can't give (**Vue, Papa John's, Krispy Kreme**, §2), then the menu layouts (Brewhouse, Cookhouse, Top Golf).
+4. **Phase 4:** a flags report in the final slice (every flagged row in one file); a review/overrides loop only if the flag volume justifies it.
 
 ## 11. Open questions
 
