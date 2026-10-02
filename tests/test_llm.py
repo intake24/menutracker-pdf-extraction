@@ -108,3 +108,60 @@ def test_a_vision_source_parses_every_page_through_the_runner(tmp_path, monkeypa
     assert [r["Product_Name"] for r in rows] == ["Item 1", "Item 2", "Item 3"] and {r["method"] for r in rows} == {"llm"}
     assert all("m19968-nutritional-info-ice-cream-" in p and p.count("Read the image") == 1 for p, _ in seen)
     assert seen[0][1] == tmp_path / "pages"
+
+
+def test_an_answer_that_fails_validation_is_not_cached_so_a_fix_can_be_rerun(image, tmp_path):
+    def must_have_rows(answer):
+        if not answer["rows"]:
+            raise LlmError("no rows")
+    empty = {**GOOD, "structured_output": {"rows": []}}
+    kw = dict(cache_dir=tmp_path / "c", budget=Budget(), validate=must_have_rows)
+    with pytest.raises(LlmError, match="no rows"):
+        call("x", SCHEMA, image, runner=Fake(empty), **kw)
+    assert not list((tmp_path / "c").glob("*.json"))
+    assert call("x", SCHEMA, image, runner=Fake(GOOD), **kw)["rows"]
+
+
+def test_a_half_written_cache_file_is_a_miss_not_a_crash(image, tmp_path):
+    kw = dict(cache_dir=tmp_path / "c", budget=Budget())
+    call("x", SCHEMA, image, runner=Fake(GOOD), **kw)
+    (next((tmp_path / "c").glob("*.json"))).write_text('{"rows": [{"na')
+    fake = Fake(GOOD)
+    assert call("x", SCHEMA, image, runner=fake, **kw)["rows"] and fake.calls == 1
+
+
+def test_a_rate_limit_reported_only_on_stderr_is_still_a_rate_limit():
+    with pytest.raises(RateLimited):
+        claude_result("", "Claude usage limit reached. Your limit will reset at 3pm", 1)
+
+
+def test_a_vision_page_with_no_rows_raises(tmp_path, monkeypatch):
+    from pathlib import Path
+
+    from pipeline.parsers import vision_table as vt
+    monkeypatch.setattr(vt, "WORK", tmp_path)
+    monkeypatch.setattr(vt, "BUDGET", Budget())
+    monkeypatch.setattr(vt, "RUNNER", Fake({"is_error": False, "structured_output": {"rows": []}, "total_cost_usd": 0.01}))
+    pdf = Path(__file__).resolve().parent.parent / "inputs" / "m19968-nutritional-info-ice-cream.pdf"
+    with pytest.raises(LlmError, match="page 1.*no rows"):
+        vt.parse(pdf, {"fields": {"kj": "energykJ_Per Portion"}, "instructions": "A table."})
+
+
+def test_a_stopped_vision_chain_does_not_stop_the_other_chains(tmp_path, monkeypatch):
+    import yaml
+
+    from pipeline.cli import ROOT, run
+    from pipeline.parsers import vision_table as vt
+    monkeypatch.setattr(vt, "RUNNER", lambda *_: {"is_error": True, "result": "usage limit reached"})
+    monkeypatch.setattr(vt, "WORK", tmp_path / "work")
+    chains = yaml.safe_load((ROOT / "config" / "chains.yaml").read_text())
+    chains = {k: chains[k] for k in ("58_Vue", "52_FiveGuys")}
+    for chain in chains.values():
+        for source in chain["sources"]:
+            source["approved"] = True
+    cf = tmp_path / "chains.yaml"
+    cf.write_text(yaml.safe_dump(chains))
+    stopped: list[str] = []
+    written = run(ROOT / "inputs", cf, tmp_path / "out", stopped=stopped)
+    assert [p.stem for p in written] == ["52_FiveGuys"]
+    assert len(stopped) == 1 and stopped[0].startswith("58_Vue") and "usage limit" in stopped[0]

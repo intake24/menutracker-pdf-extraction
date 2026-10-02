@@ -30,7 +30,14 @@ def schema_for(fields: dict[str, str]) -> dict:
         "type": "object", "required": ["name"], "properties": {k: {"type": "string"} for k in keys}}}}}
 
 
+def check_answer(answer: dict, page_no: int) -> None:
+    """A page of table rows with no rows means the model didn't read it, not that the page is empty."""
+    if not isinstance(answer.get("rows"), list) or not answer["rows"]:
+        raise llm.LlmError(f"page {page_no}: the model returned no rows")
+
+
 def rows_from_answer(answer: dict, fields: dict[str, str], page_no: int) -> list[dict]:
+    check_answer(answer, page_no)
     rows = []
     for item in answer["rows"]:
         name = (item.get("name") or "").strip()
@@ -63,6 +70,7 @@ def parse(pdf: Path, source: dict) -> list[dict]:
         prompt = (f"Read the image {png}. {source['instructions']} Return EVERY data row on the page, in order. "
                   "Copy every cell exactly as printed, as a string, including words like Trace and typos; use an "
                   "empty string for a blank cell. Do not correct, convert or calculate anything.")
-        answer = llm.call(prompt, schema, png, runner=RUNNER, cache_dir=WORK / "llm", budget=BUDGET)
+        answer = llm.call(prompt, schema, png, runner=RUNNER, cache_dir=WORK / "llm", budget=BUDGET,
+                          validate=lambda a, n=page_no: check_answer(a, n))
         rows += rows_from_answer(answer, fields, page_no)
     return rows

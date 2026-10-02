@@ -10,6 +10,7 @@ import yaml
 from pipeline.columns import load_columns
 from pipeline.evaluate import compare_golden, compare_ground_truth, ground_truth_file, read_csv
 from pipeline.export import finalise, write_csv
+from pipeline.llm import LlmError
 from pipeline.ingest import load_chains, manifest_row, page_texts, text_sha
 from pipeline.parsers import PARSERS
 
@@ -35,7 +36,8 @@ def approved(chain: dict) -> bool:
     return all(source.get("approved") for source in chain["sources"])
 
 
-def run(inputs: Path, chains_file: Path, outputs: Path, only: str | None = None) -> dict[Path, list[dict]]:
+def run(inputs: Path, chains_file: Path, outputs: Path, only: str | None = None,
+        stopped: list[str] | None = None) -> dict[Path, list[dict]]:
     """Write outputs/<chain key>.csv for every chain whose sources are all approved.
 
     Chains with an unapproved source are skipped with a notice on stderr; asking for one by name (`only`)
@@ -53,20 +55,33 @@ def run(inputs: Path, chains_file: Path, outputs: Path, only: str | None = None)
                 raise SourceNotApproved(f"{key}: has a source that is not approved in {chains_file.name}")
             print(f"skipped {key}: not approved in {chains_file.name}", file=sys.stderr)
             continue
-        rows: list[dict] = []
-        for source in chain["sources"]:
-            pdf = inputs / source["pdf"]
-            options = {k: v for k, v in source.items() if k not in ("pdf", "region", "category", "approved", "disclaimer")}
-            cache_key = (text_sha(page_texts(pdf)), json.dumps(options, sort_keys=True))   # every parse-affecting option
-            if cache_key not in parsed:
-                parsed[cache_key] = PARSERS[source["parser"]](pdf, source)
-            rows += [{"method": "parser"} | r | {"region": source["region"], "source_file": pdf.name}
-                     for r in parsed[cache_key]]
+        try:
+            rows = _parse_chain(chain, inputs, parsed)
+        except LlmError as e:   # a rate limit, a cap or a bad answer stops this chain; finished pages stay cached
+            message = f"{key}: stopped: {e}"
+            print(message, file=sys.stderr)
+            if stopped is None:
+                raise
+            stopped.append(message)
+            continue
         rows = finalise(rows, columns)
         path = outputs / f"{key}.csv"
         write_csv(rows, columns, path)
         written[path] = rows
     return written
+
+
+def _parse_chain(chain: dict, inputs: Path, parsed: dict[tuple, list[dict]]) -> list[dict]:
+    rows: list[dict] = []
+    for source in chain["sources"]:
+        pdf = inputs / source["pdf"]
+        options = {k: v for k, v in source.items() if k not in ("pdf", "region", "category", "approved", "disclaimer")}
+        cache_key = (text_sha(page_texts(pdf)), json.dumps(options, sort_keys=True))   # every parse-affecting option
+        if cache_key not in parsed:
+            parsed[cache_key] = PARSERS[source["parser"]](pdf, source)
+        rows += [{"method": "parser"} | r | {"region": source["region"], "source_file": pdf.name}
+                 for r in parsed[cache_key]]
+    return rows
 
 
 def evaluate(chains_file: Path, outputs: Path, ground_truth: Path, golden: Path, config: Path,
@@ -124,10 +139,14 @@ def main(argv: list[str] | None = None) -> None:
         rows = manifest(ROOT / "inputs", chains_file, ROOT / "work" / "manifest.csv")
         print(f"{len(rows)} PDFs -> work/manifest.csv; parsers: {dict(Counter(r['parser'] for r in rows))}")
     elif args.cmd == "run":
-        for path, rows in run(ROOT / "inputs", chains_file, ROOT / "outputs", args.chain).items():
+        stopped: list[str] = []
+        for path, rows in run(ROOT / "inputs", chains_file, ROOT / "outputs", args.chain, stopped).items():
             errors = sum("error:" in r["flags"] for r in rows)
             warns = sum("warn:" in r["flags"] for r in rows)
             print(f"{path.relative_to(ROOT)}: {len(rows)} rows, {errors} with errors, {warns} with warnings")
+        if stopped:
+            print("\n".join(stopped) + "\nrun again to resume: finished pages are cached", file=sys.stderr)
+            sys.exit(1)
     elif args.cmd == "eval":
         failures = evaluate(chains_file, ROOT / "outputs", ROOT / "inputs" / "ground-truth",
                             ROOT / "golden", ROOT / "config", strict=args.strict)

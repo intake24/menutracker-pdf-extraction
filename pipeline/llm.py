@@ -7,8 +7,10 @@ already answered is cached, so the next run resumes where this one stopped.
 """
 import hashlib
 import json
+import os
 import re
 import subprocess
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
@@ -50,7 +52,7 @@ class Budget:
 def claude_result(stdout: str, stderr: str, code: int) -> dict:
     """The parsed `--output-format json` result of a `claude -p` run."""
     if not stdout.strip():
-        raise LlmError(f"claude exit {code}, no output: {stderr[-300:]!r}")
+        raise (RateLimited if RATE_LIMIT.search(stderr) else LlmError)(f"claude exit {code}, no output: {stderr[-300:]!r}")
     try:
         return json.loads(stdout)
     except json.JSONDecodeError:
@@ -61,9 +63,13 @@ def claude_runner(prompt: str, schema: dict, add_dir: Path) -> dict:
     """Run `claude -p` once. Tools are limited to Read; no session is kept; nothing secret is passed."""
     cmd = ["claude", "-p", "--model", MODEL, "--tools", "Read", "--add-dir", str(add_dir),
            "--max-budget-usd", str(PER_CALL_USD), "--no-session-persistence", "--output-format", "json",
+           "--setting-sources", "user", "--strict-mcp-config", "--disable-slash-commands",
            "--json-schema", json.dumps(schema), prompt]
-    try:
-        r = subprocess.run(cmd, capture_output=True, text=True, stdin=subprocess.DEVNULL, timeout=TIMEOUT_S)
+    env = {k: v for k, v in os.environ.items() if k != "ANTHROPIC_API_KEY"}   # bill the plan login, never a stray key
+    try:   # run from an empty directory so no project settings or CLAUDE.md reach the model
+        with tempfile.TemporaryDirectory() as cwd:
+            r = subprocess.run(cmd, capture_output=True, text=True, stdin=subprocess.DEVNULL, timeout=TIMEOUT_S,
+                               cwd=cwd, env=env)
     except subprocess.TimeoutExpired:
         raise LlmError(f"claude timed out after {TIMEOUT_S} s") from None
     return claude_result(r.stdout, r.stderr, r.returncode)
@@ -77,21 +83,33 @@ def _key(image: Path, prompt: str, schema: dict) -> str:
 
 
 def call(prompt: str, schema: dict, image: Path, *, cache_dir: Path, budget: Budget,
-         runner: Callable[[str, dict, Path], dict] = claude_runner) -> dict:
-    """The model's structured answer about `image`; the prompt must tell it to read the file at that path."""
+         runner: Callable[[str, dict, Path], dict] = claude_runner,
+         validate: Callable[[dict], None] = lambda answer: None) -> dict:
+    """The model's structured answer about `image`; the prompt must tell it to read the file at that path.
+
+    `validate` raises LlmError for an answer that can't be used; such an answer is never cached."""
     cached = cache_dir / f"{_key(image, prompt, schema)}.json"
     if cached.exists():
-        return json.loads(cached.read_text())
+        try:
+            return json.loads(cached.read_text())
+        except json.JSONDecodeError:
+            pass   # a write that was cut short: ask again
     budget.check()
     result = runner(prompt, schema, image.parent)
     budget.calls += 1
     budget.usd += result.get("total_cost_usd") or 0.0
     if result.get("is_error"):
         message = str(result.get("result"))[:300]
-        raise (RateLimited if RATE_LIMIT.search(message) else LlmError)(f"{image.name}: {message}")
+        raise (RateLimited if RATE_LIMIT.search(message) and result.get("subtype") != "error_max_budget_usd" else LlmError)(f"{image.name}: {message}")
     answer = result.get("structured_output")
     if not isinstance(answer, dict):
         raise LlmError(f"{image.name}: no structured output in the answer: {str(result.get('result'))[:200]!r}")
+    try:
+        validate(answer)
+    except LlmError as e:
+        raise LlmError(f"{image.name}: {e}") from None
     cache_dir.mkdir(parents=True, exist_ok=True)
-    cached.write_text(json.dumps(answer))
+    partial = cached.with_suffix(".tmp")
+    partial.write_text(json.dumps(answer))
+    os.replace(partial, cached)   # atomic: a killed run never leaves half a file
     return answer
