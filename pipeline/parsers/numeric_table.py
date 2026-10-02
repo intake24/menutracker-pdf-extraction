@@ -1,14 +1,24 @@
 """Generic parser for "item name followed by a row of numbers" nutrition tables (Five Guys, Pizza Express, ...).
 
-Columns are found by position: on each page the right edges of the numeric cells are clustered into
-columns, and `source["columns"]` names them left to right. Position (not token count) is what keeps a
-row with blank cells, e.g. an item with per-100g values only, in the right columns.
+Columns are found by position, not by counting tokens: the right edges of a table's numeric cells are clustered
+into columns and `source["columns"]` names them left to right. That keeps a row with blank cells, e.g. an item with
+per-100g values only, in the right columns. Words come from pdfplumber, which separates cells that are printed
+almost touching (`1232` and `11.1`) where poppler returns one word.
+
+Source options (config/chains.yaml):
+  columns        the dictionary column of each numeric column, left to right (required)
+  header         a word that marks a column-header line, e.g. "Energy". Enables several tables per page, each with
+                 its own columns, and takes the section name from the header block (the text left of the columns)
+  wrapped_names  join a name-only line directly above a data row onto that row's name
+
+Without `header`, sections are ALL-CAPS heading lines at the left margin. Anything the parser can't place, an
+unreadable cell, a cell under no column, text between rows, raises instead of being guessed at.
 """
 import re
 from collections import Counter
 from pathlib import Path
 
-from pipeline.ingest import Word, page_words
+from pipeline.ingest import Word, page_words_fine
 
 NUMBER = re.compile(r"^(?:<\s?)?\d+(?:\.\d+)?$|^(?:Negligible|Traces?|Tr)$")
 MIN_NUMBERS = 3          # a line needs this many trailing numeric cells to be a data row
@@ -16,6 +26,8 @@ SECTION_INDENT = 12      # section headings start at the left margin; wrapped te
 VALUELIKE = re.compile(r"\d|^(?:-|–|N/?A)$", re.I)   # a token that looks like a cell value, readable or not
 NOTE_START = ("-", "*", "†")                          # a line starting like this is a note, not a name
 LINE_GAP = 3             # words whose vertical centres are this close are on one line
+WRAP_LINES = 1.5         # a name-only line within this many line heights above a data row continues its name
+TABLE_GAP = 20           # without header lines: last-cell right edges further apart than this are different tables
 COLUMN_GAP = 9           # right edges further apart than this (pt) belong to different columns
 
 
@@ -64,61 +76,145 @@ def _anchors(cells: list[Word]) -> list[float]:
     return [sum(c) / len(c) for c in clusters]
 
 
-def parse_pages(pages: list[list[Word]], columns: list[str]) -> list[dict]:
+def _tables(found: list[tuple[int, list[Word]]], header_lines: list[int]) -> list[list[tuple[int, list[Word]]]]:
+    """Split the data rows into tables: by the header lines before them, or, without headers, by where their
+    last cell ends (the rows of one table end at the same x)."""
+    if header_lines:
+        by_header: dict[int, list] = {}
+        for item in found:
+            by_header.setdefault(sum(h < item[0] for h in header_lines), []).append(item)
+        return list(by_header.values())
+    ordered = sorted(found, key=lambda f: f[1][-1].x1)
+    groups = [[ordered[0]]]
+    for item in ordered[1:]:
+        if item[1][-1].x1 - groups[-1][-1][1][-1].x1 > TABLE_GAP:
+            groups.append([])
+        groups[-1].append(item)
+    return groups
+
+
+def _classify(lines: list[list[Word]], tables: list[list[float]], table_of: dict[int, list[float]],
+              header_lines: list[int]) -> list[list[float] | None]:
+    """For each line: the column anchors of its table if it is a data row (at least MIN_NUMBERS value-like words
+    in that table's columns), else None."""
+    kinds = []
+    for i, line in enumerate(lines):
+        n = sum(h < i for h in header_lines)
+        candidates = [table_of[n]] if header_lines and n in table_of else tables
+        best = None
+        for anchors in candidates:
+            cells = [w for w in line if w.x1 >= anchors[0] - COLUMN_GAP]
+            if (sum(bool(VALUELIKE.search(w.text)) for w in cells) >= MIN_NUMBERS
+                    and cells[-1].x1 <= anchors[-1] + COLUMN_GAP
+                    and (best is None or abs(cells[-1].x1 - anchors[-1]) < abs(cells[-1].x1 - best[-1]))):
+                best = anchors
+        kinds.append(best)
+    return kinds
+
+
+def _row(line: list[Word], lead: list[Word], anchors: list[float], columns: list[str], category: str,
+         page_no: int) -> dict:
+    edge = anchors[0] - COLUMN_GAP                         # words wholly left of this are the name
+    name = [w for w in line if w.x1 < edge]
+    if not name:
+        raise ValueError(f"page {page_no}: numbers without a name: {' '.join(w.text for w in line)!r}")
+    product = " ".join(w.text for w in lead + name)
+    row = {"Product_Name": product, "Category": category, "source_page": page_no}
+    for w in (w for w in line if w.x1 >= edge):
+        if not NUMBER.match(w.text):
+            raise ValueError(f"page {page_no}: unreadable cell {w.text!r} in row {product!r}")
+        nearest = min(range(len(anchors)), key=lambda j: abs(anchors[j] - w.x1))
+        if abs(anchors[nearest] - w.x1) > COLUMN_GAP:
+            raise ValueError(f"page {page_no}: {w.text!r} in row {product!r} is under no column")
+        if columns[nearest] in row:
+            raise ValueError(f"page {page_no}: two cells in column {columns[nearest]!r} in row {product!r}")
+        row[columns[nearest]] = w.text
+    return row
+
+
+def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None = None,
+                wrapped_names: bool = False) -> list[dict]:
     rows = []
-    category = ""
+    parent = section = ""   # parent: a page title that persists ("Breakfast (selected restaurants only)")
     for page_no, words in enumerate(pages, start=1):
         lines = _lines(words)
-        found = [(name, cells) for name, cells in map(_split, lines) if name and len(cells) >= MIN_NUMBERS]
+        split = [_split(line) for line in lines]
+        found = [(i, cells) for i, (name, cells) in enumerate(split) if name and len(cells) >= MIN_NUMBERS]
         if not found:
             continue
-        # Columns come from the most common row width, so a row with blank cells can't create or hide a column.
-        usual = Counter(len(cells) for _, cells in found).most_common(1)[0][0]
-        anchors = _anchors([c for _, cells in found if len(cells) == usual for c in cells])
-        if len(anchors) != len(columns):
-            raise ValueError(f"page {page_no}: found {len(anchors)} numeric columns, config names {len(columns)}")
-        edge = anchors[0] - COLUMN_GAP                        # words wholly left of this are the name
-        left = min(name[0].x0 for name, _ in found)
-        # Classify every line by position: a data row has at least MIN_NUMBERS value-like words in the columns.
-        kinds = []
-        for line in lines:
-            cells = [w for w in line if w.x1 >= edge]
-            kinds.append("data" if sum(bool(VALUELIKE.search(w.text)) for w in cells) >= MIN_NUMBERS else "other")
-        first_row = kinds.index("data")
-        last_row = max(i for i, kind in enumerate(kinds) if kind == "data")
-        start = first_row   # the table starts at the headings and notes directly above its first row
-        while start > 0 and kinds[start - 1] == "other" and (
-                _heading(lines[start - 1], left) or " ".join(w.text for w in lines[start - 1]).startswith(NOTE_START)):
-            start -= 1
-        for i, (line, kind) in enumerate(zip(lines, kinds)):
-            if i < start:
-                continue   # page title, column headers
+        header_lines = [i for i, line in enumerate(lines) if header and any(w.text == header for w in line)]
+        # One set of columns per table, from the table's most common row width, so a row with blank cells
+        # can't create or hide a column.
+        tables: list[list[float]] = []
+        table_of: dict[int, list[float]] = {}   # number of header lines before the table -> its column anchors
+        for group in _tables(found, header_lines):
+            usual = Counter(len(cells) for _, cells in group).most_common(1)[0][0]
+            anchors = _anchors([c for _, cells in group if len(cells) == usual for c in cells])
+            if len(anchors) != len(columns):
+                raise ValueError(f"page {page_no}: found {len(anchors)} numeric columns, config names {len(columns)}")
+            tables.append(anchors)
+            table_of[sum(h < group[0][0] for h in header_lines)] = anchors
+        kinds = _classify(lines, tables, table_of, header_lines)
+        data = [i for i, anchors in enumerate(kinds) if anchors]
+        if not data:
+            raise ValueError(f"page {page_no}: rows with numbers were found but none fit the table's columns")
+        first_row, last_row = data[0], data[-1]
+        left = min(split[i][0][0].x0 for i, _ in found)
+
+        # Where the table starts: at its first header line, else at the headings and notes directly above its
+        # first row. Anything earlier is page furniture.
+        start = first_row
+        if header_lines and header_lines[0] < first_row:
+            start = header_lines[0]
+            titles = [" ".join(w.text for w in line) for line in lines[:start]]
+            parent = " ".join(t for t in titles if not any(c.isdigit() for c in t)) or parent   # not "PER 100g"
+        else:
+            while start > 0 and kinds[start - 1] is None and (
+                    _heading(lines[start - 1], left) or " ".join(w.text for w in lines[start - 1]).startswith(NOTE_START)):
+                start -= 1
+
+        in_header = False
+        block: list[list[Word]] = []     # lines of the current column-header block
+        pending: list[list[Word]] = []   # name-only lines waiting for the data row they continue
+        for i in range(start, len(lines)):
+            line, anchors = lines[i], kinds[i]
             text = " ".join(w.text for w in line)
-            if kind == "other":
-                if heading := _heading(line, left):
-                    category = heading
+            if header and any(w.text == header for w in line):
+                block = block if in_header else []
+                block.append(line)
+                in_header, pending = True, []   # a title above a column header ("PER PORTION PER 100g") is not a name
+            elif anchors is None:
+                if in_header:
+                    block.append(line)
+                elif heading := _heading(line, left):
+                    section = heading
                 elif i < last_row and not text.startswith(NOTE_START):
-                    raise ValueError(f"page {page_no}: text between rows that is not a heading or note "
-                                     f"(a wrapped name?): {text!r}")
-                continue
-            name = [w for w in line if w.x1 < edge]
-            cells = [w for w in line if w.x1 >= edge]
-            if not name:
-                raise ValueError(f"page {page_no}: numbers without a name: {text!r}")
-            product = " ".join(w.text for w in name)
-            row = {"Product_Name": product, "Category": category, "source_page": page_no}
-            for w in cells:
-                if not NUMBER.match(w.text):
-                    raise ValueError(f"page {page_no}: unreadable cell {w.text!r} in row {product!r}")
-                nearest = min(range(len(anchors)), key=lambda j: abs(anchors[j] - w.x1))
-                if abs(anchors[nearest] - w.x1) > COLUMN_GAP:
-                    raise ValueError(f"page {page_no}: {w.text!r} in row {product!r} is under no column")
-                if columns[nearest] in row:
-                    raise ValueError(f"page {page_no}: two cells in column {columns[nearest]!r} in row {product!r}")
-                row[columns[nearest]] = w.text
-            rows.append(row)
+                    if not wrapped_names:
+                        raise ValueError(f"page {page_no}: text between rows that is not a heading or note "
+                                         f"(a wrapped name?): {text!r}")
+                    pending.append(line)
+            else:
+                if in_header:
+                    # The section name is the header-block text left of the numeric columns, level with the
+                    # column headers. Text below the last column header is the start of this row's name.
+                    edge = anchors[0] - 2 * COLUMN_GAP
+                    bottom = max(w.y1 for l in block for w in l if w.x1 >= edge)
+                    above = [l for l in block if l[0].y0 < bottom]
+                    section = " ".join(w.text for l in above for w in l if w.x1 < edge) or section
+                    pending = [l for l in block if l[0].y0 >= bottom]
+                    in_header = False
+                    if pending and not wrapped_names:
+                        raise ValueError(f"page {page_no}: text between the column headers and the first row "
+                                         f"(a wrapped name?): {' '.join(w.text for w in pending[0])!r}")
+                lead: list[Word] = []
+                if pending:
+                    if line[0].y0 - pending[-1][0].y0 > WRAP_LINES * (line[0].y1 - line[0].y0):
+                        raise ValueError(f"page {page_no}: text above a row is too far away to be a wrapped name: "
+                                         f"{' '.join(w.text for w in pending[-1])!r}")
+                    lead, pending = [w for l in pending for w in l], []
+                rows.append(_row(line, lead, anchors, columns, " - ".join(c for c in (parent, section) if c), page_no))
     return rows
 
 
 def parse(pdf: Path, source: dict) -> list[dict]:
-    return parse_pages(page_words(pdf), source["columns"])
+    return parse_pages(page_words_fine(pdf), source["columns"], source.get("header"), source.get("wrapped_names", False))

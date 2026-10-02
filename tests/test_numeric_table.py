@@ -70,10 +70,14 @@ def test_trace_words_and_less_than_values_kept_as_printed():
     assert (row["fat_Per Portion"], row["energykJ_Per 100g/ml"], row["energykCal_Per 100g/ml"]) == ("Trace", "<0.1", "Negligible")
 
 
-def test_a_second_table_with_different_columns_on_the_page_raises():
-    shifted = [w._replace(x0=w.x0 + 60, x1=w.x1 + 60) if w.text != "Other" else w for w in line(120, "Other", FULL)]
-    with pytest.raises(ValueError, match="numeric columns"):
-        parse_pages([line(100, "Salad", FULL) + shifted], COLUMNS)
+def test_without_headers_a_table_ending_elsewhere_is_read_with_its_own_columns():
+    def shifted(y, name, dx):
+        return [w._replace(x0=w.x0 + dx, x1=w.x1 + dx) if w.text != name else w for w in line(y, name, FULL)]
+
+    page = line(100, "Salad", FULL) + shifted(120, "Other", 60) + shifted(130, "Other2", 60)
+    salad, other, other2 = parse_pages([page], COLUMNS)
+    assert salad["energykJ_Per Portion"] == other["energykJ_Per Portion"] == "323"
+    assert other2["fat_Per 100g/ml"] == "39"
 
 
 def test_column_count_mismatch_with_config_raises():
@@ -109,7 +113,7 @@ def test_a_minority_width_second_table_raises_instead_of_snapping_to_the_nearest
 
 
 def test_two_cells_in_one_column_raise():
-    page = line(100, "A", FULL) + line(110, "B", FULL) + line(120, "C", FULL) + line(130, "Tea", {2: "9", 3: "5", 4: "4"}) \
+    page = line(100, "A", FULL) + line(110, "B", FULL) + line(120, "C", FULL) + line(130, "Tea", {2: "9", 3: "5", 5: "4"}) \
         + [Word(269, 130, 274, 138, "7")]
     with pytest.raises(ValueError, match="two cells.*Tea"):
         parse_pages([page], COLUMNS)
@@ -153,3 +157,107 @@ def test_a_note_between_rows_is_not_an_error():
     note = [Word(70, 115, 76, 123, "-"), Word(80, 115, 120, 123, "amount")]
     rows = parse_pages([line(100, "MEAT", {}) + line(110, "Bacon", FULL) + note + line(130, "Beef", FULL)], COLUMNS)
     assert [r["Product_Name"] for r in rows] == ["Bacon", "Beef"]
+
+
+# --- header blocks, per-table columns, parent titles, wrapped names ---------------------------------------
+
+def header(y: float, section: str = "") -> list[Word]:
+    """A column-header block: the section name on the left, then header words over the first column."""
+    words = [Word(5, y, 5 + 6 * len(section), y + 12, w) for w in section.split()] if section else []
+    return words + [Word(176, y, 200, y + 8, "Energy"), Word(206, y + 10, 240, y + 18, "(kcal)")]
+
+
+def test_section_comes_from_the_header_block_and_column_header_text_is_left_out():
+    page = header(10, "Starters") + line(40, "Dough Balls", FULL) + header(70, "Sides") + line(100, "Fries", FULL)
+    a, b = parse_pages([page], COLUMNS, header="Energy")
+    assert (a["Category"], b["Category"]) == ("Starters", "Sides")
+
+
+def test_tables_on_one_page_that_share_the_last_column_each_use_their_own_columns():
+    left_shifted = {i: v for i, v in FULL.items()}
+    wide = [Word(RIGHT_EDGES[i] - 5 * len(v) - (40 if i < 3 else 0), 100, RIGHT_EDGES[i] - (40 if i < 3 else 0), 108, v)
+            for i, v in left_shifted.items()]
+    page = header(10, "Starters") + line(40, "A", FULL) + header(70, "Pasta") + [Word(5, 100, 25, 108, "B")] + wide
+    a, b = parse_pages([page], COLUMNS, header="Energy")
+    assert a["energykJ_Per Portion"] == b["energykJ_Per Portion"] == "323" and b["fat_Per 100g/ml"] == "39"
+
+
+def test_a_table_continuing_on_the_next_page_without_a_section_name_keeps_the_section():
+    p1 = header(10, "Starters") + line(40, "A", FULL)
+    p2 = header(10) + line(40, "B", FULL)
+    assert [r["Category"] for r in parse_pages([p1, p2], COLUMNS, header="Energy")] == ["Starters", "Starters"]
+
+
+def test_a_page_title_becomes_a_persistent_parent_but_one_with_digits_does_not():
+    title = [Word(5, 1, 120, 9, "Breakfast"), Word(125, 1, 150, 9, "only")]
+    per100 = [Word(5, 14, 40, 22, "PER"), Word(45, 14, 90, 22, "100g")]
+    p1 = title + per100 + header(30, "Eggs") + line(60, "A", FULL)
+    p2 = per100 + header(30, "Drinks") + line(60, "B", FULL)
+    a, b = parse_pages([p1, p2], COLUMNS, header="Energy")
+    assert a["Category"] == "Breakfast only - Eggs" and b["Category"] == "Breakfast only - Drinks"
+
+
+def test_wrapped_name_is_joined_when_enabled_and_raises_otherwise():
+    page = (header(10, "Starters") + line(40, "A", FULL) + line(64, "Goats Cheese with dough", {})
+            + line(76, "sticks", FULL) + line(100, "B", FULL))
+    first, joined, last = parse_pages([page], COLUMNS, header="Energy", wrapped_names=True)
+    assert joined["Product_Name"] == "Goats Cheese with dough sticks" and last["Product_Name"] == "B"
+    with pytest.raises(ValueError, match="text between rows.*Goats Cheese"):
+        parse_pages([page], COLUMNS, header="Energy")
+
+
+def test_a_name_only_line_too_far_above_a_row_is_not_a_wrapped_name():
+    page = header(10, "S") + line(40, "A", FULL) + line(60, "Orphan text", {}) + line(100, "B", FULL)
+    with pytest.raises(ValueError, match="too far away"):
+        parse_pages([page], COLUMNS, header="Energy", wrapped_names=True)
+
+
+# --- the real Pizza Express PDFs --------------------------------------------------------------------------
+
+PEX_COLUMNS = ["energykCal_Per Portion", "energykJ_Per Portion", "fat_Per Portion", "saturates_Per Portion",
+               "carbohydrates_Per Portion", "sugars_Per Portion", "fibre_Per Portion", "protein_Per Portion",
+               "salt_Per Portion"]
+PEX_COLUMNS = PEX_COLUMNS + [c.replace("Per Portion", "Per 100g/ml") for c in PEX_COLUMNS]
+PEX_SOURCE = {"columns": PEX_COLUMNS, "header": "Energy", "wrapped_names": True}
+
+
+@pytest.fixture(scope="module")
+def pex():
+    return parse(PDF.parent / "PEX-Nutritional-Menu---May-2025.ashx.pdf", PEX_SOURCE)
+
+
+def test_pizza_express_every_item_with_its_section(pex):
+    assert len(pex) == 453
+    first = pex[0]
+    assert (first["Product_Name"], first["Category"]) == ("Dough Balls - no dip", "Starters – Dough Balls")
+    assert (first["energykCal_Per Portion"], first["energykJ_Per 100g/ml"], first["salt_Per 100g/ml"]) == ("245", "1248", "1.66")
+
+
+def test_pizza_express_cells_printed_touching_are_split(pex):
+    row = next(r for r in pex if r["Product_Name"].endswith("houmous - no salad (Dine Out)") and "Gluten" not in r["Product_Name"])
+    assert (row["energykCal_Per 100g/ml"], row["energykJ_Per 100g/ml"], row["fat_Per 100g/ml"]) == ("294", "1232", "11.1")
+
+
+def test_pizza_express_wrapped_names_and_the_parent_title(pex):
+    names = {r["Product_Name"] for r in pex}
+    assert "Goats Cheese & Beetroot Buddha Bowl with dough sticks" in names
+    eggs = next(r for r in pex if r["Product_Name"] == "Eggs Benedict")
+    assert eggs["Category"] == "Breakfast (selected restaurants only) - Breakfast eggs"
+
+
+def test_pizza_express_blank_cell_stays_blank(pex):
+    oasis = next(r for r in pex if r["Product_Name"].startswith("Oasis Summer Fruits"))
+    assert len([k for k in oasis if k.endswith("Portion") or k.endswith("100g/ml")]) == 17
+
+
+def test_belfast_pdf_parses_with_the_same_layout():
+    rows = parse(PDF.parent / "BEL-Nutritional-Menu---May-2025.ashx.pdf", PEX_SOURCE)
+    assert len(rows) == 365 and rows[0]["Category"] == "Starters – Dough Balls"
+
+
+def test_a_wrapped_name_on_the_first_row_of_a_table_is_not_swallowed_into_the_section():
+    page = header(10, "Starters") + line(40, "Goats Cheese with dough", {}) + line(52, "sticks", FULL)
+    [row] = parse_pages([page], COLUMNS, header="Energy", wrapped_names=True)
+    assert (row["Category"], row["Product_Name"]) == ("Starters", "Goats Cheese with dough sticks")
+    with pytest.raises(ValueError, match="between the column headers and the first row"):
+        parse_pages([page], COLUMNS, header="Energy")
