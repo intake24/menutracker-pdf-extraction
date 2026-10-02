@@ -1,5 +1,7 @@
 # Complete the Pipeline: Remaining 12 Chains, LLM Routes, Finish Implementation Plan
 
+**Status: approved by the user on 2026-10-02.** Before Slice 6 starts, a 5-page calibration run measures how much plan quota a call uses (see Task 6.10).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan slice by slice. Steps use checkbox (`- [ ]`) syntax for tracking. **Read "How this plan executes" before starting:** each slice gets its own code-level plan, written after prototyping, under this plan's approval.
 
 **Goal:** Every PDF in `inputs/` produces a checked row in its chain's CSV (17 chains, 35 PDFs), or is listed as having no nutrition data, with allergen and nutrition values extracted exactly as printed and verified against Pearl Scan (nutrition) and hand-verified golden rows (allergens).
@@ -179,6 +181,7 @@ The image is a PNG the `Read` tool opens; a text page goes in the prompt. The re
 - [ ] **6.6 Validation and repair:** every returned row goes through the same Pydantic model and arithmetic checks; rows that fail get **one** re-read of that page with the failure reasons in the prompt; still-failing rows are kept with `flags` (never dropped, never altered).
 - [ ] **6.7 Coverage check:** a page's row count is compared with an independent count (text tokens where the text layer is usable, otherwise a second pass); a shortfall is flagged.
 - [ ] **6.8 Bounded concurrency:** at most 3 calls in flight, with back-off on rate-limit errors.
+- [ ] **6.10 Quota-aware runs:** a rate-limit or quota error pauses the run with a clear message (never fails the whole job); every finished page is already cached, so the next run resumes where it stopped; runs go one PDF at a time so a stop leaves complete PDFs and at most one partial. Calibration first: 5 Vue pages through the real backend, the plan-quota change noted by the user, then the full run is sized from it.
 - [ ] **6.9 Tests without the CLI:** a fake runner returning canned `claude -p` JSON; tests for cache hits, budget stop, a schema mismatch, a repair, marker copying (the model returns `▲`, code maps it), a timeout, and an `is_error` result.
 
 **Acceptance:** all tests pass with the fake runner; one real page round-trips and its cost and duration are printed; nothing secret appears in `work/` or logs.
