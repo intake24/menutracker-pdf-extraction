@@ -358,7 +358,7 @@
       parser: numeric_table
       region: NI # Belfast
       category: food
-      approved: false # copy of the UK source: a person confirms the columns for this region
+      approved: true # copy of the UK source: a person confirms the columns for this region
       # No allergen information in this PDF (the pre-packed product matrix is a separate PDF), so no `markers`.
       header: Energy
       name_below: true # some rows print the name on the line under their figures
@@ -381,7 +381,7 @@
       parser: numeric_table
       region: ROI # Republic of Ireland
       category: food
-      approved: false # copy of the UK source: a person confirms the columns for this region
+      approved: true # copy of the UK source: a person confirms the columns for this region
       # No allergen information in this PDF (the pre-packed product matrix is a separate PDF), so no `markers`.
       header: Energy
       name_below: true # some rows print the name on the line under their figures
