@@ -48,6 +48,7 @@ position type pass, and (e) a person has checked markers, disclaimer and columns
 | Running heads above a table header | Domino's | `furniture` |
 | Column-number ruler (`4 5 6 7 ...`) | Odeon | skipped automatically |
 | Name printed under its figures (Belfast/ROI) | Odeon | `name_below` |
+| Product matrix: one band per product between rules, text columns (name, pack size, ingredients, storage) + 18 figure columns | Odeon pre-packed | `product_matrix` (draft sources in `docs/odeon-prepacked-config-draft.yaml`; not live yet) |
 | Amount inside brackets or notes (`(Per Portion of 10g)`, `(16oz as served)`, `75cl`) | Odeon | `name_amount` (name stays as printed) |
 | Allergen grid, `Y` marks, rotated headers | Whitbread drinks | `whitbread_drinks_grid` |
 | Allergen text list per item | Whitbread breakfast | `premier_inn_breakfast` |
@@ -82,6 +83,12 @@ position type pass, and (e) a person has checked markers, disclaimer and columns
 - Cheap discovery pattern for a vision source: run every page once with a header mapping that records unknown
   headers and allergen texts instead of stopping; the cache keeps every answer, so mapping afterwards costs nothing.
   Do not edit the `instructions` text afterwards: it is part of the cache key (53 calls, about $4, to redo).
+- Odeon pre-packed matrix: figures print their unit (`22g`, `498 kcal`, `171 k cal`) and words (`N/A`, `not declared`, `-`); the
+  parser drops the column's own unit and keeps the words as printed (now valid nutrient words). Cells are vertically centred and
+  paragraphs overrun their rules, so words are assigned to the nearest line of figures unless a band holds exactly one.
+  Belfast/ROI use different column positions from UK (set per source). Rotated margin labels and group labels
+  (`BOTTLED DRINKS - CORE`, `IMPULSE ICES`) glue onto names: still open. Pearl Scan drops brands/labels from names and invents
+  serving sizes (250 ml for a 500 ml bottle), so serving size is not compared for these sources.
 - YAML: unquoted `Yes`/`No` become booleans; quote them.
 
 ## 5. What Pearl Scan got wrong (and its conventions)
