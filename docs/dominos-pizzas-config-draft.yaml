@@ -1,4 +1,4 @@
-# Draft source for 6_Dominos (parser grouped_table), pages 3-13 only. Not in config/chains.yaml: against Pearl Scan it matches 152 of 1,422 rows (cells all agree) because cheese labels (rotated) and pizza names are not yet assigned correctly on most pages; pages 2 and 14-18 need their own sources. See the project notes.
+# Draft sources for 6_Dominos (parser grouped_table). NOT in config/chains.yaml: the first source (pages 3-13) matches 1,148 rows of Pearl Scan's 1,422 with every cell agreeing (recall 80.6%, 1 cell errata); the second (page 2) does not parse yet (the page mixes rows with their own pizza name and groups of sizes). Pages 14-18 (bases, sauces, cheese, toppings) have no source yet. See the project notes.
 6_Dominos_extra_sources:
     - pdf: nutrition_pizzas.pdf
       parser: grouped_table
@@ -10,7 +10,7 @@
       size_x0: 165
       size_order: [Large, Medium, Small, Personal]
       left:
-        - { column: Product_Name, x0: 50 }
+        - { column: Product_Name, x0: 0, starts_at: { Cheese: Standard Mozzarella } }
         - { column: Cheese, x0: 86, rotated: true }
         - { column: Crust, x0: 96 }
       pearlscan: { "slice/portion/piece": ~ }
@@ -46,3 +46,50 @@
         - protein_Per Slice
         - salt_Per Slice
         - sodium_Per Slice
+    # --- page 2 draft (fails: 24 labels cannot be fitted to 95 rows) ---
+    #     - pdf: nutrition_pizzas.pdf
+    #       parser: grouped_table
+    #       region: UK
+    #       category: food
+    #       approved: false
+    #       # Page 2: gluten free and other named ranges. The left-most label is the range ("Gluten Free Pizzas"), then the
+    #       # rotated cheese, then the pizza name; one size per row.
+    #       pages: [2]
+    #       size_x0: 165
+    #       size_order: [Large, Medium, Small, Personal]
+    #       left:
+    #         - { column: Category, x0: 0 }
+    #         - { column: Cheese, x0: 86, rotated: true }
+    #         - { column: Product_Name, x0: 96 }
+    #       pearlscan: { "slice/portion/piece": ~ }
+    #       columns:
+    #         - energykCal_Per 100g/ml
+    #         - energykJ_Per 100g/ml
+    #         - fat_Per 100g/ml
+    #         - saturates_Per 100g/ml
+    #         - carbohydrates_Per 100g/ml
+    #         - sugars_Per 100g/ml
+    #         - fibre_Per 100g/ml
+    #         - protein_Per 100g/ml
+    #         - salt_Per 100g/ml
+    #         - sodium_Per 100g/ml
+    #         - energykCal_Per Pizza
+    #         - energykJ_Per Pizza
+    #         - fat_Per Pizza
+    #         - saturates_Per Pizza
+    #         - carbohydrates_Per Pizza
+    #         - sugars_Per Pizza
+    #         - fibre_Per Pizza
+    #         - protein_Per Pizza
+    #         - salt_Per Pizza
+    #         - sodium_Per Pizza
+    #         - energykCal_Per Slice
+    #         - energykJ_Per Slice
+    #         - fat_Per Slice
+    #         - saturates_Per Slice
+    #         - carbohydrates_Per Slice
+    #         - sugars_Per Slice
+    #         - fibre_Per Slice
+    #         - protein_Per Slice
+    #         - salt_Per Slice
+    #         - sodium_Per Slice

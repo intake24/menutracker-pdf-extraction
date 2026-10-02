@@ -10,6 +10,8 @@ Source options (config/chains.yaml):
   left       label columns, left to right: {column: <dictionary column>, x0: <left edge in pt>, rotated: <bool>}; the first
              is the product name; words left of `size_x0` belong to the column whose x0 is the largest not above them
   size_order the sizes from largest to smallest; a row whose size is not smaller than the one above starts a new lowest-level group
+  starts_at  (on a label column) {lower column: value}: a new group of this label starts at every group of the lower label with that value
+  header_word  a word that appears in every column-title block (default Energy); words level with it are not labels
   size_x0    words from here to the first figure are the row's own label (the size), written to `size_column` (default Size)
 Anything that doesn't fit (a data line with another number of figures, more labels than rows) raises.
 """
@@ -35,7 +37,7 @@ def expand_pages(spec: list) -> list[int]:
 
 
 def _rotated(w: Word) -> bool:
-    return len(w.text) > 2 and (w.y1 - w.y0) > 2.2 * (w.x1 - w.x0)
+    return len(w.text) > 2 and (w.x1 - w.x0) < 4   # sideways words are only a line height wide
 
 
 def _clusters(words: list[Word], rotated: bool) -> list[tuple[float, str]]:
@@ -111,6 +113,9 @@ def parse(pdf: Path, source: dict) -> list[dict]:
         if not data:
             continue
         top = min(d[0] for d in data) - 40   # labels above the first row (the table's header) are not labels
+        # The header block is repeated down the page: words level with a header word ("Energy") are column titles.
+        header_ys = sorted({w.y0 for w in labels[page_no - 1] if w.text == source.get("header_word", "Energy")})
+        titles = lambda w: any(h - 6 <= w.y0 <= h + 12 for h in header_ys)
         for col in left:
             col["_x1"] = next((c["x0"] for c in left if c["x0"] > col["x0"]), size_x0)
         order = {name: i for i, name in enumerate(source["size_order"])}
@@ -123,14 +128,27 @@ def parse(pdf: Path, source: dict) -> list[dict]:
         ys = [d[0] for d in data]
         for level in range(len(left) - 1, -1, -1):
             col = left[level]
-            words = [w for w in labels[page_no - 1] if w.y0 >= top and col["x0"] - 2 <= w.x0 < col["_x1"]
+            words = [w for w in labels[page_no - 1] if w.y0 >= top and w.y0 <= max(d[0] for d in data) + 6 and not titles(w) and col["x0"] - 2 <= w.x0 < col["_x1"]
                      and bool(col.get("rotated")) == _rotated(w) and not NUMBER.match(w.text)
                      and w.y0 > min(d[0] for d in data) - 6 - (w.y1 - w.y0 if col.get("rotated") else 0)]
             clusters = _clusters(words, bool(col.get("rotated")))
             if not clusters:
                 raise ValueError(f"page {page_no}: no labels found for {col['column']!r}")
+            starts = col.get("starts_at")
             if level == len(left) - 1:
                 groups = _partition_rows(ys, [c[0] for c in clusters], breaks)
+            elif starts:   # a new group of this label starts wherever a lower label has the named value
+                (low, value), = starts.items()   # `low` is the column directly below this one
+                if left[level + 1]["column"] != low:
+                    raise ValueError(f"starts_at names {low!r}, which is not the column directly below {col['column']!r}")
+                groups, current = [], -1
+                for r, u in enumerate(unit_of):
+                    new_unit = r == 0 or u != unit_of[r - 1]
+                    if new_unit and assigned[r][0] == value:
+                        current += 1
+                    groups.append(max(current, 0))
+                if current + 1 != len(clusters):
+                    raise ValueError(f"page {page_no}: {len(clusters)} {col['column']!r} labels but {current + 1} groups start at {value!r}")
             else:   # a higher label covers whole lower groups
                 units: dict[int, list[float]] = {}
                 for r, u in enumerate(unit_of):

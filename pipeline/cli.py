@@ -159,7 +159,11 @@ def evaluate(chains_file: Path, outputs: Path, ground_truth: Path, golden: Path,
                     failures.append(f"{key} {stem}: not evaluated (no ground truth, no golden rows)")
             if gt is not None:
                 errata = {(e["item"], e["column"]) for e in errata_rows if e["file"] == gt.name}
-                r = compare_ground_truth(read_csv(gt), ours, mapping | source.get("pearlscan", {}), errata)
+                truth = read_csv(gt)
+                for old, new in source.get("name_fixes", {}).items():   # Pearl Scan corrected a typo the PDF prints
+                    for t in truth:
+                        t["item_name"] = t["item_name"].replace(old, new)
+                r = compare_ground_truth(truth, ours, mapping | source.get("pearlscan", {}), errata)
                 print(f"{key} {stem}: ground truth {r['rows']} rows, recall {r['recall']:.1%}, "
                       f"{r['cells']} cells, {len(r['mismatches'])} mismatches")
                 if not r["passed"]:

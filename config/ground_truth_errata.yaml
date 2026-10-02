@@ -255,3 +255,7 @@
   item: Cadbury Crème Egg
   column: sugar_100
   why: The row prints 14 figures instead of 18; figures are read by their column position, Pearl Scan by order, so the sugars cell differs.
+- file: nutrition_pizzas­_v0.1.csv
+  item: Americano - Reduced Fat Mozzarella - Italian Style Crust - Small
+  column: fat_slice
+  why: The PDF prints 5.7 g fat per slice for this row; Pearl Scan has 6.7.

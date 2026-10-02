@@ -69,6 +69,11 @@ def compare_ground_truth(truth: list[dict], ours: list[dict], mapping: dict[str,
     by_key: dict[str, list[dict]] = {}
     for r in ours:
         by_key.setdefault(norm(_full_name(r)), []).append(r)
+    alt: dict[str, list[dict]] = {}
+    for r in ours:
+        if r.get("Cheese"):
+            alt.setdefault(norm(" ".join(r.get(k, "") for k in ("Cheese", "Product_Name", "Crust", "Size"))), []).append(r)
+    alt_key = bool(alt)
     used: set[int] = set()
     seen: dict[str, int] = {}   # repeated names pair up by order of occurrence: 1st with 1st, 2nd with 2nd
     pairs: list[tuple[dict, dict | None]] = []
@@ -76,6 +81,8 @@ def compare_ground_truth(truth: list[dict], ours: list[dict], mapping: dict[str,
         key = norm(t["item_name"])
         n = seen[key] = seen.get(key, -1) + 1
         o = by_key.get(key, [])[n] if n < len(by_key.get(key, [])) else None
+        if o is None and alt_key:   # Pearl Scan writes some names cheese first ("Standard Mozzarella - GF Cheese & Tomato - Small")
+            o = next((r for r in alt.get(key, []) if id(r) not in used), None)
         if o is not None:
             used.add(id(o))
         pairs.append((t, o))
