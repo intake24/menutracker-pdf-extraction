@@ -236,7 +236,7 @@
       parser: numeric_table
       region: UK
       category: food
-      approved: false
+      approved: true
       # No allergen information in these PDFs, so no `markers` and the CSV has no allergen columns.
       header: Energy
       wrapped_names: true
@@ -289,7 +289,7 @@
       parser: vision_table
       region: UK
       category: food
-      approved: false
+      approved: true
       dpi: 150 # at 110 the model misread two digits in the small print (1.4 as 0.4, 0.4 as 0)
       instructions: >-
         It is a nutrition table of ice creams and toppings; all figures are per portion. section = the orange heading
@@ -311,7 +311,7 @@
       parser: vision_table
       region: UK
       category: food
-      approved: false
+      approved: true
       instructions: >-
         It is a nutrition table of cinema food; all figures are per portion. section = the orange heading above the
         rows. Some items are a bold name line followed by several rows whose left cell (Portion/Pack Size) is a size such
@@ -323,7 +323,7 @@
       parser: vision_table
       region: UK
       category: food
-      approved: false
+      approved: true
       instructions: >-
         It is a nutrition table of sweets; all figures are per portion. section = the orange heading above the rows
         ("PICK'N'MIX"). name = the bold item name exactly as printed (it may contain " - "); size = empty;
