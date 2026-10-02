@@ -59,5 +59,6 @@ uv run python -m pipeline.cli eval         # compare outputs with Pearl Scan and
 | Phase 1 | Beefeater, Brewers Fayre, Table Table |
 | Phase 2a | Five Guys |
 | Phase 2b | Pizza Express (UK and Northern Ireland PDFs) |
+| Slice 1 (part) | Cineworld, through the `allergen_matrix` parser (marks matched to allergens by position; `✓` Yes, `▲` May contain, blank = not stated). Pizza Hut is still to do. |
 
-Next: the other text-based layouts. Vue, Papa John's and Krispy Kreme need a vision route because their text layers are unusable. See §10 of the design doc.
+Next: Pizza Hut, then the other text-based layouts (roadmap: `docs/superpowers/plans/2026-10-02-complete-the-pipeline.md`). Vue, Papa John's and Krispy Kreme need a vision route because their text layers are unusable. See §10 of the design doc.

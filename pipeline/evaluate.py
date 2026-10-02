@@ -71,7 +71,8 @@ def compare_ground_truth(truth: list[dict], ours: list[dict], mapping: dict[str,
             continue
         # Pearl Scan writes a row printed "per 100g" as a 100 g serving; we keep the printed basis.
         per100 = (t.get("servingsize") == "100" and t.get("servingsizeunit") in ("g", "ml")
-                  and not o.get("Serving_Size") and any(k.endswith("_Per 100g/ml") and v for k, v in o.items()))
+                  and not o.get("Serving_Size") and any(k.endswith("_Per 100g/ml") and v for k, v in o.items())
+                  and not any(k.endswith("_Per Portion") and v for k, v in o.items()))
         for gt_col, col in mapping.items():
             if per100 and col in ("Serving_Size", "Serving_Size_Unit"):
                 continue
@@ -90,17 +91,20 @@ def compare_ground_truth(truth: list[dict], ours: list[dict], mapping: dict[str,
 
 def compare_golden(golden: list[dict], ours: list[dict]) -> list[str]:
     """Every golden row (matched on Product_Name + Category + Size) must exist with identical cells."""
-    by_key = {(r["Product_Name"], r["Category"], r.get("Size", "")): r for r in ours}
+    by_key: dict[tuple, list[dict]] = {}
+    for r in ours:
+        by_key.setdefault((r["Product_Name"], r["Category"], r.get("Size", "")), []).append(r)
     failures = []
     for g in golden:
-        o = by_key.get((g["Product_Name"], g["Category"], g.get("Size", "")))
-        if o is None:
+        matches = by_key.get((g["Product_Name"], g["Category"], g.get("Size", "")))
+        if matches is None:
             failures.append(f"missing row: {g['Product_Name']}{' ' + g['Size'] if g.get('Size') else ''} ({g['Category']})")
             continue
-        for col, want in g.items():
-            got = o.get(col, "" if want == "" else None)   # chain CSVs omit columns that are blank throughout
-            if got is None:
-                failures.append(f"{g['Product_Name']}: column {col!r} not in output")
-            elif not same(want, got):
-                failures.append(f"{g['Product_Name']}.{col}: expected {want!r}, got {got!r}")
+        for o in matches:   # rows sharing a key must all agree, or the golden row is checking only one of them
+            for col, want in g.items():
+                got = o.get(col, "" if want == "" else None)   # chain CSVs omit columns that are blank throughout
+                if got is None:
+                    failures.append(f"{g['Product_Name']}: column {col!r} not in output")
+                elif not same(want, got):
+                    failures.append(f"{g['Product_Name']}.{col}: expected {want!r}, got {got!r}")
     return failures

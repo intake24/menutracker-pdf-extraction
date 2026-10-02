@@ -111,3 +111,11 @@ def test_a_row_printed_per_100g_matches_pearl_scans_100g_serving():
     assert r["passed"] and r["cells"] == 1
     ours[0]["energykCal_Per 100g/ml"] = "337"
     assert not compare_ground_truth(truth, ours, mapping, set())["passed"]
+
+
+def test_the_per_100g_rule_does_not_excuse_a_row_that_also_has_per_portion_values():
+    truth = [{"item_name": "Pizza", "servingsize": "100", "servingsizeunit": "g", "kcal": "250"}]
+    mapping = {"item_name": "Product_Name", "servingsize": "Serving_Size", "kcal": "energykCal_Per Portion"}
+    ours = [{"Product_Name": "Pizza", "Size": "", "energykCal_Per Portion": "900", "energykCal_Per 100g/ml": "250"}]
+    r = compare_ground_truth(truth, ours, mapping, set())
+    assert not r["passed"] and len(r["mismatches"]) == 2

@@ -6,7 +6,8 @@ from pipeline.parsers.allergen_matrix import parse_pages
 
 LABELS = {"Egg": "egg", "Milk": "milk", "Almond": "treeNuts", "Hazelnut": "treeNuts"}
 MARKERS = {"✓": "Yes", "▲": "May contain", "": ""}
-KW = dict(labels=LABELS, markers=MARKERS, sizes=["Large", "Small"], units=["g", "ml"], group_column_end=90)
+KW = dict(labels=LABELS, markers=MARKERS, sizes=["Large", "Small"], units=["g", "ml"], group_column_end=90,
+          variants=["Hazelnut", "Soya Milk"])
 COLS = {"Egg": 400, "Milk": 430, "Almond": 460, "Hazelnut": 490}   # label x0; each label is 9 pt wide
 
 
@@ -68,3 +69,32 @@ def test_unknown_marker_label_and_stray_mark_raise():
 def test_an_unreadable_data_row_raises():
     with pytest.raises(ValueError, match="cannot read a data row"):
         parse([w("Pepsi", 120, 100), w("330", 250, 100), w("litres", 275, 100)])
+
+
+def test_variant_rows_keep_their_own_marks():
+    rows = parse(row(100, "", "Hazelnut", "15", "50", [("Egg", "✓")]), [w("Syrups", 40, 114)] + row(114, "", "Soya Milk", "15", "40", [("Milk", "✓")]))
+    assert [(r["Product_Name"], r["Size"], r["egg"], r["milk"]) for r in rows] == [
+        ("Syrups", "Hazelnut", "Yes", ""), ("Syrups", "Soya Milk", "", "Yes")]
+
+
+def test_marks_between_two_rows_cover_both_rows():
+    rows = parse(row(100, "Churros - Medium", "", "180", "715"), row(114, "Churros - Large", "", "270", "1072"),
+                 [w("✓", COLS["Egg"] + 1, 106, 6)])
+    assert [r["egg"] for r in rows] == ["Yes", "Yes"]
+
+
+def test_marks_far_from_any_row_raise():
+    with pytest.raises(ValueError, match="not beside any row"):
+        parse(row(100, "Churros", "", "180", "715"), [w("✓", COLS["Egg"] + 1, 160, 6)])
+
+
+def test_headings_may_contain_symbols_and_a_starred_note():
+    line1 = [w("HOTDOGS", 100, 60), w("&", 160, 60), w("TOPPINGS", 175, 60)]
+    line2 = [w("HOT", 100, 160), w("FOOD", 130, 160), w("*All", 330, 160), w("weights", 360, 160)]
+    rows = parse(line1, row(100, "Chips", "", "165", "196"), line2, row(200, "Pizza", "", "100", "300"))
+    assert [(r["Product_Name"], r["Category"]) for r in rows] == [("Chips", "HOTDOGS & TOPPINGS"), ("Pizza", "HOT FOOD")]
+
+
+def test_marks_on_a_note_line_raise_instead_of_being_skipped():
+    with pytest.raises(ValueError, match="marks on a note line"):
+        parse([w("Note", 400, 100), w("✓", COLS["Milk"] + 1, 100, 6)])

@@ -34,7 +34,7 @@ LABEL_SLACK = 2        # a mark's centre must lie within its label's x-span, +/-
 AREA_SLACK = 4         # the allergen area starts this far left of the first label
 NAME_LINE_GAP = 1.7    # lines of one wrapped name are within this many line heights of each other
 SIZE_ROW_GAP = 20      # size rows are this close or closer (pt)
-MARK_SNAP = 8          # marks on a line of their own are beside the data row within this distance
+MARK_GAP = 12          # marks on a line of their own cover the data rows above and below within this distance
 HEADER_TITLES = 45     # group titles ("Allergens", "Tree Nuts") sit this far above the top of the labels
 GLUTEN = ["wheat", "rye", "barley", "oats", "spelt", "kamut"]
 RANK = {"": 0, "No": 0, "May contain": 1, "Yes": 2}
@@ -72,34 +72,37 @@ def _cells(right: list[Word], columns: dict[str, Word], markers: dict[str, str],
 
 
 def _caps(w: Word) -> bool:
-    letters = [c for c in w.text if c.isalpha()]
-    return bool(letters) and all(c.isupper() for c in letters)
+    """All capitals; a token with no letters ("&") goes along with its neighbours."""
+    return all(c.isupper() for c in w.text if c.isalpha())
 
 
-def _heading(line: list[Word], previous: str, group_column_end: float) -> str | None:
-    """Section heading: a layer of the line that is all capitals, or capitals followed by "- note". A page template can
-    leave an older heading printed in white under the current one; they differ by under a point vertically, so the
-    line is split into those layers and the lowest one that differs from `previous` wins."""
+def _heading(line: list[Word], group_column_end: float) -> str | None:
+    """Section heading: a layer of the line that is all capitals, or capitals followed by a "- note" or "*note". A page
+    template leaves an older heading printed in white under the current one; they differ by under a point vertically,
+    so the line is split into those layers and the lowest one (the visible one) wins."""
     layers: list[list[Word]] = []
     for w in sorted(line, key=lambda w: w.y0):
         if layers and w.y0 - layers[-1][0].y0 <= 0.4:
             layers[-1].append(w)
         else:
             layers.append([w])
-    found = []
+    found, notes = [], 0
     for layer in layers:
         layer.sort(key=lambda w: w.x0)
+        if layer[0].text.startswith(("-", "*")) and found:
+            notes += 1   # the note printed after a heading ("*All weights are approximate")
+            continue
         run = []
         for w in layer:
             if not _caps(w):
                 break
             run.append(w.text)
         rest = layer[len(run):]
-        if run and (not rest or rest[0].text == "-") and layer[len(run) - 1].x1 > group_column_end:   # "ICEE" is a name
+        if any(c.isalpha() for t in run for c in t) and (not rest or rest[0].text.startswith(("-", "*"))) and layer[len(run) - 1].x1 > group_column_end:   # "ICEE" is a name
             found.append(" ".join(run))
-    if len(found) != len(layers):
+    if len(found) + notes != len(layers):
         return None
-    return ([t for t in found if t != previous] or found)[-1]
+    return found[-1]
 
 
 def _partition(rows: list[float], names: list[float]) -> list[int]:
@@ -179,10 +182,12 @@ def parse_pages(pages: list[list[Word]], labels: dict[str, str], markers: dict[s
             right = [w for w in line if w.x0 >= area]
             texts = [w.text for w in left]
             if not any(NUMBER.match(t) for t in texts):
-                if heading := _heading(line, category, group_column_end):
+                if heading := _heading(line, group_column_end):
                     category = heading
                     continue
                 if right and any(w.text not in markers for w in right):
+                    if any(w.text in markers for w in right):
+                        raise ValueError(f"page {page_no}: marks on a note line: {' '.join(w.text for w in line)!r}")
                     continue   # a note spanning the allergen columns ("Allergen information is on the display")
                 item_col = [w for w in left if w.x1 > group_column_end]
                 if " ".join(texts) in note_labels:
@@ -224,6 +229,7 @@ def parse_pages(pages: list[list[Word]], labels: dict[str, str], markers: dict[s
         # a lone "Chocolate" can be a sauce. A row printed with no amount is never a size.
         for d in data:
             d["is_size"] = d["listed"] and d["middle"] in sizes
+            d["variant"] = False
         i = 0
         while i < len(data):   # a run of consecutive variant rows
             j = i
@@ -234,7 +240,7 @@ def parse_pages(pages: list[list[Word]], labels: dict[str, str], markers: dict[s
                       and abs(data[k]["y"] - data[i if k < i else j - 1]["y"]) <= SIZE_ROW_GAP]
             if j > i and (j - i >= 2 or beside):
                 for d in data[i:j]:
-                    d["is_size"] = True
+                    d["is_size"] = d["variant"] = True
             i = max(j, i + 1)
         for d in data:
             d["size"], d["item"] = (d["middle"], "") if d["is_size"] else ("", d["middle"])
@@ -256,12 +262,15 @@ def parse_pages(pages: list[list[Word]], labels: dict[str, str], markers: dict[s
         elif names:
             raise ValueError(f"page {page_no}: item names without size rows")
         for y, cells, texts in markline:
-            near = min(data, key=lambda d: abs(d["y"] - y), default=None)
-            if near is None or abs(near["y"] - y) > MARK_SNAP:
+            above = max((d for d in data if d["y"] <= y), key=lambda d: d["y"], default=None)
+            below = min((d for d in data if d["y"] > y), key=lambda d: d["y"], default=None)
+            near = [d for d in (above, below) if d is not None and abs(d["y"] - y) <= MARK_GAP]
+            if not near:
                 raise ValueError(f"page {page_no}: marks beside {texts} at y={y:.0f} are not beside any row")
-            near["cells"] = near["cells"] | cells
+            for d in near:   # a cell merged across two rows leaves its marks between them
+                d["cells"] = d["cells"] | cells
         for g in {d["group"] for d in sized}:
-            members = [d for d in sized if d["group"] == g]
+            members = [d for d in sized if d["group"] == g and not d["variant"]]   # variants carry their own marks
             merged: dict[str, str] = {}
             for d in members:
                 for label, value in d["cells"].items():
@@ -270,8 +279,12 @@ def parse_pages(pages: list[list[Word]], labels: dict[str, str], markers: dict[s
             for d in members:
                 d["cells"] = merged
         if subs and unsized:
-            _assign(unsized, subs, "sub", page_no)
-            for d in unsized:
+            for cat in {d["category"] for d in unsized}:   # a sub-section never runs past its heading
+                rows_here = [d for d in unsized if d["category"] == cat]
+                here = [c for c in subs if min(unsized, key=lambda d: abs(d["y"] - sum(f[0] for f in c) / len(c)))["category"] == cat]
+                if here:
+                    _assign(rows_here, here, "sub", page_no)
+            for d in (d for d in unsized if "sub" in d):
                 d["category"] = f"{d['category']} - {d['sub']}" if d["category"] else d["sub"]
 
         used = {labels[l] for l in columns}

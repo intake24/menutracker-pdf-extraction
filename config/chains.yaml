@@ -8,8 +8,9 @@
 #   columns   (numeric_table only) the dictionary column of each numeric column, left to right
 #   markers   the PDF's allergen key: printed marker -> Yes | May contain | No. Omit when the PDF has none.
 #             "" = what an allergen with no marker means for this PDF ("No" only if the PDF says so).
-#   labels, header_words, sizes, units   (allergen_matrix only) header label -> allergen column, other allowed header words,
-#             size-column words, portion units
+#   labels, header_words, sizes, variants, units, note_labels, group_column_end   (allergen_matrix only) header label ->
+#             allergen column, other allowed header words, size-column words, variant words (sizes only in a run of
+#             two or more or beside a size row), portion units, labels of note-only rows, x where the group column ends
 #   disclaimer  menu-wide allergen statement, kept here (not in the CSV)
 #   approved  set to true by a person after checking markers/disclaimer against the PDF
 
