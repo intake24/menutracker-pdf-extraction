@@ -1,0 +1,102 @@
+# Playbook: onboarding chains without Pearl Scan
+
+Written 2026-10-02 from the first 9 chains (Beefeater, Brewers Fayre, Table Table, Five Guys, Pizza Express, Cineworld,
+Domino's sides, Vue; Odeon in progress). Later batches have no Pearl Scan CSV to compare with, so this lists what the
+pipeline checks on its own, the order of work, what each layout needed, the PDF defects met, and what Pearl Scan got
+wrong (so its files are never treated as perfect). Spec: `pipeline-design.md`. Plan: `superpowers/plans/`.
+
+## 1. What replaces Pearl Scan
+
+| Check | What it catches | Where | Needs |
+|---|---|---|---|
+| **Fail-loud parsing** | unknown marker, label, column, unreadable cell, number with no name, mark under no column, text between rows | every parser | nothing |
+| **Mark accounting** | an allergen mark dropped or double-used: count the `✓`/`▲` glyphs in the PDF and the marks the parser consumed (key legend excluded) | scratch check used for Cineworld; do it for every matrix | nothing |
+| **`coverage`** | a data row lost: pages where `pdftotext` shows more number-carrying lines than parsed rows | `python -m pipeline.cli coverage` (numeric_table sources) | nothing |
+| **Arithmetic flags** | misread or mistyped figures: kJ vs kcal, saturates > fat, sugars > carbs, Atwater warning, duplicates with different values | `flags` column (`validate.py`) | nothing |
+| **Golden rows** | wrong allergen position (the matrix/grid logic) | `golden/<pdf stem>.csv`, 4–8 rows per PDF read off the rendered page | a person looking at the page |
+| **Second read** | model misreads on vision pages | re-read a page at a higher dpi or by a second prompt and diff (not automated yet) | LLM quota |
+| **Cross-source** | the same product in two regions or PDFs disagreeing | not built; Belfast/ROI Odeon are the first candidates | nothing |
+| **Pearl Scan** (when it exists) | everything above, for nutrition and serving size only | `eval` | the CSV |
+
+Rule of thumb: a source is *approved* when (a) it parses without raising, (b) `coverage` is clean, (c) the flags are
+explained (the PDF's own arithmetic or printed typos, not parser errors), (d) golden rows for every allergen
+position type pass, and (e) a person has checked markers, disclaimer and columns in `config/chains.yaml`.
+
+## 2. Order of work for a new chain
+
+1. `python -m pipeline.cli manifest` -> `work/manifest.csv`: pages, characters, image-only pages, assigned parser.
+2. Look at 2–3 rendered pages (`pdftoppm -r 80`) and the `pdftotext -layout` text. Decide the layout (section 3).
+3. Text layer fine -> config only if a parser covers the layout; otherwise extend a parser with an opt-in option.
+   Text layer corrupt (digits missing, `197` printed as `19`) -> `vision_table`.
+4. Write the config (unapproved), run `run --chain KEY` against a temp config with approvals on (see
+   `tests/test_cli.py: chains_file`), read the flags and `coverage`.
+5. Allergens: add golden rows read off the page images, covering a `may contain` row, an empty row, a merged-cell row.
+6. A person approves in `config/chains.yaml`; `run` then writes `outputs/<key>.csv`.
+7. Only now, with the layout known, add the next PDF of the same chain. Identical text in two regions is parsed once.
+
+## 3. Layouts met and what handled them
+
+| Layout | Example | Parser and options |
+|---|---|---|
+| Name + one row of numbers, one table per page | Five Guys | `numeric_table` |
+| Several tables per page with column-header blocks, wrapped names | Pizza Express | `numeric_table` + `header`, `wrapped_names`, `titles` |
+| Text cell inside the number run (Portion/Piece) | Domino's sides | `text_values` |
+| Amount in the name (`BBQ Dip 25g`, `Bacon Bits - 18g`, `22oz Freestyle`) | Domino's, Odeon | `name_amount` |
+| Sub-section titles between rows | Odeon | `free_sections` |
+| Rows printed over each other (hidden stale row) | Odeon p1 | `text_flow` (+ `invalid_values` for `#N/A`) |
+| Running heads above a table header | Domino's | `furniture` |
+| Column-number ruler (`4 5 6 7 ...`) | Odeon | skipped automatically |
+| Allergen grid, `Y` marks, rotated headers | Whitbread drinks | `whitbread_drinks_grid` |
+| Allergen text list per item | Whitbread breakfast | `premier_inn_breakfast` |
+| Allergen matrix, marks by column, merged cells, size groups, per-100g items | Cineworld | `allergen_matrix` |
+| Corrupt text layer, image pages | Vue (also Papa John's, Krispy Kreme) | `vision_table` (`claude -p`, 150 dpi for small print) |
+| Not done yet | Pizza Hut (3 layouts in one PDF), Domino's pizzas (3 nested merged columns), Coffee #1 (vertical blocks, slanted text), Starbucks, Brewhouse/Cookhouse/Top Golf (judgement) | see the roadmap |
+
+## 4. PDF defects found (all handled by failing loudly first, then an option)
+
+- Corrupt embedded font: digits dropped; found because 0-2% of tokens were numbers on image-like pages. Use vision.
+- Touching number cells (`1232` `11.1`): poppler merges them; pdfplumber with a 0.5 pt gap splits them (`page_words_fine`).
+- Rows printed over each other at identical positions, one of them all `#N/A` (hidden). `text_flow` layers by drawing order.
+- Hidden white headings under the visible one (a template remnant): choose the lowest layer.
+- Merged cells: one allergen cell spanning several size rows, or two rows (Churros Medium/Large): marks between rows
+  apply to the rows above and below; variants (`Hazelnut` syrup) keep their own marks; reviewed twice.
+- Section names printed vertically centred beside their rows; solved by distance partition (`_partition`).
+- Notes spanning allergen columns, labels of note-only rows, notes after headings (`*All weights...`).
+- Stray `g` after a figure (`2.7g`) printed in the PDF: kept as printed, row flagged.
+- Spelling in the PDFs is kept (`Peacan`, `Blackcurrent`). Pearl Scan sometimes corrected it, sometimes added typos.
+- Files: soft hyphen in a Pearl Scan file name; 12 Pearl Scan CSVs are Windows-1252, one mixes UTF-8 lines.
+- YAML: unquoted `Yes`/`No` become booleans; quote them.
+
+## 5. What Pearl Scan got wrong (and its conventions)
+
+- Row glued to the wrong group (Cineworld: `Diet Pepsi 200 ml` filed as a size of Tango Orange).
+- Rows shifted between repeated tables (Vue popcorn: `(Dublin)` dropped, values of the neighbouring table).
+- Stray `g` removed from printed figures; typos added to names (`Rasoberry`, `Cherrv`), others corrected.
+- Conventions, not errors: a per-100g-only row written as a 100 g serving; amounts split off names into
+  `servingsize`/`servingsizeunit`; name = group - sub-group - size. We keep what the PDF prints and map in `eval`.
+- Each confirmed mistake is an entry in `config/ground_truth_errata.yaml` with the reason.
+- Consequence: where Pearl Scan is the only check, an unexplained mismatch needs a look at the page before either side
+  is changed. In every case so far both explanations existed (the model once, Pearl Scan several times).
+
+## 6. The model route (`claude -p`, `claude-sonnet-5-5`)
+
+- One page image per call, schema-constrained, cached by image + prompt + schema + model (`work/llm/`).
+- Cost: about 0.4% of a 5-hour plan window per call at default settings (measured 2026-10-02: 5 calls = 2 points);
+  running from an empty directory with `--setting-sources user --strict-mcp-config --disable-slash-commands` gave
+  about $0.05 per call. 14 Vue pages cost roughly 6 points. 140 pages (Papa John's + Krispy Kreme) are about 40-55.
+- Accuracy on Vue after review: 3,600 cells, 2 misread at 110 dpi (small print), 0 at 150 dpi. Use 150 dpi for small print.
+- No coverage check yet for dropped rows on vision pages; the main gap. Plan: count rows against a second read.
+- Never run the model in tests (`tests/conftest.py` blocks it).
+
+## 7. Effort observed (to plan windows)
+
+Config-only chain on an existing parser: 1-3 points. New option on a parser: 3-5. New parser: 6-10 plus a fresh review
+(3-4 points) for matrix or LLM work. Reviews found real bugs every time (8 on Cineworld, 6 on the backend); keep them.
+
+## 8. Open improvements
+
+1. Coverage for vision pages (second read at another dpi, row-count diff).
+2. Cross-region checks (Odeon UK/NI/ROI share products).
+3. A `--dry-run` cost estimate and CLI-set caps for the model route; concurrency of 3.
+4. Mark accounting as a permanent `check` command for matrix sources, not a scratch script.
+5. Flags report across all chains (counts by kind) for the final review.

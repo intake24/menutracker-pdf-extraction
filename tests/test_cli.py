@@ -126,3 +126,8 @@ def test_eval_says_what_it_did_not_evaluate_and_strict_fails_on_it(tmp_path, cap
     assert "52_FiveGuys nutrition: not evaluated" in capsys.readouterr().out
     failures = evaluate(*args, only="52_FiveGuys", strict=True)
     assert failures and all("not evaluated" in f for f in failures)
+
+
+def test_coverage_finds_no_page_with_fewer_rows_than_data_looking_lines():
+    from pipeline.cli import coverage
+    assert coverage(ROOT / "inputs", ROOT / "config" / "chains.yaml") == []

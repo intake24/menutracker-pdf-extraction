@@ -52,6 +52,10 @@ uv run python -m pipeline.cli eval         # compare outputs with Pearl Scan and
 4. Run `eval`. Add `golden/<pdf-stem>.csv` rows for the allergen cells and check them against the PDF by eye.
 5. A person sets `approved: true`.
 
+## Onboarding new chains
+
+New batches have no Pearl Scan file to compare with. `docs/playbook-new-batches.md` lists the checks that stand in for it (fail-loud parsing, `python -m pipeline.cli coverage`, arithmetic flags, golden rows), the order of work, the layouts handled and the PDF defects met.
+
 ## Status
 
 | Done | Chains |

@@ -8,6 +8,7 @@ from pathlib import Path
 import yaml
 
 from pipeline.columns import load_columns
+from pipeline.coverage import numeric_lines, shortfalls
 from pipeline.evaluate import compare_golden, compare_ground_truth, ground_truth_file, read_csv
 from pipeline.export import finalise, write_csv
 from pipeline.llm import LlmError
@@ -84,6 +85,24 @@ def _parse_chain(chain: dict, inputs: Path, parsed: dict[tuple, list[dict]]) -> 
     return rows
 
 
+def coverage(inputs: Path, chains_file: Path) -> list[str]:
+    """For every approved numeric_table source: pages where the text layer has more data-looking lines than rows."""
+    out = []
+    for key, chain in load_chains(chains_file).items():
+        if not approved(chain):
+            continue
+        for source in chain["sources"]:
+            if source["parser"] != "numeric_table":
+                continue   # grids and matrices have no number runs to count; vision pages have no usable text
+            pdf = inputs / source["pdf"]
+            rows = PARSERS["numeric_table"](pdf, source)
+            lines = numeric_lines(pdf, max(3, len(source["columns"]) // 2))
+            gaps = shortfalls(rows, lines)
+            print(f"{key} {pdf.stem}: {len(rows)} rows, {sum(lines.values())} data-looking lines, {len(gaps)} pages short")
+            out += [f"{key} {pdf.stem} page {p}: {r} rows for {n} data-looking lines" for p, (r, n) in sorted(gaps.items())]
+    return out
+
+
 def evaluate(chains_file: Path, outputs: Path, ground_truth: Path, golden: Path, config: Path,
              only: str | None = None, strict: bool = False) -> list[str]:
     """Nutrition vs Pearl Scan ground truth, allergens vs hand-verified golden rows. Returns failure lines.
@@ -130,6 +149,7 @@ def main(argv: list[str] | None = None) -> None:
     sub.add_parser("manifest", help="page/text/parser report for every PDF -> work/manifest.csv")
     run_p = sub.add_parser("run", help="extract every approved chain -> outputs/<key>.csv")
     run_p.add_argument("--chain", help="only this chain key, e.g. 16_Beefeater")
+    sub.add_parser("coverage", help="pages where the text layer has more data-looking lines than parsed rows (no ground truth needed)")
     eval_p = sub.add_parser("eval", help="compare outputs with ground truth and golden rows; exit 1 on any failure")
     eval_p.add_argument("--strict", action="store_true", help="a source with nothing to compare against fails")
     args = parser.parse_args(argv)
@@ -147,6 +167,10 @@ def main(argv: list[str] | None = None) -> None:
         if stopped:
             print("\n".join(stopped) + "\nrun again to resume: finished pages are cached", file=sys.stderr)
             sys.exit(1)
+    elif args.cmd == "coverage":
+        gaps = coverage(ROOT / "inputs", chains_file)
+        print("\n".join(gaps) or "coverage: every data-looking line has a row")
+        sys.exit(1 if gaps else 0)
     elif args.cmd == "eval":
         failures = evaluate(chains_file, ROOT / "outputs", ROOT / "inputs" / "ground-truth",
                             ROOT / "golden", ROOT / "config", strict=args.strict)
