@@ -104,9 +104,15 @@ def parse_page(page, words: list[dict], source: dict, page_no: int, section: str
     label = next((w for w in words if w["text"] == "Products"), None)   # the header lines start level with this label
     header_bottom = label["top"] + source.get("header_height", 9) if label else 0
     numeric_x = num_cols[0]["x"] - X_TOLERANCE
-    # Rotated margin labels ("IMPULSE ICES", "FRUIT HANG BAGS") are taller than wide; they name a group of rows, not a product.
     body = [w for w in words if w["top"] >= header_bottom and rules and rules[0] - 0.5 <= w["top"] < rules[-1]
-            and not (len(w["text"]) > 2 and w["bottom"] - w["top"] > 2.2 * (w["x1"] - w["x0"]))]
+            and not (len(w["text"]) > 2 and w["bottom"] - w["top"] > 2.2 * (w["x1"] - w["x0"]))]   # rotated text
+    # Group labels in the name column ("IMPULSE ICES", "BOTTLED DRINKS - CORE", "FRUIT HANG BAGS") name a run of rows, not a
+    # product. They are the only bold text in that column (names are regular weight), so words on bold characters go.
+    bold = [c for c in page.chars if "bold" in c["fontname"].casefold() and c["x0"] < text_cols[1]["x0"] and c["top"] > header_bottom]
+    def on_bold(w: dict) -> bool:
+        cx, cy = (w["x0"] + w["x1"]) / 2, (w["top"] + w["bottom"]) / 2
+        return any(c["x0"] - 1 <= cx <= c["x1"] + 1 and c["top"] - 1 <= cy <= c["bottom"] + 1 for c in bold)
+    labels = {id(w) for w in body if w["x0"] < text_cols[1]["x0"] and on_bold(w)}
     # A band between two rules with words in the first column only is a section title.
     titles: list[tuple[float, str]] = []
     in_title: set[int] = set()
@@ -117,7 +123,7 @@ def parse_page(page, words: list[dict], source: dict, page_no: int, section: str
             in_title |= {id(w) for w in band}
     # Cells are vertically centred in their row and a paragraph can run past the row's rules, so words belong to the
     # product whose line of figures is nearest in height, not to the band they happen to sit in.
-    rest = [w for w in body if id(w) not in in_title]
+    rest = [w for w in body if id(w) not in in_title and id(w) not in labels]   # section titles are bold too: kept via `titles`
     # A line of prose running across the figure columns with no figure in it is a note ("you can select the links ..."),
     # not part of a product: leave it out.
     prose = {y for y in {round(w["top"]) for w in rest}

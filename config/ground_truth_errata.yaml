@@ -123,3 +123,135 @@
   item: LA VIE VEGAN HAM & CHEESE STICKS
   column: '*'
   why: The PDF prints the product name as LA VIE VEGAN HAM & SHEESE STICKS (the brand's spelling); Pearl Scan wrote CHEESE.
+- file: pre-packed-product-matrix-april-2025-edition-v88-28_04_2025-uk-version.csv
+  item: Butterkist Crunchy Toffee Coated Popcom 14 x 170g
+  column: '*'
+  why: Pearl Scan changed the name (typo, dropped brand or label); the PDF prints 'Butterkist Crunchy Toffee Coated Popcorn 14 x 170g'.
+- file: pre-packed-product-matrix-april-2025-edition-v88-28_04_2025-uk-version.csv
+  item: Joe & Seph's White Chocolate Popcom
+  column: '*'
+  why: Pearl Scan changed the name (typo, dropped brand or label); the PDF prints "Joe & Seph's White Chocolate Popcorn".
+- file: pre-packed-product-matrix-april-2025-edition-v88-28_04_2025-uk-version.csv
+  item: Joe & Seph's Orange Marmalade Popcom
+  column: '*'
+  why: Pearl Scan changed the name (typo, dropped brand or label); the PDF prints "Joe & Seph's Orange Marmalade Popcorn".
+- file: pre-packed-product-matrix-april-2025-edition-v88-28_04_2025-uk-version.csv
+  item: Joe & Seph's Salted Caramel Popcom
+  column: '*'
+  why: Pearl Scan changed the name (typo, dropped brand or label); the PDF prints "Joe & Seph's Salted Caramel Popcorn".
+- file: pre-packed-product-matrix-april-2025-edition-v88-28_04_2025-uk-version.csv
+  item: EVENT POPCORN Sweet Popcom 180 x 50g
+  column: '*'
+  why: Pearl Scan changed the name (typo, dropped brand or label); the PDF prints 'EVENT POPCORN - Sweet Popcorn 180 x 50g'.
+- file: pre-packed-product-matrix-april-2025-edition-v88-28_04_2025-uk-version.csv
+  item: Bubbles Peppermint Mint Chocolate Sharing Bag 92g
+  column: '*'
+  why: Pearl Scan changed the name (typo, dropped brand or label); the PDF prints 'Aero Bubbles Peppermint Mint Chocolate Sharing Bag 92g'.
+- file: pre-packed-product-matrix-april-2025-edition-v88-28_04_2025-uk-version.csv
+  item: Bites
+  column: '*'
+  why: Pearl Scan changed the name (typo, dropped brand or label); the PDF prints 'Oreo Bites'.
+- file: pre-packed-product-matrix-april-2025-edition-v88-28_04_2025-uk-version.csv
+  item: Bru 500ml
+  column: '*'
+  why: Pearl Scan changed the name (typo, dropped brand or label); the PDF prints 'Irn Bru 500ml'.
+- file: pre-packed-product-matrix-april-2025-edition-v88-28_04_2025-uk-version.csv
+  item: Im Bru Sugar Free 500ml
+  column: '*'
+  why: Pearl Scan changed the name (typo, dropped brand or label); the PDF prints 'Irn Bru Sugar Free 500ml'.
+- file: pre-packed-product-matrix-april-2025-edition-v87-25_04_2025-belfast-version.csv
+  item: Bubbles Peppermint Mint Chocolate Sharing Bag 92g
+  column: '*'
+  why: Pearl Scan changed the name (typo, dropped brand or label); the PDF prints 'Aero Bubbles Peppermint Mint Chocolate Sharing Bag 92g'.
+- file: pre-packed-product-matrix-april-2025-edition-v87-25_04_2025-belfast-version.csv
+  item: Cadbury Dairy Caramel Freddo 19.5g
+  column: '*'
+  why: Pearl Scan changed the name (typo, dropped brand or label); the PDF prints 'Cadbury Dairy Milk Caramel Freddo 19.5g'.
+- file: pre-packed-product-matrix-april-2025-edition-v87-25_04_2025-belfast-version.csv
+  item: Coca-Cola Zero Zero (Caffeine Free) 500ml
+  column: '*'
+  why: Pearl Scan changed the name (typo, dropped brand or label); the PDF prints 'Coca-Cola Zero Zero 500ml (Caffeine Free)'.
+- file: pre-packed-product-matrix-april-2025-edition-v87-25_04_2025-belfast-version.csv
+  item: Orange Zero 500ml
+  column: '*'
+  why: Pearl Scan changed the name (typo, dropped brand or label); the PDF prints 'Fanta Orange Zero 500ml'.
+- file: pre-packed-product-matrix-april-2025-edition-v87-25_04_2025-belfast-version.csv
+  item: RiverRock Still Water 750ml
+  column: '*'
+  why: Pearl Scan changed the name (typo, dropped brand or label); the PDF prints 'RiverRock Still 750ml'.
+- file: pre-packed-product-matrix-april-2025-edition-v87-25_04_2025-belfast-version.csv
+  item: RiverRock Tropical 750ml
+  column: '*'
+  why: Pearl Scan changed the name (typo, dropped brand or label); the PDF prints 'RiverRock Tropical Still Water 750ml'.
+- file: pre-packed-product-matrix-april-2025-edition-v87-25_04_2025-belfast-version.csv
+  item: Jerry's Chocolate Fudge Brownie Ice Cream 100ml
+  column: '*'
+  why: Pearl Scan changed the name (typo, dropped brand or label); the PDF prints "Ben & Jerry's Chocolate Fudge Brownie Ice Cream 100ml".
+- file: pre-packed-product-matrix-april-2025-edition-v87-25_04_2025-belfast-version.csv
+  item: Cometto Strawberry Ice Cream Cone 120ml
+  column: '*'
+  why: Pearl Scan changed the name (typo, dropped brand or label); the PDF prints 'Cornetto Strawberry Ice Cream Cone 120ml'.
+- file: pre-packed-product-matrix-april-2025-edition-v87-25_04_2025-roi-version.csv
+  item: Butterkist Crunchy Toffee Coated Popcorn 170g
+  column: '*'
+  why: Pearl Scan changed the name (typo, dropped brand or label); the PDF prints 'Butterkist Crunchy Toffee Coated Popcorn 14 x 170g'.
+- file: pre-packed-product-matrix-april-2025-edition-v87-25_04_2025-roi-version.csv
+  item: EVENT POPCORN Sweet Popcorn 50g
+  column: '*'
+  why: Pearl Scan changed the name (typo, dropped brand or label); the PDF prints 'EVENT POPCORN - Sweet Popcorn 180 x 50g'.
+- file: pre-packed-product-matrix-april-2025-edition-v87-25_04_2025-roi-version.csv
+  item: Bubbles Peppermint Mint Chocolate Sharing Bag 92g
+  column: '*'
+  why: Pearl Scan changed the name (typo, dropped brand or label); the PDF prints 'Aero Bubbles Peppermint Mint Chocolate Sharing Bag 92g'.
+- file: pre-packed-product-matrix-april-2025-edition-v87-25_04_2025-roi-version.csv
+  item: Munchies Milk Chocolate aramel Sharing Bag 104g
+  column: '*'
+  why: Pearl Scan changed the name (typo, dropped brand or label); the PDF prints 'Munchies Milk Chocolate & Caramel Sharing Bag 104g'.
+- file: pre-packed-product-matrix-april-2025-edition-v87-25_04_2025-roi-version.csv
+  item: Cadbury Egg
+  column: '*'
+  why: Pearl Scan changed the name (typo, dropped brand or label); the PDF prints 'Cadbury Creme Egg'.
+- file: pre-packed-product-matrix-april-2025-edition-v87-25_04_2025-roi-version.csv
+  item: Cadbury Dairy Caramel Freddo 19.5g
+  column: '*'
+  why: Pearl Scan changed the name (typo, dropped brand or label); the PDF prints 'Cadbury Dairy Milk Caramel Freddo 19.5g'.
+- file: pre-packed-product-matrix-april-2025-edition-v87-25_04_2025-roi-version.csv
+  item: Orange Zero 500ml
+  column: '*'
+  why: Pearl Scan changed the name (typo, dropped brand or label); the PDF prints 'Fanta Orange Zero 500ml'.
+- file: pre-packed-product-matrix-april-2025-edition-v87-25_04_2025-roi-version.csv
+  item: RiverRock Still Water 750ml
+  column: '*'
+  why: Pearl Scan changed the name (typo, dropped brand or label); the PDF prints 'RiverRock Still 750ml'.
+- file: pre-packed-product-matrix-april-2025-edition-v87-25_04_2025-roi-version.csv
+  item: RiverRock Tropical 750ml
+  column: '*'
+  why: Pearl Scan changed the name (typo, dropped brand or label); the PDF prints 'RiverRock Tropical Still Water 750ml'.
+- file: pre-packed-product-matrix-april-2025-edition-v87-25_04_2025-roi-version.csv
+  item: Jerry's Chocolate Fudge Brownie Ice Cream 100ml
+  column: '*'
+  why: Pearl Scan changed the name (typo, dropped brand or label); the PDF prints "Ben & Jerry's Chocolate Fudge Brownie Ice Cream 100ml".
+- file: pre-packed-product-matrix-april-2025-edition-v87-25_04_2025-roi-version.csv
+  item: Cometto Strawberry Ice Cream Cone 120ml
+  column: '*'
+  why: Pearl Scan changed the name (typo, dropped brand or label); the PDF prints 'Cornetto Strawberry Ice Cream Cone 120ml'.
+- file: pre-packed-product-matrix-april-2025-edition-v88-28_04_2025-uk-version.csv
+  item: Maltesers Pouch 102g
+  column: kcal
+  why: The PDF prints "171 k cal" (a stray space); Pearl Scan kept the text, we keep the figure without the unit.
+- file: pre-packed-product-matrix-april-2025-edition-v88-28_04_2025-uk-version.csv
+  item: Magnum Vegan Almond
+  column: protein_100
+  why: The row prints its figures out of the usual order (protein 2.2 under the protein column); Pearl Scan has 22.
+- file: pre-packed-product-matrix-april-2025-edition-v87-25_04_2025-belfast-version.csv
+  item: EVENT POPCORN - Sweet Popcorn 180 x 50g
+  column: salt
+  why: The PDF prints a decimal comma (<0,005); Pearl Scan changed it to <0.005. We keep it as printed and the row is flagged.
+- file: pre-packed-product-matrix-april-2025-edition-v87-25_04_2025-belfast-version.csv
+  item: EVENT POPCORN - Sweet Popcorn 180 x 50g
+  column: salt_100
+  why: The PDF prints a decimal comma (<0,01); Pearl Scan changed it to <0.01. We keep it as printed and the row is flagged.
+- file: pre-packed-product-matrix-april-2025-edition-v87-25_04_2025-belfast-version.csv
+  item: Cadbury Crème Egg
+  column: sugar_100
+  why: The row prints 14 figures instead of 18; figures are read by their column position, Pearl Scan by order, so the sugars cell differs.
