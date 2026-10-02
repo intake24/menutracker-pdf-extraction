@@ -11,6 +11,10 @@ from pipeline.columns import PROVENANCE
 SKIP = set(PROVENANCE) | {"source_page"}
 
 
+def _plain(value: str) -> str:
+    return value.replace("–", "-").replace("—", "-") if isinstance(value, str) else value   # the model varies dashes
+
+
 def summary(rows: list[dict]) -> dict[int, dict]:
     """page -> rows read, rows with error flags, and cells empty in a row although another row of the page has them."""
     by_page: dict[int, list[dict]] = defaultdict(list)
@@ -43,6 +47,6 @@ def diff_rows(old: list[dict], new: list[dict]) -> list[str]:
             lines.append(f"row only in the re-read: {label}")
         else:
             for col in sorted((set(a[key]) | set(b[key])) - SKIP):
-                if a[key].get(col, "") != b[key].get(col, ""):
+                if _plain(a[key].get(col, "")) != _plain(b[key].get(col, "")):
                     lines.append(f"{label}.{col}: {a[key].get(col, '')!r} vs {b[key].get(col, '')!r}")
     return lines
