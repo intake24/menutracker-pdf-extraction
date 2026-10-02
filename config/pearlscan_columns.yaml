@@ -62,8 +62,8 @@ sodium_product_as_sold: sodium_Per Product As Sold
 
 # Counts and amounts: not compared yet (their dictionary columns exist; Slices 2 and 7 map them when the parsers do).
 menu_section: ~
-serves: ~
-slice/portion/piece: ~
+serves: Serves
+slice/portion/piece: Portion_Type
 num_of_slices: ~
 num_of_portions: ~
 recommended_portions: ~

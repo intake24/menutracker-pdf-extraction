@@ -9,6 +9,9 @@ Source options (config/chains.yaml):
   columns        the dictionary column of each numeric column, left to right (required)
   header         a word that marks a column-header line, e.g. "Energy". Enables several tables per page, each with
                  its own columns, and takes the section name from the header block (the text left of the columns)
+  text_values    words that may stand in a cell ("Portion", "Piece"); allowed only under a column that has no basis
+  furniture      lines above a table header that are page furniture, not a title (running heads); ignored
+  name_amount    a trailing amount in the name ("BBQ Dip 25g") becomes Serving_Size and Serving_Size_Unit
   wrapped_names  join a name-only line directly above a data row onto that row's name
   titles         page titles allowed above a table header, e.g. "Breakfast (selected restaurants only)"; each
                  persists as a parent in Category until the next one. Any other text there raises.
@@ -23,6 +26,7 @@ from pathlib import Path
 from pipeline.ingest import Word, page_words_fine
 
 NUMBER = re.compile(r"^(?:<\s?)?\d+(?:\.\d+)?$|^(?:Negligible|Traces?|Tr)$")
+AMOUNT = re.compile(r"^(.*\S)\s+(\d+(?:\.\d+)?)\s?(g|ml)$")
 MIN_NUMBERS = 3          # a line needs this many trailing numeric cells to be a data row
 SECTION_INDENT = 12      # section headings start at the left margin; wrapped text and notes are indented more
 VALUELIKE = re.compile(r"\d|^(?:-|–|N/?A)$", re.I)   # a token that looks like a cell value, readable or not
@@ -44,10 +48,10 @@ def _lines(words: list[Word]) -> list[list[Word]]:
     return [sorted(line, key=lambda w: w.x0) for line in lines]
 
 
-def _split(line: list[Word]) -> tuple[list[Word], list[Word]]:
+def _split(line: list[Word], number: re.Pattern) -> tuple[list[Word], list[Word]]:
     """(name words, trailing numeric cells)."""
     cut = len(line)
-    while cut > 0 and NUMBER.match(line[cut - 1].text):
+    while cut > 0 and number.match(line[cut - 1].text):
         cut -= 1
     return line[:cut], line[cut:]
 
@@ -115,20 +119,25 @@ def _classify(lines: list[list[Word]], tables: list[list[float]], table_of: dict
 
 
 def _row(line: list[Word], lead: list[Word], anchors: list[float], columns: list[str], category: str,
-         page_no: int) -> dict:
+         page_no: int, number: re.Pattern = NUMBER, name_amount: bool = False) -> dict:
     edge = anchors[0] - COLUMN_GAP                         # words wholly left of this are the name
     name = [w for w in line if w.x1 < edge]
     if not name:
         raise ValueError(f"page {page_no}: numbers without a name: {' '.join(w.text for w in line)!r}")
     product = " ".join(w.text for w in lead + name)
-    if sum(bool(NUMBER.match(w.text)) for w in name) >= MIN_NUMBERS:
+    if sum(bool(number.match(w.text)) for w in name) >= MIN_NUMBERS:
         raise ValueError(f"page {page_no}: name contains numbers, so the row's columns don't match the config: "
                          f"{product!r}")
     row = {"Product_Name": product, "Category": category, "source_page": page_no}
+    if name_amount and (m := AMOUNT.match(product)):   # "BBQ Dip 25g": the amount is the serving size
+        row |= {"Product_Name": m.group(1), "Serving_Size": m.group(2), "Serving_Size_Unit": m.group(3)}
     for w in (w for w in line if w.x1 >= edge):
-        if not NUMBER.match(w.text):
+        if not number.match(w.text):
             raise ValueError(f"page {page_no}: unreadable cell {w.text!r} in row {product!r}")
         nearest = min(range(len(anchors)), key=lambda j: abs(anchors[j] - w.x1))
+        if not NUMBER.match(w.text) and "_Per " in columns[nearest]:
+            raise ValueError(f"page {page_no}: the word {w.text!r} in row {product!r} is under the nutrient column "
+                             f"{columns[nearest]!r}")
         if abs(anchors[nearest] - w.x1) > COLUMN_GAP:
             raise ValueError(f"page {page_no}: {w.text!r} in row {product!r} is under no column")
         if columns[nearest] in row:
@@ -138,12 +147,13 @@ def _row(line: list[Word], lead: list[Word], anchors: list[float], columns: list
 
 
 def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None = None,
-                wrapped_names: bool = False, titles: list[str] = ()) -> list[dict]:
+                wrapped_names: bool = False, titles: list[str] = (), text_values: list[str] = (), furniture: list[str] = (), name_amount: bool = False) -> list[dict]:
+    number = re.compile(NUMBER.pattern + "|^(?:" + "|".join(map(re.escape, text_values)) + ")$") if text_values else NUMBER
     rows = []
     parent = section = ""   # parent: a page title that persists ("Breakfast (selected restaurants only)")
     for page_no, words in enumerate(pages, start=1):
         lines = _lines(words)
-        split = [_split(line) for line in lines]
+        split = [_split(line, number) for line in lines]
         found = [(i, cells) for i, (name, cells) in enumerate(split) if name and len(cells) >= MIN_NUMBERS]
         if not found:
             continue
@@ -174,7 +184,7 @@ def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None 
         if header_lines and header_lines[0] < first_row:
             start = header_lines[0]
             above = [" ".join(w.text for w in line) for line in lines[:start]]
-            above = [a for a in above if not any(c.isdigit() for c in a)]   # "PER PORTION PER 100g" is not a title
+            above = [a for a in above if not any(c.isdigit() for c in a) and a not in furniture]   # "PER PORTION PER 100g" is not a title
             if unknown := [a for a in above if a not in titles]:
                 raise ValueError(f"page {page_no}: unrecognised text above the table header {unknown[0]!r}; "
                                  f"list it under `titles` if it is a page title")
@@ -211,7 +221,8 @@ def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None 
                     edge = anchors[0] - 2 * COLUMN_GAP
                     bottom = max(w.y1 for l in block for w in l if w.x1 >= edge)
                     above = [l for l in block if l[0].y0 < bottom]
-                    section = " ".join(w.text for l in above for w in l if w.x1 < edge) or section
+                    left_text = " ".join(w.text for l in above for w in l if w.x1 < edge)
+                    section = ("" if left_text in furniture else left_text) or section
                     pending = [l for l in block if l[0].y0 >= bottom]
                     in_header = False
                     if pending and not wrapped_names:
@@ -226,10 +237,10 @@ def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None 
                     if any(w.x1 >= anchors[0] - COLUMN_GAP for w in lead):
                         raise ValueError(f"page {page_no}: text above a row reaches into the columns, so it is not "
                                          f"a name: {' '.join(w.text for w in lead)!r}")
-                rows.append(_row(line, lead, anchors, columns, " - ".join(c for c in (parent, section) if c), page_no))
+                rows.append(_row(line, lead, anchors, columns, " - ".join(c for c in (parent, section) if c), page_no, number, name_amount))
     return rows
 
 
 def parse(pdf: Path, source: dict) -> list[dict]:
     return parse_pages(page_words_fine(pdf), source["columns"], source.get("header"),
-                       source.get("wrapped_names", False), source.get("titles", ()))
+                       source.get("wrapped_names", False), source.get("titles", ()), source.get("text_values", ()), source.get("furniture", ()), source.get("name_amount", False))

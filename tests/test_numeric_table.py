@@ -304,3 +304,38 @@ def test_text_above_a_table_header_that_is_not_a_listed_title_raises():
         parse_pages([page], COLUMNS, header="Energy")
     [row] = parse_pages([page], COLUMNS, header="Energy", titles=["Northern Ireland"])
     assert row["Category"] == "Northern Ireland - Eggs"
+
+
+def test_a_text_cell_inside_the_row_is_read_by_position():
+    cols = ["energykCal_Per 100g/ml", "Serves", "Portion_Type", "energykCal_Per Portion", "fat_Per Portion", "fat_Per 100g/ml"]
+    rows = [line(100, "Fries", {0: "260", 1: "2", 2: "Portion", 3: "259", 4: "9.5", 5: "9.5"}),
+            line(112, "Wings", {0: "206", 1: "1", 2: "Piece", 3: "65", 4: "4.3", 5: "13.7"}),
+            line(124, "Dip", {0: "109", 1: "1", 2: "Portion", 3: "98", 4: "5.6", 5: "6.2"})]
+    out = parse_pages([[w for r in rows for w in r]], cols, text_values=["Portion", "Piece", "Dip"])
+    assert [(r["Product_Name"], r["Portion_Type"], r["Serves"], r["energykCal_Per Portion"]) for r in out] == [
+        ("Fries", "Portion", "2", "259"), ("Wings", "Piece", "1", "65"), ("Dip", "Portion", "1", "98")]
+
+
+def test_a_word_outside_text_values_in_a_cell_still_raises():
+    cols = ["energykCal_Per 100g/ml", "Serves", "Portion_Type", "energykCal_Per Portion", "fat_Per Portion", "fat_Per 100g/ml"]
+    rows = [line(100, "Fries", {0: "260", 1: "2", 2: "Portion", 3: "259", 4: "9.5", 5: "9.5"}),
+            line(112, "Wings", {0: "206", 1: "1", 2: "Bucket", 3: "65", 4: "4.3", 5: "13.7"})]
+    with pytest.raises(ValueError):
+        parse_pages([[w for r in rows for w in r]], cols, text_values=["Portion", "Piece"])
+
+
+def test_furniture_above_the_header_is_ignored_but_other_text_still_raises():
+    head = [Word(5, 50, 100, 58, "Running head"), Word(RIGHT_EDGES[0] - 30, 80, RIGHT_EDGES[0], 88, "Energy")]
+    rows = [w for y in (100, 112, 124) for w in line(y, "Item", FULL)]
+    assert len(parse_pages([head + rows], COLUMNS, header="Energy", furniture=["Running head"])) == 3
+    with pytest.raises(ValueError, match="unrecognised text above the table header"):
+        parse_pages([head + rows], COLUMNS, header="Energy")
+
+
+def test_name_amount_moves_a_trailing_amount_into_the_serving_size():
+    rows = [line(100, "BBQ Dip 25g", FULL), line(112, "Tub 330 ml", FULL), line(124, "Chicken Kickers (4)", FULL)]
+    out = parse_pages([[w for r in rows for w in r]], COLUMNS, name_amount=True)
+    assert [(r["Product_Name"], r.get("Serving_Size"), r.get("Serving_Size_Unit")) for r in out] == [
+        ("BBQ Dip", "25", "g"), ("Tub", "330", "ml"), ("Chicken Kickers (4)", None, None)]
+    plain = parse_pages([[w for r in rows for w in r]], COLUMNS)
+    assert plain[0]["Product_Name"] == "BBQ Dip 25g" and "Serving_Size" not in plain[0]

@@ -228,3 +228,54 @@
         Sesame: sesame
         Soya: soya
         Sulphites: sulphite
+
+6_Dominos:
+  chain: Dominos
+  sources:
+    - pdf: nutrition_sides-and-desserts.pdf
+      parser: numeric_table
+      region: UK
+      category: food
+      approved: false
+      # No allergen information in these PDFs, so no `markers` and the CSV has no allergen columns.
+      header: Energy
+      wrapped_names: true
+      text_values: [Portion, Piece, Dip, Wrap]
+      name_amount: true # "BBQ Dip 25g": the amount is the serving size
+      furniture: ['Nutritional Information- Sides and Desserts', Product Name] # running head; the name column's header
+      titles: [Sides, Dips] # a page's title, printed above its column headers
+      # Columns left to right: ten values per 100g, how many it serves, ten per product as sold, the portion's
+      # kind (words), then ten per portion or piece.
+      columns:
+        - energykCal_Per 100g/ml
+        - energykJ_Per 100g/ml
+        - fat_Per 100g/ml
+        - saturates_Per 100g/ml
+        - carbohydrates_Per 100g/ml
+        - sugars_Per 100g/ml
+        - fibre_Per 100g/ml
+        - protein_Per 100g/ml
+        - salt_Per 100g/ml
+        - sodium_Per 100g/ml
+        - Serves
+        - energykCal_Per Product As Sold
+        - energykJ_Per Product As Sold
+        - fat_Per Product As Sold
+        - saturates_Per Product As Sold
+        - carbohydrates_Per Product As Sold
+        - sugars_Per Product As Sold
+        - fibre_Per Product As Sold
+        - protein_Per Product As Sold
+        - salt_Per Product As Sold
+        - sodium_Per Product As Sold
+        - Portion_Type
+        - energykCal_Per Portion
+        - energykJ_Per Portion
+        - fat_Per Portion
+        - saturates_Per Portion
+        - carbohydrates_Per Portion
+        - sugars_Per Portion
+        - fibre_Per Portion
+        - protein_Per Portion
+        - salt_Per Portion
+        - sodium_Per Portion
