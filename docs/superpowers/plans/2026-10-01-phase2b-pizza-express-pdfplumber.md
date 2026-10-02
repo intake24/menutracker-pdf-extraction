@@ -65,8 +65,7 @@
 
 - [ ] **Step 1: Add the dependency**
 
-Run: `uv add pdfplumber`
-Expected: `pyproject.toml` gains `"pdfplumber>=0.11.10"` (or a newer floor) under `dependencies`; `uv.lock` updates; pdfminer.six, pypdfium2, pillow and cryptography are installed.
+Run: `uv add pdfplumber` Expected: `pyproject.toml` gains `"pdfplumber>=0.11.10"` (or a newer floor) under `dependencies`; `uv.lock` updates; pdfminer.six, pypdfium2, pillow and cryptography are installed.
 
 - [ ] **Step 2: Write the failing tests**
 
@@ -128,8 +127,7 @@ def test_fine_words_keep_ordinary_words_whole():
 
 - [ ] **Step 3: Run the tests to verify they fail**
 
-Run: `uv run pytest tests/test_ingest.py -v`
-Expected: FAIL at collection with `ImportError: cannot import name 'page_words_fine' from 'pipeline.ingest'`.
+Run: `uv run pytest tests/test_ingest.py -v` Expected: FAIL at collection with `ImportError: cannot import name 'page_words_fine' from 'pipeline.ingest'`.
 
 - [ ] **Step 4: Implement**
 
@@ -230,8 +228,7 @@ def manifest_row(pdf: Path, chains: dict) -> dict:
 
 - [ ] **Step 5: Run the tests to verify they pass**
 
-Run: `uv run pytest tests/test_ingest.py -v`
-Expected: 7 passed.
+Run: `uv run pytest tests/test_ingest.py -v` Expected: 7 passed.
 
 - [ ] **Step 6: Commit**
 
@@ -331,8 +328,7 @@ def test_repeated_names_pair_up_by_order_of_occurrence():
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `uv run pytest tests/test_evaluate.py -v`
-Expected: `test_repeated_names_pair_up_by_order_of_occurrence` FAILS (the second `Margherita` is compared with the first row); the other 7 pass.
+Run: `uv run pytest tests/test_evaluate.py -v` Expected: `test_repeated_names_pair_up_by_order_of_occurrence` FAILS (the second `Margherita` is compared with the first row); the other 7 pass.
 
 - [ ] **Step 3: Implement**
 
@@ -429,8 +425,7 @@ def compare_golden(golden: list[dict], ours: list[dict]) -> list[str]:
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
-Run: `uv run pytest tests/test_evaluate.py -v`
-Expected: 8 passed.
+Run: `uv run pytest tests/test_evaluate.py -v` Expected: 8 passed.
 
 - [ ] **Step 5: Commit**
 
@@ -737,8 +732,7 @@ def test_a_wrapped_name_on_the_first_row_of_a_table_is_not_swallowed_into_the_se
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `uv run pytest tests/test_numeric_table.py -v`
-Expected: `9 failed, 25 passed, 4 errors`. The failures are the header, title, wrapped-name and per-table tests (`parse_pages() got an unexpected keyword argument 'header'`, or wrong categories) plus `test_without_headers_a_table_ending_elsewhere_is_read_with_its_own_columns`; the 4 `test_pizza_express_*` tests error because the parse itself raises. The slice 2a Five Guys tests still pass.
+Run: `uv run pytest tests/test_numeric_table.py -v` Expected: `9 failed, 25 passed, 4 errors`. The failures are the header, title, wrapped-name and per-table tests (`parse_pages() got an unexpected keyword argument 'header'`, or wrong categories) plus `test_without_headers_a_table_ending_elsewhere_is_read_with_its_own_columns`; the 4 `test_pizza_express_*` tests error because the parse itself raises. The slice 2a Five Guys tests still pass.
 
 - [ ] **Step 3: Implement**
 
@@ -969,8 +963,7 @@ def parse(pdf: Path, source: dict) -> list[dict]:
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
-Run: `uv run pytest tests/test_numeric_table.py -v`
-Expected: 38 passed (about 5 s: the Pizza Express tests read real PDFs).
+Run: `uv run pytest tests/test_numeric_table.py -v` Expected: 38 passed (about 5 s: the Pizza Express tests read real PDFs).
 
 - [ ] **Step 5: Commit**
 
@@ -1160,8 +1153,7 @@ def test_fine_words_keep_ordinary_words_whole():
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `uv run pytest tests/test_cli.py tests/test_ingest.py -v`
-Expected: `4 failed, 10 passed`, because `11_PizzaExpress` doesn't exist yet: `test_run_writes_one_csv_per_chain_and_passes_eval`, `test_run_skips_unapproved_chains_with_a_notice_but_refuses_when_asked_for_one`, `test_pizza_express_merges_the_uk_and_northern_ireland_pdfs_and_keeps_regions_apart` and `test_one_pdf_per_source_and_five_chains_configured`.
+Run: `uv run pytest tests/test_cli.py tests/test_ingest.py -v` Expected: `4 failed, 10 passed`, because `11_PizzaExpress` doesn't exist yet: `test_run_writes_one_csv_per_chain_and_passes_eval`, `test_run_skips_unapproved_chains_with_a_notice_but_refuses_when_asked_for_one`, `test_pizza_express_merges_the_uk_and_northern_ireland_pdfs_and_keeps_regions_apart` and `test_one_pdf_per_source_and_five_chains_configured`.
 
 - [ ] **Step 3: Implement**
 
@@ -1356,11 +1348,7 @@ Design: [docs/pipeline-design.md](docs/pipeline-design.md). Implementation plans
 Needs Python 3.12, [uv](https://docs.astral.sh/uv/) and poppler (`pdftotext`). `uv sync` installs the Python dependencies, including pdfplumber.
 
 ```bash
-uv sync
-uv run pytest                              # tests read PDFs from inputs/ (not in git)
-uv run python -m pipeline.cli manifest     # which parser each PDF in inputs/ uses -> work/manifest.csv
-uv run python -m pipeline.cli run          # -> outputs/<id>_<Chain>.csv
-uv run python -m pipeline.cli eval         # compare outputs with Pearl Scan and golden rows; exit 1 on failure
+uv sync uv run pytest                              # tests read PDFs from inputs/ (not in git) uv run python -m pipeline.cli manifest     # which parser each PDF in inputs/ uses -> work/manifest.csv uv run python -m pipeline.cli run          # -> outputs/<id>_<Chain>.csv uv run python -m pipeline.cli eval         # compare outputs with Pearl Scan and golden rows; exit 1 on failure
 ```
 
 `run` only builds chains whose sources are all `approved: true` in `config/chains.yaml`; any other chain is skipped with a notice on stderr, or refused with an error if you name it with `--chain`. `eval` skips unapproved chains too.
@@ -1412,8 +1400,7 @@ Next: the other text-based layouts. Vue, Papa John's and Krispy Kreme need a vis
 
 - [ ] **Step 4: Run the full test suite**
 
-Run: `uv run pytest -v`
-Expected: 122 passed (about 25 s).
+Run: `uv run pytest -v` Expected: 122 passed (about 25 s).
 
 - [ ] **Step 5: Commit**
 

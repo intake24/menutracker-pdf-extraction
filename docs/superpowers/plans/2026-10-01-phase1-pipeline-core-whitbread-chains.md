@@ -155,8 +155,7 @@ allergens: [gluten, wheat, rye, barley, oats, spelt, kamut, celery, crustacean, 
 trailing_text_columns: [treeNutSource]
 ```
 
-Run: `uv sync`
-Expected: creates `.venv/` and `uv.lock`, and installs pydantic, pyyaml and pytest.
+Run: `uv sync` Expected: creates `.venv/` and `uv.lock`, and installs pydantic, pyyaml and pytest.
 
 - [ ] **Step 3: Write the failing tests**
 
@@ -197,8 +196,7 @@ def test_row_model_rejects(bad):
 
 - [ ] **Step 4: Run the tests to verify they fail**
 
-Run: `uv run pytest tests/test_columns.py -v`
-Expected: FAIL with `ModuleNotFoundError: No module named 'pipeline.columns'`.
+Run: `uv run pytest tests/test_columns.py -v` Expected: FAIL with `ModuleNotFoundError: No module named 'pipeline.columns'`.
 
 - [ ] **Step 5: Implement `pipeline/columns.py`**
 
@@ -257,8 +255,7 @@ def build_row_model(columns: Columns) -> type[BaseModel]:
 
 - [ ] **Step 6: Run the tests to verify they pass**
 
-Run: `uv run pytest tests/test_columns.py -v`
-Expected: 14 passed.
+Run: `uv run pytest tests/test_columns.py -v` Expected: 14 passed.
 
 - [ ] **Step 7: Commit**
 
@@ -332,8 +329,7 @@ def test_unknown_term_raises(text):
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `uv run pytest tests/test_allergens.py -v`
-Expected: FAIL with `ModuleNotFoundError: No module named 'pipeline.allergens'`.
+Run: `uv run pytest tests/test_allergens.py -v` Expected: FAIL with `ModuleNotFoundError: No module named 'pipeline.allergens'`.
 
 - [ ] **Step 3: Implement `pipeline/allergens.py`**
 
@@ -410,8 +406,7 @@ def parse_allergens(contains: str, may_contain: str, unlisted: str) -> dict[str,
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
-Run: `uv run pytest tests/test_allergens.py -v`
-Expected: 7 passed.
+Run: `uv run pytest tests/test_allergens.py -v` Expected: 7 passed.
 
 - [ ] **Step 5: Commit**
 
@@ -526,8 +521,7 @@ def test_finalise_flags_without_changing_values_then_write(tmp_path):
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `uv run pytest tests/test_validate.py tests/test_export.py -v`
-Expected: FAIL with `ModuleNotFoundError: No module named 'pipeline.validate'`.
+Run: `uv run pytest tests/test_validate.py tests/test_export.py -v` Expected: FAIL with `ModuleNotFoundError: No module named 'pipeline.validate'`.
 
 - [ ] **Step 3: Implement `pipeline/validate.py`**
 
@@ -632,8 +626,7 @@ def write_csv(rows: list[dict], columns: Columns, path: Path) -> list[str]:
 
 - [ ] **Step 5: Run the tests to verify they pass**
 
-Run: `uv run pytest tests/test_validate.py tests/test_export.py -v`
-Expected: 9 passed.
+Run: `uv run pytest tests/test_validate.py tests/test_export.py -v` Expected: 9 passed.
 
 - [ ] **Step 6: Commit**
 
@@ -816,8 +809,7 @@ def test_image_only_pages_reported():
 
 - [ ] **Step 3: Run the tests to verify they fail**
 
-Run: `uv run pytest tests/test_ingest.py -v`
-Expected: FAIL with `ModuleNotFoundError: No module named 'pipeline.ingest'`.
+Run: `uv run pytest tests/test_ingest.py -v` Expected: FAIL with `ModuleNotFoundError: No module named 'pipeline.ingest'`.
 
 - [ ] **Step 4: Implement `pipeline/ingest.py`**
 
@@ -932,11 +924,9 @@ if __name__ == "__main__":
 
 - [ ] **Step 6: Run the tests, then the command**
 
-Run: `uv run pytest tests/test_ingest.py -v`
-Expected: 5 passed.
+Run: `uv run pytest tests/test_ingest.py -v` Expected: 5 passed.
 
-Run: `uv run python -m pipeline.cli manifest`
-Expected: `35 PDFs -> work/manifest.csv; parsers: {'unassigned': 29, 'premier_inn_breakfast': 3, 'whitbread_drinks_grid': 3}`. The PDF count can differ if `inputs/` has changed.
+Run: `uv run python -m pipeline.cli manifest` Expected: `35 PDFs -> work/manifest.csv; parsers: {'unassigned': 29, 'premier_inn_breakfast': 3, 'whitbread_drinks_grid': 3}`. The PDF count can differ if `inputs/` has changed.
 
 - [ ] **Step 7: Commit**
 
@@ -1079,8 +1069,7 @@ def test_unknown_allergen_names_item():
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `uv run pytest tests/test_premier_inn_breakfast.py -v`
-Expected: FAIL with `ModuleNotFoundError: No module named 'pipeline.parsers'`.
+Run: `uv run pytest tests/test_premier_inn_breakfast.py -v` Expected: FAIL with `ModuleNotFoundError: No module named 'pipeline.parsers'`.
 
 - [ ] **Step 3: Implement `pipeline/parsers/premier_inn_breakfast.py`**
 
@@ -1208,8 +1197,7 @@ PARSERS = {
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
-Run: `uv run pytest tests/test_premier_inn_breakfast.py -v`
-Expected: 7 passed.
+Run: `uv run pytest tests/test_premier_inn_breakfast.py -v` Expected: 7 passed.
 
 - [ ] **Step 5: Commit**
 
@@ -1329,8 +1317,7 @@ def test_mark_outside_any_column_raises():
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `uv run pytest tests/test_whitbread_drinks_grid.py -v`
-Expected: FAIL with `ModuleNotFoundError: No module named 'pipeline.parsers.whitbread_drinks_grid'`.
+Run: `uv run pytest tests/test_whitbread_drinks_grid.py -v` Expected: FAIL with `ModuleNotFoundError: No module named 'pipeline.parsers.whitbread_drinks_grid'`.
 
 - [ ] **Step 3: Implement `pipeline/parsers/whitbread_drinks_grid.py`**
 
@@ -1425,8 +1412,7 @@ PARSERS = {
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
-Run: `uv run pytest tests/test_whitbread_drinks_grid.py -v`
-Expected: 7 passed.
+Run: `uv run pytest tests/test_whitbread_drinks_grid.py -v` Expected: 7 passed.
 
 - [ ] **Step 5: Commit**
 
@@ -1644,8 +1630,7 @@ def test_run_refuses_unapproved_sources(tmp_path):
 
 - [ ] **Step 4: Run the tests to verify they fail**
 
-Run: `uv run pytest tests/test_evaluate.py tests/test_cli.py -v`
-Expected: FAIL with `ModuleNotFoundError: No module named 'pipeline.evaluate'`.
+Run: `uv run pytest tests/test_evaluate.py tests/test_cli.py -v` Expected: FAIL with `ModuleNotFoundError: No module named 'pipeline.evaluate'`.
 
 - [ ] **Step 5: Implement `pipeline/evaluate.py`**
 
@@ -1855,8 +1840,7 @@ if __name__ == "__main__":
 
 - [ ] **Step 7: Run the full test suite**
 
-Run: `uv run pytest -v`
-Expected: 56 passed. If `test_run_writes_one_csv_per_chain_and_passes_eval` fails on a golden cell, check that cell against the PDF. If the golden file is right, fix the parser; if it's wrong, fix the golden file after checking the PDF.
+Run: `uv run pytest -v` Expected: 56 passed. If `test_run_writes_one_csv_per_chain_and_passes_eval` fails on a golden cell, check that cell against the PDF. If the golden file is right, fix the parser; if it's wrong, fix the golden file after checking the PDF.
 
 - [ ] **Step 8: Approval by a person**
 

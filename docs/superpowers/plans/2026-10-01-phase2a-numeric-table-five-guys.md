@@ -130,8 +130,7 @@ def test_read_csv_falls_back_to_windows_1252(tmp_path):
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `uv run pytest tests/test_evaluate.py -v`
-Expected: `test_read_csv_falls_back_to_windows_1252` FAILS with `UnicodeDecodeError: 'utf-8' codec can't decode byte 0xf1`; the other 6 pass.
+Run: `uv run pytest tests/test_evaluate.py -v` Expected: `test_read_csv_falls_back_to_windows_1252` FAILS with `UnicodeDecodeError: 'utf-8' codec can't decode byte 0xf1`; the other 6 pass.
 
 - [ ] **Step 3: Implement**
 
@@ -225,8 +224,7 @@ def compare_golden(golden: list[dict], ours: list[dict]) -> list[str]:
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
-Run: `uv run pytest tests/test_evaluate.py -v`
-Expected: 7 passed.
+Run: `uv run pytest tests/test_evaluate.py -v` Expected: 7 passed.
 
 - [ ] **Step 5: Commit**
 
@@ -368,8 +366,7 @@ def test_heading_with_a_trailing_note_keeps_only_the_heading():
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `uv run pytest tests/test_numeric_table.py -v`
-Expected: FAIL with `ModuleNotFoundError: No module named 'pipeline.parsers.numeric_table'`.
+Run: `uv run pytest tests/test_numeric_table.py -v` Expected: FAIL with `ModuleNotFoundError: No module named 'pipeline.parsers.numeric_table'`.
 
 - [ ] **Step 3: Implement `pipeline/parsers/numeric_table.py`**
 
@@ -488,8 +485,7 @@ PARSERS = {
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
-Run: `uv run pytest tests/test_numeric_table.py -v`
-Expected: 11 passed.
+Run: `uv run pytest tests/test_numeric_table.py -v` Expected: 11 passed.
 
 - [ ] **Step 5: Commit**
 
@@ -622,8 +618,7 @@ def test_image_only_pages_reported():
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `uv run pytest tests/test_cli.py tests/test_ingest.py -v`
-Expected: FAIL. `test_run_writes_one_csv_per_chain_and_passes_eval`, `test_chain_without_allergen_information_has_no_allergen_columns`, `test_five_guys_flags_are_arithmetic_inconsistencies_in_the_source` and `test_one_pdf_per_source_and_four_chains_configured` fail because `52_FiveGuys` doesn't exist yet; the other tests pass.
+Run: `uv run pytest tests/test_cli.py tests/test_ingest.py -v` Expected: FAIL. `test_run_writes_one_csv_per_chain_and_passes_eval`, `test_chain_without_allergen_information_has_no_allergen_columns`, `test_five_guys_flags_are_arithmetic_inconsistencies_in_the_source` and `test_one_pdf_per_source_and_four_chains_configured` fail because `52_FiveGuys` doesn't exist yet; the other tests pass.
 
 - [ ] **Step 3: Implement**
 
@@ -890,8 +885,7 @@ Replace `config/chains.yaml`. The six Whitbread sources are unchanged and stay `
 
 - [ ] **Step 4: Run the full test suite**
 
-Run: `uv run pytest -v`
-Expected: 89 passed.
+Run: `uv run pytest -v` Expected: 89 passed.
 
 - [ ] **Step 5: Commit**
 
