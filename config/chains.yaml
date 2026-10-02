@@ -409,11 +409,11 @@
       parser: vision_products
       region: UK
       category: food
-      approved: false
+      approved: true
       # Pages with a table: pizzas 6-33, vegan pizzas 34-39, papadias 40-44, sides 45-57, desserts 58-63, create-your-own
       # tables 66-67, recently delisted 75-79. The other pages (cover, contents, welfare, allergen lists for the
       # create-your-own ingredients, drinks, Ben & Jerry's) carry no nutrition table; their allergens are not read yet.
-      pages: ["6-63", "66-67", "75-79"]
+      pages: ['6-63', '66-67', '75-79']
       dpi: 150
       # Each sheet lists the ingredient allergens per dough or base and what "may contain"; "None" is printed when empty,
       # so an allergen that is not listed is absent from the ingredients.
@@ -509,4 +509,15 @@
         'VALUES PER PORTION (1 Cookie) / TOTAL IN BOX Box of': Total_Pieces
         'VALUES PER PORTION (1 Cookie) / NO. OF PORTIONS Per box': Number_of_Portions
         'VALUES PER PORTION (1 Cookie) / NO. OF PORTIONS Piece': Number_of_Portions
-      pearlscan: { kcal: energykCal_Per Product As Sold, total_weight: Total_Weight, portion_size_g: Serving_Size, portion_size: [Portion_Size], total_slices: Total_Slices, num_of_portions: [Number_of_Portions, Portion_Size], total_pieces: [Total_Pieces, Total_Portions], recommended_portions: [Recommended_Portions, Portion_Size], total_portions: [Total_Portions, Total_Pieces] }
+      pearlscan:
+        {
+          kcal: energykCal_Per Product As Sold,
+          total_weight: Total_Weight,
+          portion_size_g: Serving_Size,
+          portion_size: [Portion_Size],
+          total_slices: Total_Slices,
+          num_of_portions: [Number_of_Portions, Portion_Size],
+          total_pieces: [Total_Pieces, Total_Portions],
+          recommended_portions: [Recommended_Portions, Portion_Size],
+          total_portions: [Total_Portions, Total_Pieces],
+        }
