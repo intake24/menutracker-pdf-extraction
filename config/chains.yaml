@@ -16,11 +16,12 @@
   sources:
     - pdf: PEX-Nutritional-Menu---May-2025.ashx.pdf
       parser: numeric_table
-      region: UK                # "England, Wales & Scotland"
+      region: UK # "England, Wales & Scotland"
       category: food
       # No allergen information in these PDFs, so no `markers` and the CSV has no allergen columns.
-      header: Energy            # each table has a column-header block; its left-hand text is the section name
-      wrapped_names: true       # long names wrap onto a second line
+      header: Energy # each table has a column-header block; its left-hand text is the section name
+      wrapped_names: true # long names wrap onto a second line
+      titles: ['Breakfast (selected restaurants only)'] # printed once on page 22; applies to the sections after it
       # Columns left to right: nine values per portion, then the same nine per 100g.
       columns: &pizza_express_columns
         - energykCal_Per Portion
@@ -41,15 +42,15 @@
         - fibre_Per 100g/ml
         - protein_Per 100g/ml
         - salt_Per 100g/ml
-      approved: false
+      approved: true
     - pdf: BEL-Nutritional-Menu---May-2025.ashx.pdf
       parser: numeric_table
-      region: NI                # "Northern Ireland"
+      region: NI # "Northern Ireland"
       category: food
       header: Energy
       wrapped_names: true
       columns: *pizza_express_columns
-      approved: false
+      approved: true
 
 16_Beefeater:
   chain: Beefeater

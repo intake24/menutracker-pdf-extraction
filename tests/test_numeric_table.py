@@ -193,7 +193,7 @@ def test_a_page_title_becomes_a_persistent_parent_but_one_with_digits_does_not()
     per100 = [Word(5, 14, 40, 22, "PER"), Word(45, 14, 90, 22, "100g")]
     p1 = title + per100 + header(30, "Eggs") + line(60, "A", FULL)
     p2 = per100 + header(30, "Drinks") + line(60, "B", FULL)
-    a, b = parse_pages([p1, p2], COLUMNS, header="Energy")
+    a, b = parse_pages([p1, p2], COLUMNS, header="Energy", titles=["Breakfast only"])
     assert a["Category"] == "Breakfast only - Eggs" and b["Category"] == "Breakfast only - Drinks"
 
 
@@ -218,7 +218,8 @@ PEX_COLUMNS = ["energykCal_Per Portion", "energykJ_Per Portion", "fat_Per Portio
                "carbohydrates_Per Portion", "sugars_Per Portion", "fibre_Per Portion", "protein_Per Portion",
                "salt_Per Portion"]
 PEX_COLUMNS = PEX_COLUMNS + [c.replace("Per Portion", "Per 100g/ml") for c in PEX_COLUMNS]
-PEX_SOURCE = {"columns": PEX_COLUMNS, "header": "Energy", "wrapped_names": True}
+PEX_SOURCE = {"columns": PEX_COLUMNS, "header": "Energy", "wrapped_names": True,
+              "titles": ["Breakfast (selected restaurants only)"]}
 
 
 @pytest.fixture(scope="module")
@@ -261,3 +262,45 @@ def test_a_wrapped_name_on_the_first_row_of_a_table_is_not_swallowed_into_the_se
     assert (row["Category"], row["Product_Name"]) == ("Starters", "Goats Cheese with dough sticks")
     with pytest.raises(ValueError, match="between the column headers and the first row"):
         parse_pages([page], COLUMNS, header="Energy")
+
+
+# --- silent-loss guards found in review ---------------------------------------------------------------------
+
+def test_a_line_between_rows_with_numbers_is_not_glued_onto_the_next_name():
+    stray = line(52, "Lost", FULL) + [Word(430, 52, 435, 60, "7")]   # a cell right of the last column
+    with pytest.raises(ValueError, match="reaches into the columns"):
+        parse_pages([header(10, "S") + line(40, "A", FULL) + stray + line(64, "B", FULL)], COLUMNS,
+                    header="Energy", wrapped_names=True)
+    two_numbers = line(52, "Half", {0: "12", 1: "3"})
+    with pytest.raises(ValueError, match="reaches into the columns"):
+        parse_pages([header(10, "S") + line(40, "A", FULL) + two_numbers + line(64, "B", FULL)], COLUMNS,
+                    header="Energy", wrapped_names=True)
+
+
+def test_a_product_named_like_the_header_word_is_still_a_row():
+    energy_bar = [Word(5, 52, 40, 60, "Energy"), Word(45, 52, 70, 60, "Bar")] + [w for w in line(52, "", FULL) if w.text]
+    last = [Word(5, 76, 40, 84, "Red"), Word(45, 76, 70, 84, "Energy")] + [w for w in line(76, "", FULL) if w.text]
+    page = header(10, "Drinks") + line(40, "A", FULL) + energy_bar + line(64, "B", FULL) + last
+    rows = parse_pages([page], COLUMNS, header="Energy")
+    assert [(r["Product_Name"], r["Category"]) for r in rows] == [
+        ("A", "Drinks"), ("Energy Bar", "Drinks"), ("B", "Drinks"), ("Red Energy", "Drinks")]
+
+
+def test_a_name_that_swallowed_several_numbers_raises():
+    name = [Word(5 + 25 * i, 52, 25 + 25 * i, 60, w) for i, w in enumerate(["Chick", "219", "916", "12.3"])]
+    with pytest.raises(ValueError, match="name contains numbers"):
+        parse_pages([line(40, "A", FULL) + name + [w for w in line(52, "", FULL) if w.text]], COLUMNS)
+
+
+def test_a_name_with_one_number_is_fine():
+    name = [Word(5, 52, 25, 60, "2"), Word(30, 52, 60, 60, "Fried"), Word(65, 52, 90, 60, "Eggs")]
+    rows = parse_pages([line(40, "A", FULL) + name + [w for w in line(52, "", FULL) if w.text]], COLUMNS)
+    assert rows[1]["Product_Name"] == "2 Fried Eggs"
+
+
+def test_text_above_a_table_header_that_is_not_a_listed_title_raises():
+    page = [Word(5, 1, 120, 9, "Northern"), Word(125, 1, 150, 9, "Ireland")] + header(30, "Eggs") + line(60, "A", FULL)
+    with pytest.raises(ValueError, match="above the table header.*Northern Ireland"):
+        parse_pages([page], COLUMNS, header="Energy")
+    [row] = parse_pages([page], COLUMNS, header="Energy", titles=["Northern Ireland"])
+    assert row["Category"] == "Northern Ireland - Eggs"

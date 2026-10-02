@@ -100,3 +100,13 @@ def test_pizza_express_merges_the_uk_and_northern_ireland_pdfs_and_keeps_regions
     assert "milk" not in header and "energykJ_Per 100g/ml" in header
     dupes = [r for r in rows if "duplicate" in r["flags"]]   # the PDF lists Smoky BBQ Chicken twice, in each region
     assert sorted((r["region"], r["Product_Name"]) for r in dupes) == [("NI", "Smoky BBQ Chicken"), ("UK", "Smoky BBQ Chicken")]
+
+
+def test_two_sources_on_one_pdf_with_different_parser_options_are_not_parsed_once(tmp_path):
+    import yaml
+    chains = yaml.safe_load((ROOT / "config" / "chains.yaml").read_text())
+    pex = chains["11_PizzaExpress"]["sources"][0] | {"approved": True}
+    cf = tmp_path / "chains.yaml"
+    cf.write_text(yaml.safe_dump({"98_Cache": {"chain": "X", "sources": [pex, pex | {"wrapped_names": False}]}}))
+    with pytest.raises(ValueError, match="text between rows"):
+        run(ROOT / "inputs", cf, tmp_path / "out")

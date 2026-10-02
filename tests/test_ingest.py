@@ -1,3 +1,4 @@
+import pytest
 from pathlib import Path
 
 from pipeline.ingest import load_chains, manifest_row, page_texts, page_words, page_words_fine, sources_by_pdf, text_sha
@@ -47,3 +48,9 @@ def test_fine_words_split_cells_that_poppler_returns_as_one_word():
 def test_fine_words_keep_ordinary_words_whole():
     texts = {w.text for w in page_words_fine(INPUTS / "PEX-Nutritional-Menu---May-2025.ashx.pdf")[10]}
     assert {"Goats", "Cheese", "Buddha", "Bowl"} <= texts
+
+
+def test_fine_words_refuse_to_guess_when_the_pieces_do_not_rebuild_the_word():
+    # Slanted text: the character pass groups characters across lines, so a number could silently become another.
+    with pytest.raises(ValueError, match="could not split"):
+        page_words_fine(INPUTS / "C_1-Core-Beverage-Allergen-Nutritional-Information-March-2025-Issued-28.03.25-3.pdf")

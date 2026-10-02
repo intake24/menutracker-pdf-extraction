@@ -51,6 +51,9 @@ def page_words_fine(pdf: Path, gap: float = 0.5) -> list[list[Word]]:
                 if NUMERIC_CHARS.match(w["text"]):
                     inside = [f for f in fine if f["x0"] >= w["x0"] - 0.1 and f["x1"] <= w["x1"] + 0.1
                               and abs(f["top"] - w["top"]) < 1]
+                    if "".join(f["text"] for f in sorted(inside, key=lambda f: f["x0"])) != w["text"]:
+                        raise ValueError(f"page {len(out) + 1}: could not split {w['text']!r} into cells "
+                                         f"(slanted text?); refusing to guess")
                     words += [Word(f["x0"], f["top"], f["x1"], f["bottom"], f["text"]) for f in inside]
                 else:
                     words.append(Word(w["x0"], w["top"], w["x1"], w["bottom"], w["text"]))

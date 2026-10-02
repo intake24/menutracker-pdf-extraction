@@ -10,6 +10,8 @@ Source options (config/chains.yaml):
   header         a word that marks a column-header line, e.g. "Energy". Enables several tables per page, each with
                  its own columns, and takes the section name from the header block (the text left of the columns)
   wrapped_names  join a name-only line directly above a data row onto that row's name
+  titles         page titles allowed above a table header, e.g. "Breakfast (selected restaurants only)"; each
+                 persists as a parent in Category until the next one. Any other text there raises.
 
 Without `header`, sections are ALL-CAPS heading lines at the left margin. Anything the parser can't place, an
 unreadable cell, a cell under no column, text between rows, raises instead of being guessed at.
@@ -119,6 +121,9 @@ def _row(line: list[Word], lead: list[Word], anchors: list[float], columns: list
     if not name:
         raise ValueError(f"page {page_no}: numbers without a name: {' '.join(w.text for w in line)!r}")
     product = " ".join(w.text for w in lead + name)
+    if sum(bool(NUMBER.match(w.text)) for w in name) >= MIN_NUMBERS:
+        raise ValueError(f"page {page_no}: name contains numbers, so the row's columns don't match the config: "
+                         f"{product!r}")
     row = {"Product_Name": product, "Category": category, "source_page": page_no}
     for w in (w for w in line if w.x1 >= edge):
         if not NUMBER.match(w.text):
@@ -133,7 +138,7 @@ def _row(line: list[Word], lead: list[Word], anchors: list[float], columns: list
 
 
 def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None = None,
-                wrapped_names: bool = False) -> list[dict]:
+                wrapped_names: bool = False, titles: list[str] = ()) -> list[dict]:
     rows = []
     parent = section = ""   # parent: a page title that persists ("Breakfast (selected restaurants only)")
     for page_no, words in enumerate(pages, start=1):
@@ -142,7 +147,9 @@ def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None 
         found = [(i, cells) for i, (name, cells) in enumerate(split) if name and len(cells) >= MIN_NUMBERS]
         if not found:
             continue
-        header_lines = [i for i, line in enumerate(lines) if header and any(w.text == header for w in line)]
+        # A header line has the header word and no data cells: a product called "Energy Bar" is a row.
+        header_lines = [i for i, line in enumerate(lines)
+                        if header and any(w.text == header for w in line) and len(split[i][1]) < MIN_NUMBERS]
         # One set of columns per table, from the table's most common row width, so a row with blank cells
         # can't create or hide a column.
         tables: list[list[float]] = []
@@ -166,8 +173,12 @@ def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None 
         start = first_row
         if header_lines and header_lines[0] < first_row:
             start = header_lines[0]
-            titles = [" ".join(w.text for w in line) for line in lines[:start]]
-            parent = " ".join(t for t in titles if not any(c.isdigit() for c in t)) or parent   # not "PER 100g"
+            above = [" ".join(w.text for w in line) for line in lines[:start]]
+            above = [a for a in above if not any(c.isdigit() for c in a)]   # "PER PORTION PER 100g" is not a title
+            if unknown := [a for a in above if a not in titles]:
+                raise ValueError(f"page {page_no}: unrecognised text above the table header {unknown[0]!r}; "
+                                 f"list it under `titles` if it is a page title")
+            parent = " ".join(above) or parent
         else:
             while start > 0 and kinds[start - 1] is None and (
                     _heading(lines[start - 1], left) or " ".join(w.text for w in lines[start - 1]).startswith(NOTE_START)):
@@ -179,7 +190,7 @@ def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None 
         for i in range(start, len(lines)):
             line, anchors = lines[i], kinds[i]
             text = " ".join(w.text for w in line)
-            if header and any(w.text == header for w in line):
+            if i in header_lines:
                 block = block if in_header else []
                 block.append(line)
                 in_header, pending = True, []   # a title above a column header ("PER PORTION PER 100g") is not a name
@@ -212,9 +223,13 @@ def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None 
                         raise ValueError(f"page {page_no}: text above a row is too far away to be a wrapped name: "
                                          f"{' '.join(w.text for w in pending[-1])!r}")
                     lead, pending = [w for l in pending for w in l], []
+                    if any(w.x1 >= anchors[0] - COLUMN_GAP for w in lead):
+                        raise ValueError(f"page {page_no}: text above a row reaches into the columns, so it is not "
+                                         f"a name: {' '.join(w.text for w in lead)!r}")
                 rows.append(_row(line, lead, anchors, columns, " - ".join(c for c in (parent, section) if c), page_no))
     return rows
 
 
 def parse(pdf: Path, source: dict) -> list[dict]:
-    return parse_pages(page_words_fine(pdf), source["columns"], source.get("header"), source.get("wrapped_names", False))
+    return parse_pages(page_words_fine(pdf), source["columns"], source.get("header"),
+                       source.get("wrapped_names", False), source.get("titles", ()))

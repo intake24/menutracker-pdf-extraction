@@ -1,5 +1,6 @@
 import argparse
 import csv
+import json
 import sys
 from collections import Counter
 from pathlib import Path
@@ -55,8 +56,8 @@ def run(inputs: Path, chains_file: Path, outputs: Path, only: str | None = None)
         rows: list[dict] = []
         for source in chain["sources"]:
             pdf = inputs / source["pdf"]
-            cache_key = (text_sha(page_texts(pdf)), source["parser"], repr(sorted(source.get("markers", {}).items())),
-                         tuple(source.get("columns", [])))   # column order matters: do not sort
+            options = {k: v for k, v in source.items() if k not in ("pdf", "region", "category", "approved", "disclaimer")}
+            cache_key = (text_sha(page_texts(pdf)), json.dumps(options, sort_keys=True))   # every parse-affecting option
             if cache_key not in parsed:
                 parsed[cache_key] = PARSERS[source["parser"]](pdf, source)
             rows += [r | {"region": source["region"], "source_file": pdf.name, "method": "parser"}
