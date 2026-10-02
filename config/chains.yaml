@@ -11,6 +11,46 @@
 #   disclaimer  menu-wide allergen statement, kept here (not in the CSV)
 #   approved  set to true by a person after checking markers/disclaimer against the PDF
 
+11_PizzaExpress:
+  chain: Pizza Express
+  sources:
+    - pdf: PEX-Nutritional-Menu---May-2025.ashx.pdf
+      parser: numeric_table
+      region: UK                # "England, Wales & Scotland"
+      category: food
+      # No allergen information in these PDFs, so no `markers` and the CSV has no allergen columns.
+      header: Energy            # each table has a column-header block; its left-hand text is the section name
+      wrapped_names: true       # long names wrap onto a second line
+      # Columns left to right: nine values per portion, then the same nine per 100g.
+      columns: &pizza_express_columns
+        - energykCal_Per Portion
+        - energykJ_Per Portion
+        - fat_Per Portion
+        - saturates_Per Portion
+        - carbohydrates_Per Portion
+        - sugars_Per Portion
+        - fibre_Per Portion
+        - protein_Per Portion
+        - salt_Per Portion
+        - energykCal_Per 100g/ml
+        - energykJ_Per 100g/ml
+        - fat_Per 100g/ml
+        - saturates_Per 100g/ml
+        - carbohydrates_Per 100g/ml
+        - sugars_Per 100g/ml
+        - fibre_Per 100g/ml
+        - protein_Per 100g/ml
+        - salt_Per 100g/ml
+      approved: false
+    - pdf: BEL-Nutritional-Menu---May-2025.ashx.pdf
+      parser: numeric_table
+      region: NI                # "Northern Ireland"
+      category: food
+      header: Energy
+      wrapped_names: true
+      columns: *pizza_express_columns
+      approved: false
+
 16_Beefeater:
   chain: Beefeater
   sources:

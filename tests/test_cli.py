@@ -5,7 +5,8 @@ import pytest
 from pipeline.cli import SourceNotApproved, evaluate, run
 
 ROOT = Path(__file__).resolve().parent.parent
-ROWS = {"16_Beefeater": 207, "17_Brewersfayre": 207, "21_TableTable": 207, "52_FiveGuys": 54}   # breakfast+drinks / table
+ROWS = {"11_PizzaExpress": 818, "16_Beefeater": 207, "17_Brewersfayre": 207, "21_TableTable": 207, "52_FiveGuys": 54}
+SOURCE_FLAGS = ("error: kJ/kcal", "error: saturates >", "error: sugars >", "warn: Atwater", "error: duplicate")   # the PDFs print these
 
 
 def chains_file(tmp_path: Path, approved: bool) -> Path:
@@ -23,9 +24,11 @@ def test_run_writes_one_csv_per_chain_and_passes_eval(tmp_path):
     assert {p.stem: len(rows) for p, rows in written.items()} == ROWS
     for path, rows in written.items():
         flagged = [r for r in rows if r["flags"]]
-        if path.stem != "52_FiveGuys":
+        if path.stem in ("11_PizzaExpress", "52_FiveGuys"):   # their PDFs contain figures that fail the checks
+            assert all(f.startswith(SOURCE_FLAGS) for r in flagged for f in r["flags"].split(" | "))
+        else:
             assert not flagged
-        assert {r["region"] for r in rows} == {"UK"} and {r["method"] for r in rows} == {"parser"}
+        assert {r["method"] for r in rows} == {"parser"}
     failures = evaluate(cf, tmp_path / "out", ROOT / "inputs" / "ground-truth", ROOT / "golden", ROOT / "config")
     assert failures == []
 
@@ -80,8 +83,20 @@ def test_run_skips_unapproved_chains_with_a_notice_but_refuses_when_asked_for_on
     cf = tmp_path / "chains.yaml"
     cf.write_text(yaml.safe_dump(chains))
     written = run(ROOT / "inputs", cf, tmp_path / "out")
-    assert sorted(p.stem for p in written) == ["16_Beefeater", "17_Brewersfayre", "21_TableTable"]
+    assert sorted(p.stem for p in written) == sorted(k for k in ROWS if k != "52_FiveGuys")
     assert "skipped 52_FiveGuys: not approved" in capsys.readouterr().err
     with pytest.raises(SourceNotApproved):
         run(ROOT / "inputs", cf, tmp_path / "out", "52_FiveGuys")
     assert evaluate(cf, tmp_path / "out", ROOT / "inputs" / "ground-truth", ROOT / "golden", ROOT / "config") == []
+
+
+def test_pizza_express_merges_the_uk_and_northern_ireland_pdfs_and_keeps_regions_apart(tmp_path):
+    written = run(ROOT / "inputs", chains_file(tmp_path, approved=True), tmp_path / "out", "11_PizzaExpress")
+    [(path, rows)] = written.items()
+    by_region = {region: [r for r in rows if r["region"] == region] for region in ("UK", "NI")}
+    assert {k: len(v) for k, v in by_region.items()} == {"UK": 453, "NI": 365}
+    assert {r["source_file"] for r in by_region["NI"]} == {"BEL-Nutritional-Menu---May-2025.ashx.pdf"}
+    header = path.read_text().splitlines()[0].split(",")
+    assert "milk" not in header and "energykJ_Per 100g/ml" in header
+    dupes = [r for r in rows if "duplicate" in r["flags"]]   # the PDF lists Smoky BBQ Chicken twice, in each region
+    assert sorted((r["region"], r["Product_Name"]) for r in dupes) == [("NI", "Smoky BBQ Chicken"), ("UK", "Smoky BBQ Chicken")]

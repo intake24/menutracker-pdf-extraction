@@ -6,7 +6,7 @@ Design: [docs/pipeline-design.md](docs/pipeline-design.md). Implementation plans
 
 ## Quick start
 
-Needs Python 3.12, [uv](https://docs.astral.sh/uv/) and poppler (`pdftotext`).
+Needs Python 3.12, [uv](https://docs.astral.sh/uv/) and poppler (`pdftotext`). `uv sync` installs the Python dependencies, including pdfplumber.
 
 ```bash
 uv sync
@@ -57,6 +57,7 @@ uv run python -m pipeline.cli eval         # compare outputs with Pearl Scan and
 | Done | Chains |
 |---|---|
 | Phase 1 | Beefeater, Brewers Fayre, Table Table |
-| Phase 2a | Five Guys (awaiting approval) |
+| Phase 2a | Five Guys |
+| Phase 2b | Pizza Express (UK and Northern Ireland PDFs) |
 
-Next: Pizza Express (needs character-level extraction), then the other text-based layouts. Vue, Papa John's and Krispy Kreme need a vision route because their text layers are unusable. See §10 of the design doc.
+Next: the other text-based layouts. Vue, Papa John's and Krispy Kreme need a vision route because their text layers are unusable. See §10 of the design doc.
