@@ -51,7 +51,8 @@ position type pass, and (e) a person has checked markers, disclaimer and columns
 | Allergen grid, `Y` marks, rotated headers | Whitbread drinks | `whitbread_drinks_grid` |
 | Allergen text list per item | Whitbread breakfast | `premier_inn_breakfast` |
 | Allergen matrix, marks by column, merged cells, size groups, per-100g items | Cineworld | `allergen_matrix` |
-| Corrupt text layer, image pages | Vue (also Papa John's, Krispy Kreme) | `vision_table` (`claude -p`, 150 dpi for small print) |
+| Corrupt text layer, image pages, one flat table | Vue | `vision_table` (`claude -p`, 150 dpi for small print) |
+| Product sheets: variant table + allergen text blocks, image pages | Papa John's | `vision_products`: model returns cells keyed by printed header + allergen text per row; `header_columns` maps headers (an unknown one stops the run); `rules` turn printed row warnings into `May contain`; `pages` lists table pages |
 | Not done yet | Pizza Hut (3 layouts in one PDF), Domino's pizzas (3 nested merged columns), Coffee #1 (vertical blocks, slanted text), Starbucks, Brewhouse/Cookhouse/Top Golf (judgement) | see the roadmap |
 
 ## 4. PDF defects found (all handled by failing loudly first, then an option)
@@ -71,6 +72,15 @@ position type pass, and (e) a person has checked markers, disclaimer and columns
   is the source, not a parser fault. Check the first flagged rows against the page, then accept the pattern.
 - Belfast and ROI are not copies of UK: some rows print the name under the figures, notes follow the amount
   (`454ml *This product is not recommended...`). Never assume two regions parse alike; run each against `coverage`/`eval`.
+- Papa John's sheets: a warning printed once (page 4) applies to some rows only (wheat free base: traces of wheat; vegan
+  items: cross contact with milk and egg). Read the intro and warning pages before approving; encode row-specific ones
+  as `rules`, menu-wide ones in `disclaimer`. A review caught the wheat-free case that Pearl Scan could not.
+- Vision allergen text is messy: `Sulphites/Sulphur Dioxide`, `Fish (Tuna)`, `Oats (Gluten Free)`, lost commas,
+  trailing colons, qualifiers (`With Gluten Free Oats - Vegan Stuffed Crust Only`). The allergen vocabulary raises on
+  anything it does not know; the first run over a new document lists them all (use a lenient scratch wrapper).
+- Cheap discovery pattern for a vision source: run every page once with a header mapping that records unknown
+  headers and allergen texts instead of stopping; the cache keeps every answer, so mapping afterwards costs nothing.
+  Do not edit the `instructions` text afterwards: it is part of the cache key (53 calls, about $4, to redo).
 - YAML: unquoted `Yes`/`No` become booleans; quote them.
 
 ## 5. What Pearl Scan got wrong (and its conventions)
@@ -84,6 +94,10 @@ position type pass, and (e) a person has checked markers, disclaimer and columns
   (also from inside brackets), dropped accents (BACARDI for BACARDÍ), and typed several typos (Cherrv, Berrv, Rasoberry,
   Crispv, `Sig` as `Sia`). `eval` now falls back to a start-of-name match (notes removed) on a row not yet paired, and
   compares every cell on it; typos and shortened names that still don't pair go to errata.
+- Papa John's: decimal commas printed in the PDF (`1,75`) written as `1.75`; the fraction `1/2` turned into the date
+  `01-Feb` or `0.50`; a brand spelling (`SHEESE`) written `CHEESE`; count columns (`Total portions`, `Total pieces`,
+  `Portion size`) filed under different Pearl Scan columns for the same printed header. `eval` takes list-valued
+  mappings for those (`pearlscan:` per source) and checks the cell wherever Pearl Scan has a value.
 - Each confirmed mistake is an entry in `config/ground_truth_errata.yaml` with the reason.
 - Consequence: where Pearl Scan is the only check, an unexplained mismatch needs a look at the page before either side
   is changed. In every case so far both explanations existed (the model once, Pearl Scan several times).
@@ -91,6 +105,8 @@ position type pass, and (e) a person has checked markers, disclaimer and columns
 ## 6. The model route (`claude -p`, `claude-sonnet-5-5`)
 
 - One page image per call, schema-constrained, cached by image + prompt + schema + model (`work/llm/`).
+- Papa John's: 65 page reads (3 at a time) cost about $4.5 reported; nutrition matched Pearl Scan on 434 rows and 6,943
+  cells with 0 mismatches.
 - Cost: about 0.4% of a 5-hour plan window per call at default settings (measured 2026-10-02: 5 calls = 2 points);
   running from an empty directory with `--setting-sources user --strict-mcp-config --disable-slash-commands` gave
   about $0.05 per call. 14 Vue pages cost roughly 6 points. 140 pages (Papa John's + Krispy Kreme) are about 40-55.

@@ -10,6 +10,8 @@ Source options (config/chains.yaml):
   pages            pages to read, 1-based: numbers and "a-b" ranges (cover and text pages are left out)
   header_columns   printed header ("<table title> / <column header with unit>") -> dictionary column; "Column|unit"
                    also sets Serving_Size_Unit; "Column@Slice" also sets Portion_Type
+  rules            printed warnings for some rows: {variant_has|section_has|name_has: text, may_contain: [columns]};
+                   the columns become "May contain" unless they are already "Yes"
   markers          {"": "No"} when the sheets list every ingredient allergen, so an unlisted one is absent
   instructions     what the pages look like
   dpi              render resolution (default 150)
@@ -26,7 +28,7 @@ from pipeline.parsers import vision_table
 
 WORK = vision_table.WORK
 RUNNER = llm.claude_runner          # tests replace these two
-BUDGET = llm.Budget()
+BUDGET = llm.BUDGET                 # one budget for the whole run, shared with vision_table
 
 SCHEMA = {"type": "object", "required": ["rows"], "properties": {"rows": {"type": "array", "items": {
     "type": "object", "required": ["name", "values"], "properties": {
@@ -61,6 +63,8 @@ def _apply_qualifier(contains: str, variant: str) -> str:
     m = QUALIFIER.search(contains)
     if not m:
         return contains
+    if not variant:
+        raise llm.LlmError(f"allergen text with a qualifier on a row without a variant: {contains!r}")
     base, extra, where = contains[:m.start()], m.group(1), m.group(2)
     where = re.sub(r"\bvegan\b", "", where, flags=re.I).strip().casefold()   # the sheet is already the vegan one
     if where and where in variant.casefold():
@@ -85,6 +89,7 @@ def rows_from_answer(answer: dict, source: dict, page_no: int) -> list[dict]:
             raise llm.LlmError(f"page {page_no}: the model returned a row without a name: {item!r}")
         row = {"Product_Name": name, "Category": (item.get("section") or "").strip(), "source_page": page_no,
                "method": "llm"}
+        pending_may: list[str] = []
         if variant := (item.get("variant") or "").strip():
             row["Size"] = variant
         for header, value in item["values"].items():
@@ -97,9 +102,17 @@ def rows_from_answer(answer: dict, source: dict, page_no: int) -> list[dict]:
                     row["Serving_Size_Unit"] = unit
                 if kind:
                     row["Portion_Type"] = kind
+        for rule in source.get("rules", []):   # printed warnings that apply to some rows ("Wheat Free base: traces of wheat")
+            if any(rule[k].casefold() in (row.get(col) or "").casefold() for k, col in
+                   (("variant_has", "Size"), ("section_has", "Category"), ("name_has", "Product_Name")) if k in rule):
+                for column in rule["may_contain"]:
+                    pending_may.append(column)
         contains, may = _apply_qualifier((item.get("contains") or "").strip(), row.get("Size", "")), (item.get("may") or "").strip()
         if contains or may:
             row |= parse_allergens(contains, may, unlisted)
+        for column in pending_may:
+            if row.get(column) in (None, "", "No"):
+                row[column] = "May contain"
         rows.append(row)
     return rows
 

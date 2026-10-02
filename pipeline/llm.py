@@ -117,3 +117,6 @@ def call(prompt: str, schema: dict, image: Path, *, cache_dir: Path, budget: Bud
     partial.write_text(json.dumps(answer))
     os.replace(partial, cached)   # atomic: a killed run never leaves half a file
     return answer
+
+
+BUDGET = Budget()   # the caps for one run: every parser that calls the model draws on this one

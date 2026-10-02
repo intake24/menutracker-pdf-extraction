@@ -64,3 +64,24 @@ def test_a_qualified_allergen_applies_only_to_the_named_rows():
     stuffed = vp.rows_from_answer({"rows": [{**ITEM, "variant": "Stuffed Crust - Large", "contains": text, "may": ""}]}, SOURCE, 1)[0]
     thin = vp.rows_from_answer({"rows": [{**ITEM, "variant": "Original Base - Large", "contains": text, "may": ""}]}, SOURCE, 1)[0]
     assert (stuffed["oats"], thin["oats"]) == ("Yes", "No") and stuffed["gluten"] == thin["gluten"] == "Yes"
+
+
+def test_a_printed_row_warning_makes_the_named_cells_may_contain_and_never_lowers_a_yes():
+    source = {**SOURCE, "rules": [{"variant_has": "Wheat Free", "may_contain": ["gluten", "wheat"]}]}
+    wheat_free = {**ITEM, "variant": "Wheat Free Stone Baked *- Medium", "contains": "Milk", "may": "None"}
+    row = vp.rows_from_answer({"rows": [wheat_free]}, source, 1)[0]
+    assert (row["gluten"], row["wheat"], row["milk"]) == ("May contain", "May contain", "Yes")
+    assert vp.rows_from_answer({"rows": [{**wheat_free, "contains": "Gluten, Wheat"}]}, source, 1)[0]["wheat"] == "Yes"
+    assert vp.rows_from_answer({"rows": [ITEM]}, source, 1)[0]["wheat"] == "Yes"   # other rows are untouched
+
+
+def test_a_qualified_allergen_on_a_row_with_no_variant_raises():
+    text = "Gluten, Wheat, Soya. With Gluten Free Oats – Vegan Stuffed Crust Only"
+    with pytest.raises(LlmError, match="without a variant"):
+        vp.rows_from_answer({"rows": [{**ITEM, "variant": "", "contains": text}]}, SOURCE, 1)
+
+
+def test_all_model_parsers_share_one_budget():
+    from pipeline import llm
+    from pipeline.parsers import vision_table
+    assert vp.BUDGET is vision_table.BUDGET is llm.BUDGET

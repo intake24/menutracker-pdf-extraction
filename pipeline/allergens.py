@@ -30,6 +30,8 @@ def _simple_keys(head: str) -> list[str]:
     if "/" in head:
         return sorted({_lookup(SIMPLE, part.strip()) for part in head.split("/")})
     words = head.split()
+    if len(words) > 1 and words[-1] == "milk" and words[-2] in {"soya", "oat", "almond", "coconut", "rice"}:
+        raise UnknownAllergen(f"{head!r} is a milk substitute, not an allergen list with a lost comma")
     if len(words) > 1 and all(w in SIMPLE for w in words):
         return [SIMPLE[w] for w in words]
     return [_lookup(SIMPLE, head)]

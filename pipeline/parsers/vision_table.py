@@ -21,7 +21,7 @@ from pipeline.ingest import page_texts
 WORK = Path(__file__).resolve().parent.parent.parent / "work"
 PORTION = re.compile(r"^(\d+(?:\.\d+)?)\s*(g|ml)$")
 RUNNER = llm.claude_runner          # tests replace these two
-BUDGET = llm.Budget()
+BUDGET = llm.BUDGET
 
 
 def schema_for(fields: dict[str, str]) -> dict:

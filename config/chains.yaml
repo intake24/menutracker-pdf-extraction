@@ -418,10 +418,20 @@
       # Each sheet lists the ingredient allergens per dough or base and what "may contain"; "None" is printed when empty,
       # so an allergen that is not listed is absent from the ingredients.
       markers: { '': 'No' }
+      # Printed on page 4, not repeated on each sheet: the wheat free base is not suitable for people with Coeliac
+      # disease (cross contact), pizzas made with it "may still have traces of wheat", pizzas without cheese may still have
+      # traces of milk, and the vegan items are prepared where cheese (milk), egg and meat are handled. The rules below
+      # turn the two row-specific warnings into "May contain" cells; the menu-wide ones stay here.
+      rules:
+        - { variant_has: Wheat Free, may_contain: [gluten, wheat] }
+        - { section_has: VEGAN, may_contain: [milk, egg] }
       disclaimer: >-
-        Allergens: "None" refers to the ingredients themselves, not the finished product from store. All of our food is
+        Pizzas without cheese may still have traces of milk; pizzas made with the Wheat Free base may still have traces of wheat; we make no claim that our products will be free from all allergens. Allergens: "None" refers to the ingredients themselves, not the finished product from store. All of our food is
         freshly prepared in store. We cannot guarantee that our products will be free from allergens / animal products
         due to the risk of cross contact when assembling the products. Product customisation may affect calorie content.
+      # Note: the model uses the block headed 'ORIGINAL OR AUTHENTIC THIN CRUST BASE' for the stuffed crust rows too; the sheets
+      # print no other block for them (page 38 names a 'Vegan Stuffed Crust' exception to it). Do not edit the instructions
+      # text without meaning to re-read every page: it is part of the cache key.
       instructions: >-
         It is a Papa John's UK product sheet (one or two products per page). section = the coloured band at the bottom of
         the page (PIZZAS, SIDES, ...). name = the product title as printed (for a page with two products, each row gets
@@ -463,7 +473,7 @@
         'VALUES PER SLICE / RECOMMENDED PORTION SIZE Serving': Recommended_Portions
         'VALUES PER SLICE / TOTAL SLICES SLICE': Total_Slices
         'VALUES PER SLICE / TOTAL PORTION SIZE Slice': Total_Slices
-        'VALUES PER SLICE / TOTAL PORTION SIZE Box of': Total_Portions
+        'VALUES PER SLICE / TOTAL PORTION SIZE Box of': Total_Pieces
         'VALUES PER SLICE / TOTAL PORTIONS Box of': Total_Portions
         'VALUES PER SLICE / TOTAL IN BOX Pieces': Total_Pieces
         'VALUES PER SLICE / TOTAL IN BOX Box of': Total_Pieces
@@ -478,7 +488,7 @@
         'VALUES PER PORTION / RECOMMENDED PORTION SIZE Serving': Recommended_Portions
         'VALUES PER PORTION / TOTAL SLICES SLICE': Total_Slices
         'VALUES PER PORTION / TOTAL PORTION SIZE Slice': Total_Slices
-        'VALUES PER PORTION / TOTAL PORTION SIZE Box of': Total_Portions
+        'VALUES PER PORTION / TOTAL PORTION SIZE Box of': Total_Pieces
         'VALUES PER PORTION / TOTAL PORTIONS Box of': Total_Portions
         'VALUES PER PORTION / TOTAL IN BOX Pieces': Total_Pieces
         'VALUES PER PORTION / TOTAL IN BOX Box of': Total_Pieces
@@ -493,11 +503,10 @@
         'VALUES PER PORTION (1 Cookie) / RECOMMENDED PORTION SIZE Serving': Recommended_Portions
         'VALUES PER PORTION (1 Cookie) / TOTAL SLICES SLICE': Total_Slices
         'VALUES PER PORTION (1 Cookie) / TOTAL PORTION SIZE Slice': Total_Slices
-        'VALUES PER PORTION (1 Cookie) / TOTAL PORTION SIZE Box of': Total_Portions
+        'VALUES PER PORTION (1 Cookie) / TOTAL PORTION SIZE Box of': Total_Pieces
         'VALUES PER PORTION (1 Cookie) / TOTAL PORTIONS Box of': Total_Portions
         'VALUES PER PORTION (1 Cookie) / TOTAL IN BOX Pieces': Total_Pieces
         'VALUES PER PORTION (1 Cookie) / TOTAL IN BOX Box of': Total_Pieces
         'VALUES PER PORTION (1 Cookie) / NO. OF PORTIONS Per box': Number_of_Portions
         'VALUES PER PORTION (1 Cookie) / NO. OF PORTIONS Piece': Number_of_Portions
-        'VALUES PER 100G / Fibre g': fibre_Per 100g/ml
-      pearlscan: { kcal: energykCal_Per Product As Sold, total_weight: Total_Weight, portion_size_g: Serving_Size, portion_size: ~, total_slices: Total_Slices, num_of_portions: [Number_of_Portions, Portion_Size], total_pieces: [Total_Pieces, Total_Portions], recommended_portions: [Recommended_Portions, Portion_Size], total_portions: ~ }
+      pearlscan: { kcal: energykCal_Per Product As Sold, total_weight: Total_Weight, portion_size_g: Serving_Size, portion_size: [Portion_Size], total_slices: Total_Slices, num_of_portions: [Number_of_Portions, Portion_Size], total_pieces: [Total_Pieces, Total_Portions], recommended_portions: [Recommended_Portions, Portion_Size], total_portions: [Total_Portions, Total_Pieces] }

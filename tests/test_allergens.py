@@ -70,3 +70,10 @@ def test_papa_johns_wordings():
     assert parse_allergens("Gluten, Wheat, Soya, Celery Milk", "None", "No")["celery"] == "Yes"
     with __import__("pytest").raises(UnknownAllergen):
         parse_allergens("Gluten, Kryptonite", "None", "No")
+
+
+def test_a_milk_substitute_is_not_split_into_two_allergens():
+    from pipeline.allergens import UnknownAllergen, parse_allergens
+    import pytest
+    with pytest.raises(UnknownAllergen):
+        parse_allergens("Soya Milk", "", "")
