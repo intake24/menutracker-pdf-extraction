@@ -26,3 +26,50 @@ fibre_100: fibre_Per 100g/ml
 protein_100: protein_Per 100g/ml
 salt_100: salt_Per 100g/ml
 sodium_100: sodium_Per 100g/ml
+
+# Domino's and Papa John's basis suffixes
+kcal_portion: energykCal_Per Portion
+kj_pizza: energykJ_Per Pizza
+kcal_pizza: energykCal_Per Pizza
+fat_pizza: fat_Per Pizza
+satfat_pizza: saturates_Per Pizza
+carb_pizza: carbohydrates_Per Pizza
+sugar_pizza: sugars_Per Pizza
+fibre_pizza: fibre_Per Pizza
+protein_pizza: protein_Per Pizza
+salt_pizza: salt_Per Pizza
+sodium_pizza: sodium_Per Pizza
+kj_slice: energykJ_Per Slice
+kcal_slice: energykCal_Per Slice
+fat_slice: fat_Per Slice
+satfat_slice: saturates_Per Slice
+carb_slice: carbohydrates_Per Slice
+sugar_slice: sugars_Per Slice
+fibre_slice: fibre_Per Slice
+protein_slice: protein_Per Slice
+salt_slice: salt_Per Slice
+sodium_slice: sodium_Per Slice
+kj_product_as_sold: energykJ_Per Product As Sold
+kcal_product_as_sold: energykCal_Per Product As Sold
+fat_product_as_sold: fat_Per Product As Sold
+satfat_product_as_sold: saturates_Per Product As Sold
+carb_product_as_sold: carbohydrates_Per Product As Sold
+sugar_product_as_sold: sugars_Per Product As Sold
+fibre_product_as_sold: fibre_Per Product As Sold
+protein_product_as_sold: protein_Per Product As Sold
+salt_product_as_sold: salt_Per Product As Sold
+sodium_product_as_sold: sodium_Per Product As Sold
+
+# Counts and amounts: not compared yet (their dictionary columns exist; Slices 2 and 7 map them when the parsers do).
+menu_section: ~
+serves: ~
+slice/portion/piece: ~
+num_of_slices: ~
+num_of_portions: ~
+recommended_portions: ~
+portion_size: ~
+portion_size_g: ~
+total_slices: ~
+total_pieces: ~
+total_portions: ~
+total_weight: ~

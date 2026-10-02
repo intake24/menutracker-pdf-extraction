@@ -8,13 +8,17 @@ from pathlib import Path
 ROW_RECALL_MIN = 0.99
 
 
-def read_csv(path: Path) -> list[dict]:
-    """Read a CSV as UTF-8, or as Windows-1252 when it isn't (Pearl Scan files exported from Excel)."""
-    raw = path.read_bytes()
+def _decode(line: bytes) -> str:
     try:
-        text = raw.decode("utf-8-sig")
+        return line.decode("utf-8")
     except UnicodeDecodeError:
-        text = raw.decode("cp1252")
+        return line.decode("cp1252")
+
+
+def read_csv(path: Path) -> list[dict]:
+    """Read a CSV as UTF-8, or as Windows-1252 where a line isn't (Pearl Scan files edited in Excel; some mix both)."""
+    raw = path.read_bytes().removeprefix(b"\xef\xbb\xbf")
+    text = "".join(_decode(line) for line in raw.splitlines(keepends=True))
     return list(csv.DictReader(io.StringIO(text, newline="")))
 
 
@@ -66,7 +70,7 @@ def compare_ground_truth(truth: list[dict], ours: list[dict], mapping: dict[str,
             unmatched.append(name)
             continue
         for gt_col, col in mapping.items():
-            if gt_col not in t or gt_col == "item_name" or (name, gt_col) in errata:
+            if col is None or gt_col not in t or gt_col == "item_name" or (name, gt_col) in errata:
                 continue
             cells += 1
             if not same(t[gt_col], o.get(col, "")):

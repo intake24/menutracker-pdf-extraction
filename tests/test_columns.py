@@ -28,3 +28,10 @@ def test_nutrient_cells_accept_numbers_and_known_words(value):
 def test_row_model_rejects(bad):
     with pytest.raises(ValidationError):
         build_row_model(load_columns()).model_validate(bad)
+
+
+def test_dictionary_has_the_count_and_suitability_columns_later_chains_need():
+    types = load_columns().types
+    for col in ["Serves", "Portion_Type", "Number_of_Slices", "Total_Slices", "Total_Weight",
+                "Suitable_for_Vegetarian", "Suitable_for_Vegan", "Suitable_for_Coeliac"]:
+        assert types[col] == "text"

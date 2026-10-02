@@ -1,4 +1,4 @@
-from pipeline.evaluate import compare_golden, compare_ground_truth, ground_truth_file, same
+from pipeline.evaluate import compare_golden, compare_ground_truth, ground_truth_file, read_csv, same
 
 MAPPING = {"item_name": "Product_Name", "kcal": "energykCal_Per Portion", "fat": "fat_Per Portion"}
 OURS = [{"Product_Name": "Sweet Popcorn", "Size": "Large", "energykCal_Per Portion": "958.9", "fat_Per Portion": "Negligible"},
@@ -74,3 +74,29 @@ def test_repeated_names_pair_up_by_order_of_occurrence():
     assert not swapped["passed"] and len(swapped["mismatches"]) == 2
     lost = compare_ground_truth(truth, ours[:1], mapping, set())
     assert lost["unmatched"] == ["Margherita"] and not lost["passed"]
+
+
+def test_read_csv_handles_a_file_mixing_windows_1252_and_utf8_lines(tmp_path):
+    path = tmp_path / "mixed.csv"
+    path.write_bytes("item_name\nCr\u00e8me\n".encode("cp1252") + "BACARD\u00cd\n".encode("utf-8"))
+    assert [r["item_name"] for r in read_csv(path)] == ["Cr\u00e8me", "BACARD\u00cd"]
+
+
+def test_every_ground_truth_column_is_in_the_pearl_scan_column_map():
+    import glob
+    from pathlib import Path
+
+    import yaml
+    root = Path(__file__).resolve().parent.parent
+    mapping = yaml.safe_load((root / "config" / "pearlscan_columns.yaml").read_text())
+    missing = set()
+    for f in glob.glob(str(root / "inputs" / "ground-truth" / "**" / "*.csv"), recursive=True):
+        if "Previous" not in f:
+            missing |= set(read_csv(Path(f))[0]) - set(mapping)
+    assert not missing
+
+
+def test_columns_mapped_to_nothing_are_not_compared():
+    truth = [{"item_name": "Croissant", "kcal": "167", "serves": "2"}]
+    r = compare_ground_truth(truth, OURS, {"item_name": "Product_Name", "kcal": "energykCal_Per Portion", "serves": None}, set())
+    assert r["passed"] and r["cells"] == 1
