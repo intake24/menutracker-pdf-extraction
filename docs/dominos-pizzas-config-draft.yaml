@@ -1,0 +1,48 @@
+# Draft source for 6_Dominos (parser grouped_table), pages 3-13 only. Not in config/chains.yaml: against Pearl Scan it matches 152 of 1,422 rows (cells all agree) because cheese labels (rotated) and pizza names are not yet assigned correctly on most pages; pages 2 and 14-18 need their own sources. See the project notes.
+6_Dominos_extra_sources:
+    - pdf: nutrition_pizzas.pdf
+      parser: grouped_table
+      region: UK
+      category: food
+      approved: false
+      # No allergen information in this PDF. Pages 3-13: pizza name, rotated cheese label, crust, then one row per size.
+      pages: ["3-13"]
+      size_x0: 165
+      size_order: [Large, Medium, Small, Personal]
+      left:
+        - { column: Product_Name, x0: 50 }
+        - { column: Cheese, x0: 86, rotated: true }
+        - { column: Crust, x0: 96 }
+      pearlscan: { "slice/portion/piece": ~ }
+      # Figures left to right: ten per 100g, ten per pizza, ten per slice.
+      columns:
+        - energykCal_Per 100g/ml
+        - energykJ_Per 100g/ml
+        - fat_Per 100g/ml
+        - saturates_Per 100g/ml
+        - carbohydrates_Per 100g/ml
+        - sugars_Per 100g/ml
+        - fibre_Per 100g/ml
+        - protein_Per 100g/ml
+        - salt_Per 100g/ml
+        - sodium_Per 100g/ml
+        - energykCal_Per Pizza
+        - energykJ_Per Pizza
+        - fat_Per Pizza
+        - saturates_Per Pizza
+        - carbohydrates_Per Pizza
+        - sugars_Per Pizza
+        - fibre_Per Pizza
+        - protein_Per Pizza
+        - salt_Per Pizza
+        - sodium_Per Pizza
+        - energykCal_Per Slice
+        - energykJ_Per Slice
+        - fat_Per Slice
+        - saturates_Per Slice
+        - carbohydrates_Per Slice
+        - sugars_Per Slice
+        - fibre_Per Slice
+        - protein_Per Slice
+        - salt_Per Slice
+        - sodium_Per Slice

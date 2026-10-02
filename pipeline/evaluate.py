@@ -50,6 +50,11 @@ def ground_truth_file(gt_dir: Path, pdf_stem: str) -> Path | None:
     return max(found, key=lambda p: p.stem.endswith("_v0.1"), default=None)
 
 
+def _full_name(row: dict) -> str:
+    """Pearl Scan's item name: product, then cheese and crust where the PDF has them, then size."""
+    return " ".join(row.get(k, "") for k in ("Product_Name", "Cheese", "Crust", "Size"))
+
+
 def _clean(name: str) -> str:
     """A name without bracketed notes and anything after a star: Pearl Scan dropped those from item names."""
     return re.sub(r"\*.*$|\([^)]*\)", " ", name)
@@ -63,7 +68,7 @@ def compare_ground_truth(truth: list[dict], ours: list[dict], mapping: dict[str,
     """
     by_key: dict[str, list[dict]] = {}
     for r in ours:
-        by_key.setdefault(norm(r["Product_Name"] + r.get("Size", "")), []).append(r)
+        by_key.setdefault(norm(_full_name(r)), []).append(r)
     used: set[int] = set()
     seen: dict[str, int] = {}   # repeated names pair up by order of occurrence: 1st with 1st, 2nd with 2nd
     pairs: list[tuple[dict, dict | None]] = []
@@ -79,7 +84,7 @@ def compare_ground_truth(truth: list[dict], ours: list[dict], mapping: dict[str,
         if o is None and (t["item_name"], "*") not in errata:
             key = norm(t["item_name"])
             for r in ours:
-                if id(r) not in used and norm(_clean(r["Product_Name"] + " " + r.get("Size", ""))).startswith(key):
+                if id(r) not in used and norm(_clean(_full_name(r))).startswith(key):
                     used.add(id(r))
                     pairs[i] = (t, r)
                     break
