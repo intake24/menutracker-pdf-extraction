@@ -279,6 +279,133 @@
         - protein_Per Portion
         - salt_Per Portion
         - sodium_Per Portion
+    - pdf: nutrition_pizzas.pdf
+      parser: grouped_table
+      region: UK
+      category: food
+      approved: false
+      # No allergen information in this PDF. Pages 3-13: pizza name, rotated cheese label, crust, then one row per size.
+      # KNOWN GAP: page 2 (95 rows: gluten free, plant-based, cheeky little, Italiano trial-store, delight pizzas, Absolute Banger) is
+      # not extracted yet: its six small tables label rows differently and one model read of the whole page returned no rows.
+      known_gaps: 110
+      pages: ["3-13"]
+      size_x0: 165
+      size_order: [Large, Medium, Small, Personal]
+      left:
+        - { column: Product_Name, x0: 0, starts_at: { Cheese: Standard Mozzarella } }
+        - { column: Cheese, x0: 86, rotated: true }
+        - { column: Crust, x0: 96 }
+      pearlscan: { "slice/portion/piece": ~ }
+      # Figures left to right: ten per 100g, ten per pizza, ten per slice.
+      columns:
+        - energykCal_Per 100g/ml
+        - energykJ_Per 100g/ml
+        - fat_Per 100g/ml
+        - saturates_Per 100g/ml
+        - carbohydrates_Per 100g/ml
+        - sugars_Per 100g/ml
+        - fibre_Per 100g/ml
+        - protein_Per 100g/ml
+        - salt_Per 100g/ml
+        - sodium_Per 100g/ml
+        - energykCal_Per Pizza
+        - energykJ_Per Pizza
+        - fat_Per Pizza
+        - saturates_Per Pizza
+        - carbohydrates_Per Pizza
+        - sugars_Per Pizza
+        - fibre_Per Pizza
+        - protein_Per Pizza
+        - salt_Per Pizza
+        - sodium_Per Pizza
+        - energykCal_Per Slice
+        - energykJ_Per Slice
+        - fat_Per Slice
+        - saturates_Per Slice
+        - carbohydrates_Per Slice
+        - sugars_Per Slice
+        - fibre_Per Slice
+        - protein_Per Slice
+        - salt_Per Slice
+        - sodium_Per Slice
+    - pdf: nutrition_pizzas.pdf
+      parser: grouped_table
+      region: UK
+      category: food
+      approved: false
+      # Page 14: bases (crust label, then one row per size; figures per 100g, per pizza, per slice).
+      pages: [14]
+      size_x0: 145
+      size_order: [Large, Medium, Small, Personal]
+      left:
+        - { column: Product_Name, x0: 0 }
+      pearlscan: { "slice/portion/piece": ~ }
+      columns:
+        - energykCal_Per 100g/ml
+        - energykJ_Per 100g/ml
+        - fat_Per 100g/ml
+        - saturates_Per 100g/ml
+        - carbohydrates_Per 100g/ml
+        - sugars_Per 100g/ml
+        - fibre_Per 100g/ml
+        - protein_Per 100g/ml
+        - salt_Per 100g/ml
+        - sodium_Per 100g/ml
+        - energykCal_Per Pizza
+        - energykJ_Per Pizza
+        - fat_Per Pizza
+        - saturates_Per Pizza
+        - carbohydrates_Per Pizza
+        - sugars_Per Pizza
+        - fibre_Per Pizza
+        - protein_Per Pizza
+        - salt_Per Pizza
+        - sodium_Per Pizza
+        - energykCal_Per Slice
+        - energykJ_Per Slice
+        - fat_Per Slice
+        - saturates_Per Slice
+        - carbohydrates_Per Slice
+        - sugars_Per Slice
+        - fibre_Per Slice
+        - protein_Per Slice
+        - salt_Per Slice
+        - sodium_Per Slice
+    - pdf: nutrition_pizzas.pdf
+      parser: grouped_table
+      region: UK
+      category: food
+      approved: false
+      # Pages 15-18: sauce, cheese and toppings. Each has a per 100g row, then one row per size with the single serve figures; the per 100g figures go onto each size row.
+      pages: [15, 16, 17, 18]
+      size_x0: 182.5
+      size_order: [per 100g, Large, Medium, Small, Personal]
+      shared_row: per 100g
+      left:
+        - { column: Product_Name, x0: 0, x1: 170 } # the "Per single serve" label at x 170-186 is not a name
+      pearlscan: { "slice/portion/piece": ~ }
+      shared_columns:
+        - energykCal_Per 100g/ml
+        - energykJ_Per 100g/ml
+        - fat_Per 100g/ml
+        - saturates_Per 100g/ml
+        - carbohydrates_Per 100g/ml
+        - sugars_Per 100g/ml
+        - fibre_Per 100g/ml
+        - protein_Per 100g/ml
+        - salt_Per 100g/ml
+        - sodium_Per 100g/ml
+      columns:
+        - energykCal_Per Portion
+        - energykJ_Per Portion
+        - fat_Per Portion
+        - saturates_Per Portion
+        - carbohydrates_Per Portion
+        - sugars_Per Portion
+        - fibre_Per Portion
+        - protein_Per Portion
+        - salt_Per Portion
+        - sodium_Per Portion
 
 58_Vue:
   chain: Vue

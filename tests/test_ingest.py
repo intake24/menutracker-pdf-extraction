@@ -29,7 +29,8 @@ def test_identical_pdfs_share_text_sha():
 def test_one_pdf_per_source_and_ten_chains_configured():
     chains = load_chains()
     assert set(chains) == {"11_PizzaExpress", "6_Dominos", "58_Vue", "59_Odeon", "26_PapaJohns", "16_Beefeater", "17_Brewersfayre", "21_TableTable", "46_Cineworld", "52_FiveGuys"}
-    assert all(len(users) == 1 for users in sources_by_pdf(chains).values())
+    assert all(len(users) == 1 or all("pages" in source for _, source in users)   # one PDF, several page ranges
+               for users in sources_by_pdf(chains).values())
 
 
 def test_image_only_pages_reported():

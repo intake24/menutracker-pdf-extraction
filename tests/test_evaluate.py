@@ -145,3 +145,12 @@ def test_trademark_signs_do_not_stop_names_matching():
     mapping = {"item_name": "Product_Name", "kcal": "energykCal_Per Portion"}
     ours = [{"Product_Name": "LA VIE\u2122 VEGAN HAWAIIAN", "Size": "", "energykCal_Per Portion": "1"}]
     assert compare_ground_truth([{"item_name": "LA VIE VEGAN HAWAIIAN", "kcal": "1"}], ours, mapping, set())["passed"]
+
+
+def test_known_gap_rows_may_be_unmatched_up_to_the_stated_number_but_cells_must_still_agree():
+    mapping = {"item_name": "Product_Name", "kcal": "energykCal_Per Portion"}
+    ours = [{"Product_Name": "A", "Size": "", "energykCal_Per Portion": "1"}]
+    truth = [{"item_name": "A", "kcal": "1"}, {"item_name": "Missing", "kcal": "2"}]
+    assert not compare_ground_truth(truth, ours, mapping, set())["passed"]
+    assert compare_ground_truth(truth, ours, mapping, set(), allowed_unmatched=1)["passed"]
+    assert not compare_ground_truth([{"item_name": "A", "kcal": "9"}], ours, mapping, set(), allowed_unmatched=1)["passed"]

@@ -7,11 +7,13 @@ cover, so every row is given the label whose centre fits best (rows are split in
 Source options (config/chains.yaml):
   pages      pages to read (numbers and "a-b" ranges)
   columns    the dictionary column of each figure, left to right (every data line must have exactly this many)
-  left       label columns, left to right: {column: <dictionary column>, x0: <left edge in pt>, rotated: <bool>}; the first
+  left       label columns, left to right: {column: <dictionary column>, x0: <left edge in pt>, x1: <right edge, default the next column's x0>, rotated: <bool>}; the first
              is the product name; words left of `size_x0` belong to the column whose x0 is the largest not above them
   size_order the sizes from largest to smallest; a row whose size is not smaller than the one above starts a new lowest-level group
   starts_at  (on a label column) {lower column: value}: a new group of this label starts at every group of the lower label with that value
   header_word  a word that appears in every column-title block (default Energy); words level with it are not labels
+  shared_row, shared_columns  a size label ("per 100g") whose row is not a row of its own: its figures, named by shared_columns,
+             are copied onto the rows that follow it until the next such row
   size_x0    words from here to the first figure are the row's own label (the size), written to `size_column` (default Size)
 Anything that doesn't fit (a data line with another number of figures, more labels than rows) raises.
 """
@@ -105,7 +107,8 @@ def parse(pdf: Path, source: dict) -> list[dict]:
             if len(nums) < 9:
                 continue
             first = nums[0]
-            size_words = [w.text for w in line if size_x0 <= w.x0 < first.x0 and not NUMBER.match(w.text)]
+            vocab = {part for name in source["size_order"] for part in name.split()}
+            size_words = [w.text for w in line if size_x0 <= w.x0 < first.x0 and w.text in vocab]   # not stray letters of a label
             if len(nums) != len(columns):
                 raise ValueError(f"page {page_no}: a data line has {len(nums)} figures, config names {len(columns)}: "
                                  f"{' '.join(w.text for w in line)!r}")
@@ -117,7 +120,7 @@ def parse(pdf: Path, source: dict) -> list[dict]:
         header_ys = sorted({w.y0 for w in labels[page_no - 1] if w.text == source.get("header_word", "Energy")})
         titles = lambda w: any(h - 6 <= w.y0 <= h + 12 for h in header_ys)
         for col in left:
-            col["_x1"] = next((c["x0"] for c in left if c["x0"] > col["x0"]), size_x0)
+            col["_x1"] = col.get("x1") or next((c["x0"] for c in left if c["x0"] > col["x0"]), size_x0)
         order = {name: i for i, name in enumerate(source["size_order"])}
         ranks = [order.get(d[1], -1) for d in data]
         if -1 in ranks:
@@ -159,8 +162,12 @@ def parse(pdf: Path, source: dict) -> list[dict]:
             for i, g in enumerate(groups):
                 assigned[i].insert(0, clusters[g][1])
             unit_of = groups
+        shared: dict[str, str] = {}   # figures of the group's "per 100g" row, repeated on each of its other rows
         for (y, size, nums), labs in zip(data, assigned):
+            if size == source.get("shared_row"):
+                shared = dict(zip(source["shared_columns"], nums))
+                continue
             row = {left[i]["column"]: labs[i] for i in range(len(left))} | {size_column: size, "source_page": page_no}
-            row |= dict(zip(columns, nums))
+            row |= shared | dict(zip(columns, nums))
             rows.append(row)
     return rows

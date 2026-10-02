@@ -148,7 +148,13 @@ def evaluate(chains_file: Path, outputs: Path, ground_truth: Path, golden: Path,
             failures.append(f"{key}: {out.name} missing, run `run` first")
             continue
         ours_all = read_csv(out)
+        compared: set[str] = set()   # one PDF can have several sources (page ranges): compare it once, with all their rows
         for source in chain["sources"]:
+            if source["pdf"] in compared:
+                continue
+            compared.add(source["pdf"])
+            same_pdf = [s for s in chain["sources"] if s["pdf"] == source["pdf"]]
+            source = {**source, "known_gaps": max(s.get("known_gaps", 0) for s in same_pdf)}
             stem = Path(source["pdf"]).stem
             ours = [r for r in ours_all if r["source_file"] == source["pdf"]]
             gt = ground_truth_file(ground_truth, stem)
@@ -163,9 +169,11 @@ def evaluate(chains_file: Path, outputs: Path, ground_truth: Path, golden: Path,
                 for old, new in source.get("name_fixes", {}).items():   # Pearl Scan corrected a typo the PDF prints
                     for t in truth:
                         t["item_name"] = t["item_name"].replace(old, new)
-                r = compare_ground_truth(truth, ours, mapping | source.get("pearlscan", {}), errata)
+                r = compare_ground_truth(truth, ours, mapping | source.get("pearlscan", {}), errata,
+                                         source.get("known_gaps", 0))
+                gap = f", {len(r['unmatched'])} rows in the known gap" if source.get("known_gaps") else ""
                 print(f"{key} {stem}: ground truth {r['rows']} rows, recall {r['recall']:.1%}, "
-                      f"{r['cells']} cells, {len(r['mismatches'])} mismatches")
+                      f"{r['cells']} cells, {len(r['mismatches'])} mismatches{gap}")
                 if not r["passed"]:
                     failures += [f"{key} {stem}: unmatched row {n}" for n in r["unmatched"]]
                     failures += [f"{key} {stem}: {m}" for m in r["mismatches"]]

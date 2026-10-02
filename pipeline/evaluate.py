@@ -61,7 +61,7 @@ def _clean(name: str) -> str:
 
 
 def compare_ground_truth(truth: list[dict], ours: list[dict], mapping: dict[str, str],
-                         errata: set[tuple[str, str]]) -> dict:
+                         errata: set[tuple[str, str]], allowed_unmatched: int = 0) -> dict:
     """Match rows on name (+ size), then compare every mapped cell.
 
     errata: {(item_name, pearlscan_column)}; column "*" excuses a whole row.
@@ -123,7 +123,7 @@ def compare_ground_truth(truth: list[dict], ours: list[dict], mapping: dict[str,
     checked = len(truth) - sum((t["item_name"], "*") in errata for t in truth)
     recall = (checked - len(unmatched)) / checked if checked else 1.0
     return {"rows": checked, "recall": recall, "cells": cells, "unmatched": unmatched, "mismatches": mismatches,
-            "passed": recall >= ROW_RECALL_MIN and not mismatches}
+            "passed": (recall >= ROW_RECALL_MIN or len(unmatched) <= allowed_unmatched) and not mismatches}
 
 
 def compare_golden(golden: list[dict], ours: list[dict]) -> list[str]:
