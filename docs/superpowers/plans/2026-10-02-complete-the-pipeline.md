@@ -11,10 +11,10 @@
 What this plan adds:
 - A config-driven **allergen matrix** parser (Cineworld, Pizza Hut, and the Whitbread drinks grid migrated onto it).
 - Parsers for the remaining table layouts (Domino's, Odeon, Coffee #1, Starbucks).
-- A **vision/LLM route** (Anthropic API) for the PDFs whose text layer is unusable (Vue, Papa John's, Krispy Kreme) and for menu layouts that need judgement about what a dish name is (Brewhouse, Cookhouse, Top Golf).
+- A **vision/LLM route** (headless Claude Code, `claude -p`) for the PDFs whose text layer is unusable (Vue, Papa John's, Krispy Kreme) and for menu layouts that need judgement about what a dish name is (Brewhouse, Cookhouse, Top Golf).
 - Finishing work: a flags report, a coverage check, and docs.
 
-**Tech Stack:** Python 3.12, `uv`, `pydantic` v2, `pyyaml`, `pdfplumber`, `pytest`, poppler. New in this plan: `anthropic` (LLM slices only).
+**Tech Stack:** Python 3.12, `uv`, `pydantic` v2, `pyyaml`, `pdfplumber`, `pytest`, poppler. No new Python dependency: the LLM slices call the `claude` CLI (version 2.1.287 installed) as a subprocess.
 
 **Spec:** [docs/pipeline-design.md](../../pipeline-design.md), draft v3. This plan implements §10 from Phase 2c to the end.
 
@@ -22,7 +22,7 @@ What this plan adds:
 
 Approving this plan authorises, without further questions:
 1. **The work in slices 0 to 9 below,** executed natively in this session, one slice after another.
-2. **New dependency `anthropic`,** and calls to the Anthropic API for slices 7 to 9 using `ANTHROPIC_API_KEY` from your environment. Spend is capped (see Slice 6). If the key is absent, slices 7 to 9 pause and everything else continues.
+2. **Headless Claude Code calls** (`claude -p`) for slices 7 to 9, using your existing Claude Code login. No API key and no new dependency. Every call is capped with `--max-budget-usd`, and each run has call and token caps (see Slice 6). The calls count against your Claude plan or account. If `claude` is not logged in, slices 7 to 9 pause and everything else continues. A direct API client can be added later behind the same interface, but only if you ask.
 3. **Local merges to `main`** after each slice's review (no remote exists, nothing is pushed).
 
 What stays with you, and never blocks the work:
@@ -51,7 +51,7 @@ Disagreements between our output and Pearl Scan are triaged by rendering the pag
 - Anything a parser can't place raises. Nothing is guessed or dropped. LLM output is validated by the same Pydantic row model, and the model **copies markers as printed**: code maps them.
 - `flags` hold problems and values are never changed. Flags can come from the source.
 - `run` and `eval` skip unapproved chains. Only a person sets `approved: true`.
-- New dependencies: only `anthropic`, and only in Slice 6. No others without asking.
+- No new dependencies planned. LLM calls go through the `claude` CLI; a direct API client (`anthropic`) is out of scope unless you ask for it.
 - Tests that read PDFs must stay under ~60 s for the whole suite; cache parsed PDFs in fixtures where a test file parses the same PDF repeatedly.
 
 ## Review Focus
@@ -60,7 +60,7 @@ Disagreements between our output and Pearl Scan are triaged by rendering the pag
 2. **Ground-truth lookup misses.** The Domino's pizza file has a soft hyphen in its name and is silently skipped today (1,422 rows never evaluated). Every PDF must be evaluated or listed as having no ground truth.
 3. **Variants and repeated names** (sizes, milk types, crusts, regions). Rows must not collide or merge; duplicates with different values are flagged.
 4. **The LLM changing a number or inventing a row.** Validators and the Pearl Scan comparison are the only defence: row coverage per page must equal what the page shows; a mismatch reaches a person.
-5. **Runaway spend.** Token caps enforced before each call, results cached by content hash, and a dry-run that prints the estimate.
+5. **Runaway spend.** A per-call `--max-budget-usd`, a per-run cap on calls and reported cost, results cached by content hash, and a dry-run that prints the estimate. Each call carries ~20k tokens of Claude Code overhead, so batching several pages per call must be tested for accuracy before it is used.
 6. **Slanted or rotated text** (Coffee #1 beverages, some matrix headers). `page_words_fine` refuses it; the affected slice needs a documented alternative, never a guess.
 
 ---
@@ -77,7 +77,7 @@ The order puts everything that needs no API key first.
 | 3 | Odeon | Odeon (59): 3 nutrition PDFs, 3 pre-packed matrices | parser |
 | 4 | Coffee #1 | Coffee #1 (47): food, beverages | parser |
 | 5 | Starbucks | Starbucks (7): food, beverages | parser |
-| 6 | LLM backend | none (infrastructure) | LLM |
+| 6 | LLM backend (`claude -p`) | none (infrastructure) | LLM |
 | 7 | Vision chains | Vue (58), Papa John's (26), Krispy Kreme (35) | vision |
 | 8 | Menu layouts | Brewhouse (45), Cookhouse (49), Top Golf (73) | LLM text or vision |
 | 9 | Finish | all | tooling, docs |
@@ -156,20 +156,32 @@ Fixes found while surveying that would otherwise hide failures in later slices.
 
 **Acceptance:** 93 and 1,464 ground-truth rows match; each size and milk variant is its own row without collisions.
 
-### Slice 6: LLM backend (needs `ANTHROPIC_API_KEY`)
+### Slice 6: LLM backend (headless Claude Code)
 
-**Design:** one function, `extract(page, columns, instructions) -> list[dict]`, behind a small interface so the backend can change later; the Anthropic Messages API with tool-use structured output derived from `build_row_model(columns).model_json_schema(by_alias=True)`. Default model `claude-sonnet-5-5`.
+**Evidence (a trial on 2026-10-02):** one real call read the Vue ice-cream page image (the page whose text layer is corrupt) and returned the first four rows through `--json-schema`; every cell matched the page and Pearl Scan exactly, including `trace`, `08`, `05`, `09`. It took 11 s and reported $0.10, of which about 22k tokens were Claude Code's own system prompt and tool definitions.
+
+**Design:** one function, `extract(page, columns, instructions) -> list[dict]`, behind a small interface. The first implementation shells out to:
+
+```
+claude -p --model claude-sonnet-5-5 --tools Read --add-dir work/pages \
+       --json-schema <schema from build_row_model(columns)> --output-format json \
+       --no-session-persistence --max-budget-usd <cap> "<instructions + image path>"
+```
+
+The image is a PNG the `Read` tool opens; a text page goes in the prompt. The result is read from `structured_output`; `usage` and `total_cost_usd` are recorded. The model is pinned by its full ID, never an alias, and is part of the cache key.
 
 **Tasks**
-- [ ] **6.1 Dependency and client:** add `anthropic`; read the key from the environment only; never log it.
-- [ ] **6.2 Content-hash cache** in `work/llm/` keyed on `sha256(page text or image) + columns.version + prompt version + model`; a re-run over unchanged inputs makes no API calls (tested with a fake client).
-- [ ] **6.3 Budget guard:** per `run`, a cap on input and output tokens (default 2M and 1M, configurable); the estimate is printed before the first call, and exceeding the cap stops the run. `--dry-run` prints the estimate and calls nothing.
-- [ ] **6.4 Page rendering:** `pdftoppm -r 150`, long edge capped at 1568 px.
-- [ ] **6.5 Validation and repair:** every returned row goes through the same Pydantic model and arithmetic checks; rows that fail get **one** re-read of that page with the failure reasons in the prompt; still-failing rows are kept with `flags` (never dropped, never altered).
-- [ ] **6.6 Coverage check:** a page's row count is compared with an independent count (text tokens or a second cheap pass); a shortfall is flagged.
-- [ ] **6.7 Tests without the network:** a fake client returning canned structured output; tests for cache hits, budget stop, schema mismatch, repair, and marker copying (the model returns `▲`, code maps it).
+- [ ] **6.1 Backend interface and `claude -p` implementation** (`pipeline/llm.py`): subprocess with an explicit timeout, `stdin` closed, no secrets passed or logged, errors (non-zero exit, `is_error`, schema mismatch) raised with the page and the stderr tail.
+- [ ] **6.2 Content-hash cache** in `work/llm/` keyed on `sha256(page text or image) + columns.version + prompt version + model`; a re-run over unchanged inputs makes no calls (tested with a fake runner).
+- [ ] **6.3 Budget guard:** per call `--max-budget-usd`; per run a cap on calls and on summed `total_cost_usd` (defaults: 400 calls, $60, configurable); the estimate is printed before the first call; exceeding a cap stops the run. `--dry-run` prints the estimate and calls nothing.
+- [ ] **6.4 Overhead measurement:** compare a default call with `--bare` and with trimmed tools on the same page; keep whichever is cheapest **without** changing a single cell. Test a two-page call against two one-page calls for accuracy before ever batching pages.
+- [ ] **6.5 Page rendering:** `pdftoppm -r 150`, long edge capped at 1568 px, into `work/pages/`.
+- [ ] **6.6 Validation and repair:** every returned row goes through the same Pydantic model and arithmetic checks; rows that fail get **one** re-read of that page with the failure reasons in the prompt; still-failing rows are kept with `flags` (never dropped, never altered).
+- [ ] **6.7 Coverage check:** a page's row count is compared with an independent count (text tokens where the text layer is usable, otherwise a second pass); a shortfall is flagged.
+- [ ] **6.8 Bounded concurrency:** at most 3 calls in flight, with back-off on rate-limit errors.
+- [ ] **6.9 Tests without the CLI:** a fake runner returning canned `claude -p` JSON; tests for cache hits, budget stop, a schema mismatch, a repair, marker copying (the model returns `▲`, code maps it), a timeout, and an `is_error` result.
 
-**Acceptance:** all tests pass with the fake client; one real call on one real page succeeds and its cost is printed; no secret appears in logs or `work/`.
+**Acceptance:** all tests pass with the fake runner; one real page round-trips and its cost and duration are printed; nothing secret appears in `work/` or logs.
 
 ### Slice 7: Vision chains
 
@@ -205,10 +217,11 @@ Fixes found while surveying that would otherwise hide failures in later slices.
 
 ## Cost and risk
 
-- **Tokens (Slices 6 to 8, from the design's estimates):** about 0.4M input and 0.17M output for one full run over the vision and text PDFs, plus development iterations (assume 3 to 5 runs). Re-runs cost nothing because of the cache. The cap in Task 6.3 stops a run before it can exceed 2M input or 1M output tokens.
+- **Calls (Slices 6 to 8):** about 154 vision pages (Vue 14, Papa John's 79, Krispy Kreme 61) plus about 26 menu pages, so roughly 180 calls for a full run if each page is its own call. At the trial's $0.10 per call that is about $18 per full run on a per-token account (the trial's overhead dominates, and Task 6.4 tries to cut it); on a subscription it counts against your plan limits instead. Assume 3 to 5 development runs. Re-runs are free because of the cache. The caps in Task 6.3 stop a run before it can exceed 400 calls or $60.
+- **Terms:** a subscription is meant for individual, interactive use. Running a recurring or production pipeline on `claude -p` may be outside what your plan allows; check Anthropic's terms before relying on it beyond this one-off extraction. That is your call; the backend interface keeps an API client possible.
 - **Biggest technical risks:** Starbucks' interleaved name/ingredient layout (Slice 5), Coffee #1's slanted beverages (Slice 4, with a vision fallback), and Pearl Scan errors that look like parser errors (mitigated by reading the page image for each disagreement).
 - **If a slice can't reach the gate** (a layout no parser or prompt handles exactly), it stops, records what was tried and the closest result, and the plan continues with the next slice rather than loosening the gate.
 
 ## Order of work, once approved
 
-Slice 0, then 1 to 5 (parsers, no key needed), then 6 to 8 (needs `ANTHROPIC_API_KEY`), then 9. After each slice I report what merged, its test count and `eval` result, and carry on.
+Slice 0, then 1 to 5 (parsers, no LLM), then 6 to 8 (needs a logged-in `claude`), then 9. After each slice I report what merged, its test count and `eval` result, and carry on.

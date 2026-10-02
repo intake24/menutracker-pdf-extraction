@@ -186,7 +186,7 @@ A chain's CSV contains only the dictionary columns that have a value for that ch
 | Character-level cells | `pdfplumber` | Approved 2026-10-01. Splits cells that are printed almost touching (Pizza Express, §2). `numeric_table` takes its words from it for every table PDF; poppler's `-bbox` stays for the grid parsers. |
 | Row model + JSON Schema | `pydantic` v2 | One definition drives both extraction and validation |
 | Config | `pyyaml` | Human-edited, version-controlled config |
-| LLM (Phase 3) | `anthropic` SDK, Message Batches + prompt caching | 50% batch discount; prefix cached. Alternatives in §8 |
+| LLM (Phase 3) | Headless Claude Code (`claude -p`) with `--json-schema` | Chosen 2026-10-02: no API key or new dependency, and a trial on a corrupt-text Vue page matched every cell. The backend sits behind one interface, so the Anthropic Batch API stays possible (§8) |
 | Models (Phase 3) | Sonnet 5.5 for 2b/2c/5; Opus 5.5 for writing parsers (dev time) | Numbers must be exact; no cheap model until it passes §9 |
 | Orchestration | One CLI (`python -m pipeline.cli manifest|run|eval`) | Dozens of files doesn't justify a framework or database |
 
@@ -254,6 +254,8 @@ Every LLM call goes through one function, `extract(page, columns) -> rows`. Buil
 | **Anthropic Batch API** (default) | List price × 0.5; cached prefix ~10% | Scheduled and recurring runs |
 | **Headless Claude Code** (`claude -p`) | Pro/Max quota; per-call system-prompt overhead; 5-hour and weekly caps | Development, one-off runs, parser authoring |
 | **OpenRouter** | Provider price + small fee; Claude costs ~2× the Batch API | Testing cheaper non-Claude models against §9 |
+
+**Decision (2026-10-02): backend 1 is headless Claude Code.** A one-page trial (Vue ice cream, image via the `Read` tool, structured output via `--json-schema`) returned four rows that matched the page and Pearl Scan exactly, in 11 s, at a reported $0.10 of which about 22k tokens were Claude Code's own overhead. Each call carries that overhead, so the roadmap plan measures `--bare` and trimmed tools before any run, and tests batching pages for accuracy before using it. Models are pinned by full ID (`claude-sonnet-5-5`), never an alias.
 
 Rules:
 - **Accuracy decides**, not list price.
