@@ -11,7 +11,8 @@ import os
 import re
 import subprocess
 import tempfile
-from dataclasses import dataclass
+import threading
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
 
@@ -41,6 +42,7 @@ class Budget:
     max_usd: float = 60.0
     calls: int = 0
     usd: float = 0.0
+    lock: threading.Lock = field(default_factory=threading.Lock, repr=False)
 
     def check(self) -> None:
         if self.calls >= self.max_calls or self.usd >= self.max_usd:
@@ -94,10 +96,12 @@ def call(prompt: str, schema: dict, image: Path, *, cache_dir: Path, budget: Bud
             return json.loads(cached.read_text())
         except json.JSONDecodeError:
             pass   # a write that was cut short: ask again
-    budget.check()
+    with budget.lock:
+        budget.check()
+        budget.calls += 1   # counted when started, so parallel calls cannot overshoot the cap
     result = runner(prompt, schema, image.parent)
-    budget.calls += 1
-    budget.usd += result.get("total_cost_usd") or 0.0
+    with budget.lock:
+        budget.usd += result.get("total_cost_usd") or 0.0
     if result.get("is_error"):
         message = str(result.get("result"))[:300]
         raise (RateLimited if RATE_LIMIT.search(message) and result.get("subtype") != "error_max_budget_usd" else LlmError)(f"{image.name}: {message}")

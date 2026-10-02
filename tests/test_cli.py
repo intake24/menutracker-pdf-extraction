@@ -16,7 +16,7 @@ def chains_file(tmp_path: Path, approved: bool) -> Path:
     path = tmp_path / "chains.yaml"
     path.write_text(text)
     import yaml   # chains read by the model cost real calls: the offline tests leave them out
-    chains = {k: c for k, c in yaml.safe_load(text).items() if all(s["parser"] != "vision_table" for s in c["sources"])}
+    chains = {k: c for k, c in yaml.safe_load(text).items() if all(not s["parser"].startswith("vision_") for s in c["sources"])}
     path.write_text(yaml.safe_dump(chains))
     return path
 
@@ -81,7 +81,7 @@ def test_two_chains_sharing_a_pdf_each_get_their_own_column_mapping(tmp_path):
 def test_run_skips_unapproved_chains_with_a_notice_but_refuses_when_asked_for_one(tmp_path, capsys):
     import yaml
     chains = {k: c for k, c in yaml.safe_load((ROOT / "config" / "chains.yaml").read_text()).items()
-              if all(s["parser"] != "vision_table" for s in c["sources"])}
+              if all(not s["parser"].startswith("vision_") for s in c["sources"])}
     for key, chain in chains.items():   # whatever is committed, Five Guys is the only unapproved chain here
         for source in chain["sources"]:
             source["approved"] = key != "52_FiveGuys"

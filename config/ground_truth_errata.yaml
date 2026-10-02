@@ -95,3 +95,31 @@
   item: 'Side of McCains Our Menu Sia Crispers '
   column: '*'
   why: 'Pearl Scan typo: the PDF prints Sig Crispers'
+- file: nutritional-information_v0.1.csv
+  item: CHEESE & TOMATO - Stuffed Crust Pepperoni - Large
+  column: salt_100
+  why: The PDF prints the figure with a decimal comma (1,75); Pearl Scan changed it to 1.75. We keep it as printed and the row is flagged.
+- file: nutritional-information_v0.1.csv
+  item: THE MEXICAN - Original Base - Small
+  column: fat_100
+  why: The PDF prints the figure with a decimal comma (8,6); Pearl Scan changed it to 8.6. We keep it as printed and the row is flagged.
+- file: nutritional-information_v0.1.csv
+  item: CHEESY POTATO TOTS
+  column: recommended_portions
+  why: The PDF prints 1/2; Pearl Scan's file holds the date 01-Feb (spreadsheet auto-format).
+- file: nutritional-information_v0.1.csv
+  item: POTATO TOTS WITH CHEESE & JALAPENOS
+  column: recommended_portions
+  why: The PDF prints 1/2; Pearl Scan's file holds the date 01-Feb (spreadsheet auto-format).
+- file: nutritional-information_v0.1.csv
+  item: BACON & CHEESE POTATO TOTS
+  column: recommended_portions
+  why: The PDF prints 1/2; Pearl Scan's file holds the date 01-Feb (spreadsheet auto-format).
+- file: nutritional-information_v0.1.csv
+  item: POTATO TOTS WITH FOUR CHEESES
+  column: recommended_portions
+  why: The PDF prints 1/2; Pearl Scan converted it to 0.50.
+- file: nutritional-information_v0.1.csv
+  item: LA VIE VEGAN HAM & CHEESE STICKS
+  column: '*'
+  why: The PDF prints the product name as LA VIE VEGAN HAM & SHEESE STICKS (the brand's spelling); Pearl Scan wrote CHEESE.

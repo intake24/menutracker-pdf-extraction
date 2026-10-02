@@ -132,3 +132,16 @@ def test_a_pearl_scan_name_that_is_the_start_of_ours_without_notes_still_matches
     assert not r["passed"] and r["unmatched"] == []
     r = compare_ground_truth([{"item_name": "Cola", "kcal": "1"}], ours, mapping, set())
     assert r["unmatched"] == ["Cola"]
+
+
+def test_a_mapping_to_several_columns_takes_the_first_one_that_has_a_value():
+    mapping = {"item_name": "Product_Name", "pieces": ["Total_Pieces", "Total_Portions"]}
+    ours = [{"Product_Name": "Wings", "Size": "", "Total_Portions": "6"}]
+    assert compare_ground_truth([{"item_name": "Wings", "pieces": "6"}], ours, mapping, set())["passed"]
+    assert not compare_ground_truth([{"item_name": "Wings", "pieces": "7"}], ours, mapping, set())["passed"]
+
+
+def test_trademark_signs_do_not_stop_names_matching():
+    mapping = {"item_name": "Product_Name", "kcal": "energykCal_Per Portion"}
+    ours = [{"Product_Name": "LA VIE\u2122 VEGAN HAWAIIAN", "Size": "", "energykCal_Per Portion": "1"}]
+    assert compare_ground_truth([{"item_name": "LA VIE VEGAN HAWAIIAN", "kcal": "1"}], ours, mapping, set())["passed"]

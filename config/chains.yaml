@@ -400,3 +400,104 @@
         - sodium_Per Portion
         - salt_Per Portion
         - fibre_Per Portion
+
+26_PapaJohns:
+  chain: Papa Johns
+  sources:
+    # The text layer is empty (image pages), so the pages are read by the model (parser vision_products).
+    - pdf: nutritional-information.pdf
+      parser: vision_products
+      region: UK
+      category: food
+      approved: false
+      # Pages with a table: pizzas 6-33, vegan pizzas 34-39, papadias 40-44, sides 45-57, desserts 58-63, create-your-own
+      # tables 66-67, recently delisted 75-79. The other pages (cover, contents, welfare, allergen lists for the
+      # create-your-own ingredients, drinks, Ben & Jerry's) carry no nutrition table; their allergens are not read yet.
+      pages: ["6-63", "66-67", "75-79"]
+      dpi: 150
+      # Each sheet lists the ingredient allergens per dough or base and what "may contain"; "None" is printed when empty,
+      # so an allergen that is not listed is absent from the ingredients.
+      markers: { '': 'No' }
+      disclaimer: >-
+        Allergens: "None" refers to the ingredients themselves, not the finished product from store. All of our food is
+        freshly prepared in store. We cannot guarantee that our products will be free from allergens / animal products
+        due to the risk of cross contact when assembling the products. Product customisation may affect calorie content.
+      instructions: >-
+        It is a Papa John's UK product sheet (one or two products per page). section = the coloured band at the bottom of
+        the page (PIZZAS, SIDES, ...). name = the product title as printed (for a page with two products, each row gets
+        the title of its own product). variant = the first-column label of the row in a 'SIZE & CRUST' table
+        (for example 'Original Base - Medium'), or empty when the table has a single row. values = the cells of that row
+        from every table on the sheet (the 'VALUES PER 100G' table and the 'VALUES PER SLICE' or 'VALUES PER PORTION'
+        table). contains and may = the text under 'INGREDIENT ALLERGENS WITH ...' and 'INGREDIENT MAY CONTAIN' for the
+        dough or base that this row's variant uses (a sheet can have a separate block for the wheat free base); when
+        there is one block, use it for every row; leave both empty on a page without such text.
+      # Printed header -> column. "per Total" is the whole product; "per Portion" is per slice/piece. The unit word
+      # of a count header (Slice, Piece, Box of) is dropped except where `@Type` records it.
+      header_columns:
+        'VALUES PER 100G / CARBOHYDRATE g': carbohydrates_Per 100g/ml
+        'VALUES PER 100G / ENERGY kJ': energykJ_Per 100g/ml
+        'VALUES PER 100G / ENERGY kcal': energykCal_Per 100g/ml
+        'VALUES PER 100G / FAT g': fat_Per 100g/ml
+        'VALUES PER 100G / FIBRE g': fibre_Per 100g/ml
+        'VALUES PER 100G / PROTEIN g': protein_Per 100g/ml
+        'VALUES PER 100G / SALT g': salt_Per 100g/ml
+        'VALUES PER 100G / SATURATES g': saturates_Per 100g/ml
+        'VALUES PER 100G / SODIUM g': sodium_Per 100g/ml
+        'VALUES PER 100G / SUGARS g': sugars_Per 100g/ml
+        'COOKED INGREDIENT VALUES PER 100G / CARBOHYDRATE g': carbohydrates_Per 100g/ml
+        'COOKED INGREDIENT VALUES PER 100G / ENERGY kJ': energykJ_Per 100g/ml
+        'COOKED INGREDIENT VALUES PER 100G / ENERGY kcal': energykCal_Per 100g/ml
+        'COOKED INGREDIENT VALUES PER 100G / FAT g': fat_Per 100g/ml
+        'COOKED INGREDIENT VALUES PER 100G / FIBRE g': fibre_Per 100g/ml
+        'COOKED INGREDIENT VALUES PER 100G / PROTEIN g': protein_Per 100g/ml
+        'COOKED INGREDIENT VALUES PER 100G / SALT g': salt_Per 100g/ml
+        'COOKED INGREDIENT VALUES PER 100G / SATURATES g': saturates_Per 100g/ml
+        'COOKED INGREDIENT VALUES PER 100G / SODIUM g': sodium_Per 100g/ml
+        'COOKED INGREDIENT VALUES PER 100G / SUGARS g': sugars_Per 100g/ml
+        'VALUES PER SLICE / ENERGY kcal per Portion': energykCal_Per Portion
+        'VALUES PER SLICE / ENERGY kcal per Total': energykCal_Per Product As Sold
+        'VALUES PER SLICE / TOTAL PRODUCT WEIGHT g': Total_Weight
+        'VALUES PER SLICE / PORTION SIZE g': Serving_Size|g
+        'VALUES PER SLICE / PORTION SIZE Slice': Portion_Size@Slice
+        'VALUES PER SLICE / PORTION SIZE Piece': Portion_Size@Piece
+        'VALUES PER SLICE / RECOMMENDED PORTION SIZE Serving': Recommended_Portions
+        'VALUES PER SLICE / TOTAL SLICES SLICE': Total_Slices
+        'VALUES PER SLICE / TOTAL PORTION SIZE Slice': Total_Slices
+        'VALUES PER SLICE / TOTAL PORTION SIZE Box of': Total_Portions
+        'VALUES PER SLICE / TOTAL PORTIONS Box of': Total_Portions
+        'VALUES PER SLICE / TOTAL IN BOX Pieces': Total_Pieces
+        'VALUES PER SLICE / TOTAL IN BOX Box of': Total_Pieces
+        'VALUES PER SLICE / NO. OF PORTIONS Per box': Number_of_Portions
+        'VALUES PER SLICE / NO. OF PORTIONS Piece': Number_of_Portions
+        'VALUES PER PORTION / ENERGY kcal per Portion': energykCal_Per Portion
+        'VALUES PER PORTION / ENERGY kcal per Total': energykCal_Per Product As Sold
+        'VALUES PER PORTION / TOTAL PRODUCT WEIGHT g': Total_Weight
+        'VALUES PER PORTION / PORTION SIZE g': Serving_Size|g
+        'VALUES PER PORTION / PORTION SIZE Slice': Portion_Size@Slice
+        'VALUES PER PORTION / PORTION SIZE Piece': Portion_Size@Piece
+        'VALUES PER PORTION / RECOMMENDED PORTION SIZE Serving': Recommended_Portions
+        'VALUES PER PORTION / TOTAL SLICES SLICE': Total_Slices
+        'VALUES PER PORTION / TOTAL PORTION SIZE Slice': Total_Slices
+        'VALUES PER PORTION / TOTAL PORTION SIZE Box of': Total_Portions
+        'VALUES PER PORTION / TOTAL PORTIONS Box of': Total_Portions
+        'VALUES PER PORTION / TOTAL IN BOX Pieces': Total_Pieces
+        'VALUES PER PORTION / TOTAL IN BOX Box of': Total_Pieces
+        'VALUES PER PORTION / NO. OF PORTIONS Per box': Number_of_Portions
+        'VALUES PER PORTION / NO. OF PORTIONS Piece': Number_of_Portions
+        'VALUES PER PORTION (1 Cookie) / ENERGY kcal per Portion': energykCal_Per Portion
+        'VALUES PER PORTION (1 Cookie) / ENERGY kcal per Total': energykCal_Per Product As Sold
+        'VALUES PER PORTION (1 Cookie) / TOTAL PRODUCT WEIGHT g': Total_Weight
+        'VALUES PER PORTION (1 Cookie) / PORTION SIZE g': Serving_Size|g
+        'VALUES PER PORTION (1 Cookie) / PORTION SIZE Slice': Portion_Size@Slice
+        'VALUES PER PORTION (1 Cookie) / PORTION SIZE Piece': Portion_Size@Piece
+        'VALUES PER PORTION (1 Cookie) / RECOMMENDED PORTION SIZE Serving': Recommended_Portions
+        'VALUES PER PORTION (1 Cookie) / TOTAL SLICES SLICE': Total_Slices
+        'VALUES PER PORTION (1 Cookie) / TOTAL PORTION SIZE Slice': Total_Slices
+        'VALUES PER PORTION (1 Cookie) / TOTAL PORTION SIZE Box of': Total_Portions
+        'VALUES PER PORTION (1 Cookie) / TOTAL PORTIONS Box of': Total_Portions
+        'VALUES PER PORTION (1 Cookie) / TOTAL IN BOX Pieces': Total_Pieces
+        'VALUES PER PORTION (1 Cookie) / TOTAL IN BOX Box of': Total_Pieces
+        'VALUES PER PORTION (1 Cookie) / NO. OF PORTIONS Per box': Number_of_Portions
+        'VALUES PER PORTION (1 Cookie) / NO. OF PORTIONS Piece': Number_of_Portions
+        'VALUES PER 100G / Fibre g': fibre_Per 100g/ml
+      pearlscan: { kcal: energykCal_Per Product As Sold, total_weight: Total_Weight, portion_size_g: Serving_Size, portion_size: ~, total_slices: Total_Slices, num_of_portions: [Number_of_Portions, Portion_Size], total_pieces: [Total_Pieces, Total_Portions], recommended_portions: [Recommended_Portions, Portion_Size], total_portions: ~ }

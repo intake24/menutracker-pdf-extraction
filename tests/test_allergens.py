@@ -43,3 +43,30 @@ def test_unknown_term_raises(text):
 def test_text_that_does_not_parse_completely_raises(contains):
     with pytest.raises(UnknownAllergen):
         parse_allergens(contains, "", "No")
+
+
+def test_cereals_named_on_their_own_and_none_are_understood():
+    from pipeline.allergens import parse_allergens
+    r = parse_allergens("Gluten, Wheat, Milk", "None", "No")
+    assert (r["gluten"], r["wheat"], r["milk"], r["barley"]) == ("Yes", "Yes", "Yes", "No")
+    assert parse_allergens("None", "Barley", "")["barley"] == "May contain"
+
+
+def test_a_trailing_colon_or_full_stop_is_ignored():
+    from pipeline.allergens import parse_allergens
+    assert parse_allergens("Gluten, Wheat, Milk:", "None.", "No")["milk"] == "Yes"
+
+
+def test_papa_johns_wordings():
+    from pipeline.allergens import UnknownAllergen, parse_allergens
+    r = parse_allergens("Gluten, Wheat, Soya, Mustard, Sulphites/Sulphur Dioxide, Milk", "None", "No")
+    assert (r["sulphite"], r["mustard"], r["soya"]) == ("Yes", "Yes", "Yes")
+    assert parse_allergens("Milk, Sulphur / Sulphur Dioxide", "None", "No")["sulphite"] == "Yes"
+    assert parse_allergens("Fish (Tuna), Milk", "None", "No")["fish"] == "Yes"
+    r = parse_allergens("Gluten, Wheat, Oats (Gluten Free)", "None", "No")
+    assert (r["oats"], r["gluten"]) == ("Yes", "Yes")                      # gluten comes from the wheat entry
+    assert parse_allergens("Oats (gluten free)", "None", "No")["gluten"] == "No"
+    assert parse_allergens("Wheat (Gluten)", "Milk", "No")["milk"] == "May contain"
+    assert parse_allergens("Gluten, Wheat, Soya, Celery Milk", "None", "No")["celery"] == "Yes"
+    with __import__("pytest").raises(UnknownAllergen):
+        parse_allergens("Gluten, Kryptonite", "None", "No")

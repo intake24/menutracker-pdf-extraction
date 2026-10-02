@@ -9,14 +9,30 @@ SIMPLE = {"celery": "celery", "crustacean": "crustacean", "crustaceans": "crusta
           "egg": "egg", "eggs": "egg", "fish": "fish", "lupin": "lupin", "milk": "milk",
           "mollusc": "mollusc", "molluscs": "mollusc", "mustard": "mustard",
           "peanut": "peanut", "peanuts": "peanut", "sesame": "sesame", "soya": "soya", "soy": "soya",
-          "sulphite": "sulphite", "sulphites": "sulphite", "sulphur dioxide": "sulphite"}
+          "sulphite": "sulphite", "sulphites": "sulphite", "sulphur": "sulphite", "sulphur dioxide": "sulphite",
+          "sulphites / sulphur dioxide": "sulphite", "sulphur dioxide / sulphites": "sulphite"}
 CEREAL_HEADS = {"cereals containing gluten", "other cereals containing", "gluten"}
 NUT_HEADS = {"tree nuts", "nuts"}
-NONE_PHRASES = {"", "no major allergens"}
+NONE_PHRASES = {"", "no major allergens", "none"}
 
 
 class UnknownAllergen(ValueError):
     pass
+
+
+SPECIES = {"fish", "crustacean", "crustaceans", "mollusc", "molluscs"}
+
+
+def _simple_keys(head: str) -> list[str]:
+    """'Sulphites / Sulphur Dioxide' is one allergen written two ways; 'Celery Milk' (a lost comma) is two."""
+    if head in SIMPLE:
+        return [SIMPLE[head]]
+    if "/" in head:
+        return sorted({_lookup(SIMPLE, part.strip()) for part in head.split("/")})
+    words = head.split()
+    if len(words) > 1 and all(w in SIMPLE for w in words):
+        return [SIMPLE[w] for w in words]
+    return [_lookup(SIMPLE, head)]
 
 
 def _lookup(table: dict[str, str], term: str) -> str:
@@ -28,7 +44,7 @@ def _lookup(table: dict[str, str], term: str) -> str:
 def _terms(text: str) -> list[tuple[str, list[str]]]:
     """'Cereals (Wheat, Oats), Egg' -> [('cereals', ['wheat', 'oats']), ('egg', [])]"""
     out = []
-    text = text.strip()
+    text = text.strip().rstrip(":.").strip()   # "Gluten, Wheat, Milk:" is printed with a trailing colon
     consumed = 0
     for m in re.finditer(r"([^,(]+?)\s*(?:\(([^)]*)\))?\s*(?:,|$)", text):
         if text[consumed:m.start()].strip(" ,"):
@@ -53,7 +69,7 @@ def parse_allergens(contains: str, may_contain: str, unlisted: str) -> dict[str,
     nuts: dict[str, list[str]] = {"Yes": [], "May contain": []}
     # "May contain" first so "Yes" overwrites it when an allergen appears in both.
     for text, level in ((may_contain, "May contain"), (contains, "Yes")):
-        if text.strip().lower() in NONE_PHRASES:
+        if text.strip().rstrip(":.").strip().lower() in NONE_PHRASES:
             continue
         for head, subs in _terms(text):
             if head in CEREAL_HEADS:
@@ -61,10 +77,16 @@ def parse_allergens(contains: str, may_contain: str, unlisted: str) -> dict[str,
             elif head in NUT_HEADS:
                 keys = ["treeNuts"]
                 nuts[level] += [s.title() for s in subs]
+            elif head in CEREALS and subs in ([], ["gluten"]):   # "Wheat (Gluten)": the cereal and gluten
+                keys = ["gluten", CEREALS[head]]
+            elif head in CEREALS and subs == ["gluten free"]:     # "Oats (Gluten Free)": the cereal, not gluten
+                keys = [CEREALS[head]]
+            elif subs and head in SPECIES:                        # "Fish (Tuna)": which species is detail only
+                keys = [SIMPLE[head]]
             elif subs:
                 raise UnknownAllergen(f"unexpected detail {subs!r} after allergen {head!r}")
             else:
-                keys = [_lookup(SIMPLE, head)]
+                keys = _simple_keys(head)
             for k in keys:
                 result[k] = level
     parts = []

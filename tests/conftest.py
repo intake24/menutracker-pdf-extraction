@@ -9,3 +9,5 @@ def no_model_calls(monkeypatch):
     def refuse(*_):
         raise AssertionError("a test tried to call the real model; patch vision_table.RUNNER")
     monkeypatch.setattr(vision_table, "RUNNER", refuse)
+    from pipeline.parsers import vision_products
+    monkeypatch.setattr(vision_products, "RUNNER", refuse)
