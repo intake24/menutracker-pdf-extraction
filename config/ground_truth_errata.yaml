@@ -259,3 +259,11 @@
   item: Americano - Reduced Fat Mozzarella - Italian Style Crust - Small
   column: fat_slice
   why: The PDF prints 5.7 g fat per slice for this row; Pearl Scan has 6.7.
+- file: nutrition_pizzas­_v0.1.csv
+  item: American Hot - Standard Mozzarella - Double Decadence - Large
+  column: '*'
+  why: The PDF prints the crust as 'Douoble Decadence' on this pizza (a typo); Pearl Scan corrected it, so the names do not pair. The figures were not compared; the typo is kept as printed.
+- file: nutrition_pizzas­_v0.1.csv
+  item: American Hot - Standard Mozzarella - Double Decadence - Medium
+  column: '*'
+  why: The PDF prints the crust as 'Douoble Decadence' on this pizza (a typo); Pearl Scan corrected it, so the names do not pair. The figures were not compared; the typo is kept as printed.

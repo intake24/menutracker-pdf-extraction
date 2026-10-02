@@ -85,3 +85,56 @@ def test_all_model_parsers_share_one_budget():
     from pipeline import llm
     from pipeline.parsers import vision_table
     assert vp.BUDGET is vision_table.BUDGET is llm.BUDGET
+
+
+def test_a_page_with_crops_is_read_band_by_band(tmp_path, monkeypatch):
+    from pathlib import Path
+    monkeypatch.setattr(vp, "WORK", tmp_path)
+    monkeypatch.setattr(vp, "BUDGET", Budget())
+    seen = []
+
+    def runner(prompt, schema, add_dir):
+        seen.append(prompt)
+        return {"is_error": False, "structured_output": {"rows": [{**ITEM, "name": f"Pizza {len(seen)}"}]}, "total_cost_usd": 0.01}
+    monkeypatch.setattr(vp, "RUNNER", runner)
+    pdf = Path(__file__).resolve().parent.parent / "inputs" / "nutrition_pizzas.pdf"
+    rows = vp.parse(pdf, {**SOURCE, "pages": [2], "crops": {2: [[60, 300], [300, 700]]}})
+    assert [r["Product_Name"] for r in rows] == ["Pizza 1", "Pizza 2"] and len(seen) == 2
+    assert "crop1" in seen[0] and "crop2" in seen[1]
+
+
+def test_a_variant_can_be_split_into_cheese_crust_and_size():
+    source = {**SOURCE, "variant_columns": True}
+    one = vp.rows_from_answer({"rows": [{**ITEM, "variant": "Standard Mozzarella - Classic Crust - Large"}]}, source, 1)[0]
+    two = vp.rows_from_answer({"rows": [{**ITEM, "variant": "Standard Mozzarella - Small"}]}, source, 1)[0]
+    assert (one["Cheese"], one["Crust"], one["Size"]) == ("Standard Mozzarella", "Classic Crust", "Large")
+    assert (two["Cheese"], two["Size"]) == ("Standard Mozzarella", "Small") and "Crust" not in two
+    with pytest.raises(LlmError, match="parts"):
+        vp.rows_from_answer({"rows": [{**ITEM, "variant": "a - b - c - d"}]}, source, 1)
+
+
+def test_text_figures_replace_the_models_and_a_size_disagreement_stops_the_run(monkeypatch):
+    from pathlib import Path
+    import pipeline.parsers.grouped_table as gt
+    spec = {"columns": ["a", "b"], "size_x0": 1, "size_order": ["Small"]}
+    monkeypatch.setattr(gt, "figure_lines", lambda *args: [("Small", {"a": "1", "b": "2"})])
+    rows = [{"Product_Name": "X", "Size": "Small", "a": "9"}]
+    out = vp.with_text_figures(Path("x.pdf"), {"figures_from_text": spec}, 2, rows)
+    assert (out[0]["a"], out[0]["b"]) == ("1", "2")
+    with pytest.raises(LlmError, match="size"):
+        vp.with_text_figures(Path("x.pdf"), {"figures_from_text": spec}, 2, [{"Product_Name": "X", "Size": "Large"}])
+    with pytest.raises(LlmError, match="2 rows"):
+        vp.with_text_figures(Path("x.pdf"), {"figures_from_text": spec}, 2, rows * 2)
+
+
+def test_a_label_the_model_misread_is_replaced_by_the_printed_one_and_flagged(monkeypatch):
+    from pathlib import Path
+
+    from pipeline.ingest import Word
+    import pipeline.ingest as ing
+    monkeypatch.setattr(ing, "page_words", lambda pdf: [[Word(0, 0, 1, 1, t) for t in "Plant-Based Margheri-tastic Medium".split()]])
+    rows = [{"Product_Name": "Plant-Based Margherita-tastic"}, {"Product_Name": "Plant-Based Margheri-tastic"}]
+    out = vp.snap_labels(Path("x.pdf"), 1, rows, ["Product_Name"])
+    assert out[0]["Product_Name"] == "Plant-Based Margheri-tastic" and "Margherita-tastic" in out[0]["flags"] and "flags" not in out[1]
+    with pytest.raises(LlmError, match="not printed"):
+        vp.snap_labels(Path("x.pdf"), 1, [{"Product_Name": "Hawaiian Special Deluxe"}], ["Product_Name"])

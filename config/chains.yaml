@@ -287,7 +287,6 @@
       # No allergen information in this PDF. Pages 3-13: pizza name, rotated cheese label, crust, then one row per size.
       # KNOWN GAP: page 2 (95 rows: gluten free, plant-based, cheeky little, Italiano trial-store, delight pizzas, Absolute Banger) is
       # not extracted yet: its six small tables label rows differently and one model read of the whole page returned no rows.
-      known_gaps: 110
       pages: ["3-13"]
       size_x0: 165
       size_order: [Large, Medium, Small, Personal]
@@ -381,6 +380,7 @@
       size_x0: 182.5
       size_order: [per 100g, Large, Medium, Small, Personal]
       shared_row: per 100g
+      ignore_words: [Per, single, serve]
       left:
         - { column: Product_Name, x0: 0, x1: 170 } # the "Per single serve" label at x 170-186 is not a name
       pearlscan: { "slice/portion/piece": ~ }
@@ -406,6 +406,97 @@
         - protein_Per Portion
         - salt_Per Portion
         - sodium_Per Portion
+    - pdf: nutrition_pizzas.pdf
+      parser: vision_products
+      region: UK
+      category: food
+      approved: false
+      # Page 2 only (gluten free, plant-based, cheeky little, Italiano trial-store, delight pizzas and Absolute Banger). The page
+      # holds six small tables with different row labels, so each table is cropped and read from its image. No allergen information.
+      pages: [2]
+      dpi: 150
+      variant_columns: true
+      snap_labels: [Product_Name, Crust] # a label the model misread (Margherita-tastic for Margheri-tastic) is replaced by the printed one
+      # The print on this page is too small for the model: at 150 dpi it misread about a quarter of the figures (758 for 708).
+      # So only the labels (section, pizza, cheese, crust, size) come from the model; every figure comes from the text layer.
+      figures_from_text:
+        size_x0: 165
+        size_order: [Large, Medium, Small, Personal]
+        columns:
+          - energykCal_Per 100g/ml
+          - energykJ_Per 100g/ml
+          - fat_Per 100g/ml
+          - saturates_Per 100g/ml
+          - carbohydrates_Per 100g/ml
+          - sugars_Per 100g/ml
+          - fibre_Per 100g/ml
+          - protein_Per 100g/ml
+          - salt_Per 100g/ml
+          - sodium_Per 100g/ml
+          - energykCal_Per Pizza
+          - energykJ_Per Pizza
+          - fat_Per Pizza
+          - saturates_Per Pizza
+          - carbohydrates_Per Pizza
+          - sugars_Per Pizza
+          - fibre_Per Pizza
+          - protein_Per Pizza
+          - salt_Per Pizza
+          - sodium_Per Pizza
+          - energykCal_Per Slice
+          - energykJ_Per Slice
+          - fat_Per Slice
+          - saturates_Per Slice
+          - carbohydrates_Per Slice
+          - sugars_Per Slice
+          - fibre_Per Slice
+          - protein_Per Slice
+          - salt_Per Slice
+          - sodium_Per Slice
+      crop_dpi: { 2-4: 230, 2-5: 230, 2-7: 230 } # the two halves of the big Italiano table: its print is too small at 150
+      crops: { 2: [[62, 127], [125, 198], [196, 266], [266, 369], [[266, 278], [369, 468]], [468, 518], [518, 680]] }
+      instructions: >-
+        It is part of a Domino's UK nutrition table page: one small table with its own column titles (Per 100g, Per Pizza, Per
+        Slice, each with Energy kcal, Energy kJ, Fat, Sat, Carb, Sugars, Fibre, Protein, Salt, Sodium). Every row has a size
+        (Small, Medium, Large or Personal) and a pizza label. section = the range heading printed at the left of the table (for
+        example "Gluten Free Pizzas", "Plant-Based Pizzas", "Cheeky Little Pizzas", "Italiano Pizzas", "Delight Pizzas", "Absolute
+        Banger"), or empty if the image shows none. name = the pizza name exactly as printed in the pizza name column, including a
+        trial stores note when it is part of the printed name. variant = the cheese (the sideways label, for example "Standard
+        Mozzarella" or "Reduced Fat Mozzarella") when the table has one, then the crust text if it is printed beside the row, then
+        the size, separated by " - ". values = every figure of the row keyed by its printed column header written as "<table
+        title> / <column header> <unit>" (for example "Per 100g / Energy kcal", "Per Slice / Fat g").
+      # Printed header -> column; the model writes each as '<table title> / <column header> <unit>'.
+      header_columns:
+        'Per 100g / Energy kcal': energykCal_Per 100g/ml
+        'Per 100g / Energy kJ': energykJ_Per 100g/ml
+        'Per 100g / Fat g': fat_Per 100g/ml
+        'Per 100g / Sat g': saturates_Per 100g/ml
+        'Per 100g / Carb g': carbohydrates_Per 100g/ml
+        'Per 100g / Sugars g': sugars_Per 100g/ml
+        'Per 100g / Fibre g': fibre_Per 100g/ml
+        'Per 100g / Protein g': protein_Per 100g/ml
+        'Per 100g / Salt g': salt_Per 100g/ml
+        'Per 100g / Sodium g': sodium_Per 100g/ml
+        'Per Pizza / Energy kcal': energykCal_Per Pizza
+        'Per Pizza / Energy kJ': energykJ_Per Pizza
+        'Per Pizza / Fat g': fat_Per Pizza
+        'Per Pizza / Sat g': saturates_Per Pizza
+        'Per Pizza / Carb g': carbohydrates_Per Pizza
+        'Per Pizza / Sugars g': sugars_Per Pizza
+        'Per Pizza / Fibre g': fibre_Per Pizza
+        'Per Pizza / Protein g': protein_Per Pizza
+        'Per Pizza / Salt g': salt_Per Pizza
+        'Per Pizza / Sodium g': sodium_Per Pizza
+        'Per Slice / Energy kcal': energykCal_Per Slice
+        'Per Slice / Energy kJ': energykJ_Per Slice
+        'Per Slice / Fat g': fat_Per Slice
+        'Per Slice / Sat g': saturates_Per Slice
+        'Per Slice / Carb g': carbohydrates_Per Slice
+        'Per Slice / Sugars g': sugars_Per Slice
+        'Per Slice / Fibre g': fibre_Per Slice
+        'Per Slice / Protein g': protein_Per Slice
+        'Per Slice / Salt g': salt_Per Slice
+        'Per Slice / Sodium g': sodium_Per Slice
 
 58_Vue:
   chain: Vue

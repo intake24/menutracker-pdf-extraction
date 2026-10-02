@@ -11,6 +11,7 @@ Source options (config/chains.yaml):
              is the product name; words left of `size_x0` belong to the column whose x0 is the largest not above them
   size_order the sizes from largest to smallest; a row whose size is not smaller than the one above starts a new lowest-level group
   starts_at  (on a label column) {lower column: value}: a new group of this label starts at every group of the lower label with that value
+  ignore_words words that are never part of a label ("Per single serve" printed beside the names)
   header_word  a word that appears in every column-title block (default Energy); words level with it are not labels
   shared_row, shared_columns  a size label ("per 100g") whose row is not a row of its own: its figures, named by shared_columns,
              are copied onto the rows that follow it until the next such row
@@ -94,6 +95,21 @@ def _partition_rows(rows: list[float], centres: list[float], breaks: set[int]) -
     return groups
 
 
+def figure_lines(pdf: Path, page_no: int, columns: list[str], size_x0: float, size_order: list[str]) -> list[tuple[str, dict[str, str]]]:
+    """(size, {column: figure}) of every data line of a page, top to bottom, read from the text layer."""
+    vocab = {part for name in size_order for part in name.split()}
+    out = []
+    for line in _lines(page_words_fine(pdf, text_flow=True)[page_no - 1]):
+        nums = [w for w in line if NUMBER.match(w.text)]
+        if len(nums) < 9:
+            continue
+        if len(nums) != len(columns):
+            raise ValueError(f"page {page_no}: a data line has {len(nums)} figures, config names {len(columns)}")
+        size = " ".join(w.text for w in line if size_x0 <= w.x0 < nums[0].x0 and w.text in vocab)
+        out.append((size, dict(zip(columns, [w.text for w in nums]))))
+    return out
+
+
 def parse(pdf: Path, source: dict) -> list[dict]:
     columns, left = source["columns"], source["left"]
     size_x0, size_column = source["size_x0"], source.get("size_column", "Size")
@@ -133,6 +149,7 @@ def parse(pdf: Path, source: dict) -> list[dict]:
             col = left[level]
             words = [w for w in labels[page_no - 1] if w.y0 >= top and w.y0 <= max(d[0] for d in data) + 6 and not titles(w) and col["x0"] - 2 <= w.x0 < col["_x1"]
                      and bool(col.get("rotated")) == _rotated(w) and not NUMBER.match(w.text)
+                     and w.text not in source.get("ignore_words", ())
                      and w.y0 > min(d[0] for d in data) - 6 - (w.y1 - w.y0 if col.get("rotated") else 0)]
             clusters = _clusters(words, bool(col.get("rotated")))
             if not clusters:

@@ -96,7 +96,7 @@ Every mismatch was settled by looking at the page. In every case so far one of f
 | Source | PDF | Why not done yet | What the survey found |
 |---|---|---|---|
 | Krispy Kreme | 61 pages, no text layer | needs a join of two page types | page pairs: an allergen matrix page (dietary YES/NO and ticks in 25 columns) then a nutrition page; plus ingredient-declaration text pages and beverage pages. One CSV row per product needs the two joined by name, which the pipeline cannot do yet. |
-| Domino's pizzas | 18 pages, 1,422 GT rows | page 2 only (95 rows) | `grouped_table` reads pizza, sideways cheese, crust and size labels by position and size order; the bases, sauces, cheese and toppings pages use a shared per-100g row. 1,327 rows from pages 3-18, every one of 52,919 compared cells agrees with Pearl Scan (recall 93%); one Pearl Scan figure is wrong (6.7 for the PDF's 5.7). Page 2 (six small tables with different row labels) is a recorded known gap (`known_gaps` in the config); one model read of the whole page returned no rows, so it needs cropping into its tables or a hand-built source. |
+| Domino's pizzas | 18 pages, 1,422 GT rows | done | `grouped_table` reads the pizza, sideways cheese, crust and size labels by position and size order (pages 3-13), the bases, and the sauces, cheese and toppings (pages 14-18, a shared per-100g row); page 2 (six small tables, 95 rows) uses the model for the labels only and the text layer for every figure. 1,420 rows compared, 56,799 cells, 0 mismatches; 2 rows excused (a typo the PDF prints). |
 | Pizza Hut | 24 pages, 483 GT rows | three layouts in one PDF | allergen tables with Yes/No and `●`/`○`, ingredient prose, per-slice nutrition tables |
 | Coffee #1 | food 18 pp (vertical blocks), drinks 28 pp (slanted text) | slanted text defeats the word reader | vision route likely for the drinks |
 | Starbucks | food 20 pp, drinks 73 pp | not started | wrapped names, size rows, milk type in the product line |
@@ -145,6 +145,10 @@ A review by a fresh reader found a real defect in every slice where we asked for
 10. **Record every confirmed Pearl Scan mistake with its reason** (`ground_truth_errata.yaml`), so the same error is not rediscovered and so a future reader can see why a value differs.
 11. **Guard against my own workflow errors:** a failing test once slipped into a commit because a pipe hid its exit code, and one `rm -rf outputs` removed your sample files (restored from version history). Rules now: tests are run on their own, never behind a pipe in a chain; data folders are never deleted.
 12. **Quota planning:** a config-only chain costs 1-3 points of a window, a new parser option 3-5, a new parser 6-10, plus a review of 3-4. A 65-page vision read is about 15-25 points. Plan about two windows for the remaining list.
+
+## 7b. A model read of tiny print is not reliable: use the text layer for figures
+
+On Domino's page 2 (a text PDF, 4-5 pt print) one model read of the whole page returned no rows, and reads of its six tables at 150 dpi returned 654 wrong cells out of about 2,850 (758 for 708, 20.0 for 30). Two of the tables came back empty until they were rendered at 230 dpi. The answer was to let the model read only the labels (section, pizza, cheese, crust, size) and take every figure from the page's text layer, pairing rows in page order and stopping if the counts or sizes disagree. The model also misread one label (`Margherita-tastic` for the printed `Margheri-tastic`), so every model-read label must be found in the text layer and a near miss is replaced by the printed text and flagged. Lesson: when a PDF has a text layer, use the model only for what the text layer cannot give, and check what it returns against that layer.
 
 ## 8. Known limits (what a user of the CSVs should know)
 
