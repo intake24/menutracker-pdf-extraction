@@ -7,7 +7,7 @@ State on 2026-10-03: ten chains live and approved, `outputs/` holds ten CSVs (5,
 1. Krispy Kreme (`2025_Allergen_Nutrition_Book_230525_UK__Minions_.pdf`, 61 pages, no text layer, Pearl Scan has 188 nutrition rows). Pages come in pairs: an allergen matrix page (dietary YES/NO and ticks in about 25 columns) followed by a nutrition page, plus ingredient-declaration text pages and beverage pages. Needs a step that joins matrix rows and nutrition rows by product name into one row per product, then about 65 model reads (use `pages` and `reread` to check them). About 20 points of a 5-hour window plus a design check with the user first. Use the lesson from Domino's: when a page has a text layer use it for figures.
 2. Pizza Hut (`Pizza_Hut_Restaurants_Dietary_Information_Booklet_March_2025.pdf`, 24 pages, Pearl Scan has 483 nutrition rows): three layouts (allergen tables with Yes/No and filled or empty circles on pages 2-7, ingredient prose on pages 8-19, per-slice nutrition tables from page 20). Text layer exists. About 10 points.
 3. Coffee #1 (food 18 pages with vertical blocks, drinks 28 pages with slanted text; Pearl Scan 92 and 371 rows) and Starbucks (food 20 pages, drinks 73 pages with wrapped names, sizes and milk types; 93 and 1,464 rows). About 8 points each plus a review.
-4. Brewhouse, Cookhouse, Top Gold menus: the dish name is the text before the first comma; judgement and model reads.
+4. Brewhouse, Cookhouse, Top Golf menus: the dish name is the text before the first comma; judgement and model reads.
 5. Final slice: a flags report across all chains, an automatic row-count check for model-read pages, a last review of the whole pipeline.
 
 ## Before approving anything
