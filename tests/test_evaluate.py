@@ -54,3 +54,15 @@ def test_read_csv_falls_back_to_windows_1252(tmp_path):
     assert read_csv(path) == [{"item_name": "Jalapeño Peppers", "kcal": "4"}]
     path.write_bytes("item_name,kcal\nJalapeño Peppers,4\n".encode("utf-8-sig"))
     assert read_csv(path)[0]["item_name"] == "Jalapeño Peppers"
+
+
+def test_repeated_names_pair_up_by_order_of_occurrence():
+    truth = [{"item_name": "Margherita", "kcal": "100"}, {"item_name": "Margherita", "kcal": "200"}]
+    ours = [{"Product_Name": "Margherita", "Size": "", "energykCal_Per Portion": "100"},
+            {"Product_Name": "Margherita", "Size": "", "energykCal_Per Portion": "200"}]
+    mapping = {"item_name": "Product_Name", "kcal": "energykCal_Per Portion"}
+    assert compare_ground_truth(truth, ours, mapping, set())["passed"]
+    swapped = compare_ground_truth(truth, ours[::-1], mapping, set())
+    assert not swapped["passed"] and len(swapped["mismatches"]) == 2
+    lost = compare_ground_truth(truth, ours[:1], mapping, set())
+    assert lost["unmatched"] == ["Margherita"] and not lost["passed"]

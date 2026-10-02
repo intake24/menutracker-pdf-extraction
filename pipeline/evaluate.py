@@ -41,15 +41,18 @@ def compare_ground_truth(truth: list[dict], ours: list[dict], mapping: dict[str,
 
     errata: {(item_name, pearlscan_column)}; column "*" excuses a whole row.
     """
-    by_key: dict[str, dict] = {}
+    by_key: dict[str, list[dict]] = {}
     for r in ours:
-        by_key.setdefault(norm(r["Product_Name"] + r.get("Size", "")), r)
+        by_key.setdefault(norm(r["Product_Name"] + r.get("Size", "")), []).append(r)
+    seen: dict[str, int] = {}   # repeated names pair up by order of occurrence: 1st with 1st, 2nd with 2nd
     unmatched, mismatches, cells = [], [], 0
     for t in truth:
         name = t["item_name"]
         if (name, "*") in errata:
             continue
-        o = by_key.get(norm(name))
+        key = norm(name)
+        n = seen[key] = seen.get(key, -1) + 1
+        o = by_key.get(key, [])[n] if n < len(by_key.get(key, [])) else None
         if o is None:
             unmatched.append(name)
             continue
