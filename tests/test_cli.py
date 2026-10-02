@@ -5,7 +5,7 @@ import pytest
 from pipeline.cli import SourceNotApproved, evaluate, run
 
 ROOT = Path(__file__).resolve().parent.parent
-ROWS = {"11_PizzaExpress": 818, "16_Beefeater": 207, "17_Brewersfayre": 207, "21_TableTable": 207, "52_FiveGuys": 54}
+ROWS = {"11_PizzaExpress": 818, "46_Cineworld": 286, "16_Beefeater": 207, "17_Brewersfayre": 207, "21_TableTable": 207, "52_FiveGuys": 54}
 SOURCE_FLAGS = ("error: kJ/kcal", "error: saturates >", "error: sugars >", "warn: Atwater", "error: duplicate")   # the PDFs print these
 
 

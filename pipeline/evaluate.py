@@ -69,7 +69,14 @@ def compare_ground_truth(truth: list[dict], ours: list[dict], mapping: dict[str,
         if o is None:
             unmatched.append(name)
             continue
+        # Pearl Scan writes a row printed "per 100g" as a 100 g serving; we keep the printed basis.
+        per100 = (t.get("servingsize") == "100" and t.get("servingsizeunit") in ("g", "ml")
+                  and not o.get("Serving_Size") and any(k.endswith("_Per 100g/ml") and v for k, v in o.items()))
         for gt_col, col in mapping.items():
+            if per100 and col in ("Serving_Size", "Serving_Size_Unit"):
+                continue
+            if per100 and col and col.endswith("_Per Portion"):
+                col = col.replace("_Per Portion", "_Per 100g/ml")
             if col is None or gt_col not in t or gt_col == "item_name" or (name, gt_col) in errata:
                 continue
             cells += 1
@@ -82,13 +89,13 @@ def compare_ground_truth(truth: list[dict], ours: list[dict], mapping: dict[str,
 
 
 def compare_golden(golden: list[dict], ours: list[dict]) -> list[str]:
-    """Every golden row (matched on Product_Name + Category) must exist with identical cells."""
-    by_key = {(r["Product_Name"], r["Category"]): r for r in ours}
+    """Every golden row (matched on Product_Name + Category + Size) must exist with identical cells."""
+    by_key = {(r["Product_Name"], r["Category"], r.get("Size", "")): r for r in ours}
     failures = []
     for g in golden:
-        o = by_key.get((g["Product_Name"], g["Category"]))
+        o = by_key.get((g["Product_Name"], g["Category"], g.get("Size", "")))
         if o is None:
-            failures.append(f"missing row: {g['Product_Name']} ({g['Category']})")
+            failures.append(f"missing row: {g['Product_Name']}{' ' + g['Size'] if g.get('Size') else ''} ({g['Category']})")
             continue
         for col, want in g.items():
             got = o.get(col, "" if want == "" else None)   # chain CSVs omit columns that are blank throughout

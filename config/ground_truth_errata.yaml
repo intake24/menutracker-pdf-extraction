@@ -1,7 +1,6 @@
-# Known errors in the Pearl Scan ground truth, each confirmed by a person against the PDF.
-# `eval` skips these cells. column: a Pearl Scan column name, or "*" for a whole row.
-# - file: m19968-nutritional-info-ice-cream_v0.1.csv
-#   item: Fairtrade Vanilla 1 Scoop Tub
-#   column: kj
-#   reason: Pearl Scan wrote 82; the PDF says ...
-[]
+# Mistakes in Pearl Scan's CSVs, found by comparing with the PDF. Each: file (CSV name), item (its item_name),
+# column (Pearl Scan column, or "*" for the whole row), why.
+- file: 25-04-03_20Cineworld_20Allergen_20and_20Nutritional_20Information.csv
+  item: Tango Orange Sugar Free - Diet Pepsi
+  column: "*"
+  why: The PDF lists "Diet Pepsi, 200 ml, 1.2 kcal" as an item of its own, below the Tango Orange Sugar Free group; Pearl Scan filed it as a size of Tango.

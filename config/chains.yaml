@@ -8,6 +8,8 @@
 #   columns   (numeric_table only) the dictionary column of each numeric column, left to right
 #   markers   the PDF's allergen key: printed marker -> Yes | May contain | No. Omit when the PDF has none.
 #             "" = what an allergen with no marker means for this PDF ("No" only if the PDF says so).
+#   labels, header_words, sizes, units   (allergen_matrix only) header label -> allergen column, other allowed header words,
+#             size-column words, portion units
 #   disclaimer  menu-wide allergen statement, kept here (not in the CSV)
 #   approved  set to true by a person after checking markers/disclaimer against the PDF
 
@@ -171,3 +173,49 @@
         - protein_Per 100g/ml
         - salt_Per 100g/ml
       approved: true
+
+46_Cineworld:
+  chain: Cineworld
+  sources:
+    - pdf: 25-04-03_20Cineworld_20Allergen_20and_20Nutritional_20Information.pdf
+      parser: allergen_matrix
+      region: UK
+      category: food
+      approved: false
+      # Key (page 1 and every page header): "✓ - Contains", "▲ - May Contain". It does not say what a blank cell
+      # means, so a blank is "not stated". The PDF is an allergen matrix with calories only.
+      markers: {"✓": "Yes", "▲": "May contain", "": ""}
+      disclaimer: "We cannot guarantee that any of our products are free of a particular allergen due to the use of shared equipment, utensils, cooking methods and open product handling on site."
+      sizes: [Large, Regular, Small, Medium, Pint, Half Pint, Splash, Munchbox]
+      variants: [Semi-Skimmed Milk, Soya Milk, Sugar Free Caramel, Sugar Free Vanilla, Chocolate, Hazelnut]
+      units: [g, ml]
+      note_labels: [Pick and Mix, Ice Cream]
+      group_column_end: 92 # the left-most column (item group names, sub-sections) ends here
+      header_words: [Allergens, Tree, Nuts, Cereals, Containing, Gluten]
+      labels:
+        Celery: celery
+        Wheat: wheat
+        Rye: rye
+        Barley: barley
+        Oats: oats
+        Spelt: spelt
+        Kamut: kamut
+        Crustaceans: crustacean
+        Egg: egg
+        Fish: fish
+        Lupin: lupin
+        Milk: milk
+        Molluscs: mollusc
+        Mustard: mustard
+        Almond: treeNuts
+        Hazelnut: treeNuts
+        Walnut: treeNuts
+        Cashew: treeNuts
+        Peacan: treeNuts
+        Brazil: treeNuts
+        Pistachio: treeNuts
+        Macadamia: treeNuts
+        Peanuts: peanut
+        Sesame: sesame
+        Soya: soya
+        Sulphites: sulphite

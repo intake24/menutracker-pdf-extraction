@@ -100,3 +100,14 @@ def test_columns_mapped_to_nothing_are_not_compared():
     truth = [{"item_name": "Croissant", "kcal": "167", "serves": "2"}]
     r = compare_ground_truth(truth, OURS, {"item_name": "Product_Name", "kcal": "energykCal_Per Portion", "serves": None}, set())
     assert r["passed"] and r["cells"] == 1
+
+
+def test_a_row_printed_per_100g_matches_pearl_scans_100g_serving():
+    truth = [{"item_name": "Whipped Cream", "servingsize": "100", "servingsizeunit": "g", "kcal": "336"}]
+    mapping = {"item_name": "Product_Name", "servingsize": "Serving_Size", "servingsizeunit": "Serving_Size_Unit",
+               "kcal": "energykCal_Per Portion"}
+    ours = [{"Product_Name": "Whipped Cream", "Size": "", "energykCal_Per 100g/ml": "336"}]
+    r = compare_ground_truth(truth, ours, mapping, set())
+    assert r["passed"] and r["cells"] == 1
+    ours[0]["energykCal_Per 100g/ml"] = "337"
+    assert not compare_ground_truth(truth, ours, mapping, set())["passed"]
