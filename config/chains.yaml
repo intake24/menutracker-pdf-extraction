@@ -279,3 +279,53 @@
         - protein_Per Portion
         - salt_Per Portion
         - sodium_Per Portion
+
+58_Vue:
+  chain: Vue
+  sources:
+    # The text layer of these PDFs is corrupt (the embedded font drops characters: 197 prints as 19), so the page
+    # images are read by the model (parser vision_table). No allergen information in these PDFs.
+    - pdf: m19968-nutritional-info-ice-cream.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: false
+      dpi: 150 # at 110 the model misread two digits in the small print (1.4 as 0.4, 0.4 as 0)
+      instructions: >-
+        It is a nutrition table of ice creams and toppings; all figures are per portion. section = the orange heading
+        above the rows. Each item has a bold name line; for the ice creams a second line below it ("1 Scoop Tub") is the
+        size. name = the bold name (join a wrapped name, e.g. "Joe & Sephs: Chocolate Caramel Sauce"); size = the second
+        line if there is one, else empty; portion = the Portion/Pack Size cell ("85g", "Per 1").
+      fields: &vue_fields
+        kj: energykJ_Per Portion
+        kcal: energykCal_Per Portion
+        protein: protein_Per Portion
+        carbohydrate: carbohydrates_Per Portion
+        sugars: sugars_Per Portion
+        fat: fat_Per Portion
+        saturates: saturates_Per Portion
+        fibre: fibre_Per Portion
+        sodium: sodium_Per Portion
+        salt: salt_Per Portion
+    - pdf: m19982-nutritional-info-food.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: false
+      instructions: >-
+        It is a nutrition table of cinema food; all figures are per portion. section = the orange heading above the
+        rows. Some items are a bold name line followed by several rows whose left cell (Portion/Pack Size) is a size such
+        as "Kids/Snackit", "Regular", "Large": for those rows name = the bold name above them, size = the left cell,
+        portion = empty. For an item that has a single row with a weight or count in the left cell, name = the bold
+        name, size = empty, portion = that cell.
+      fields: *vue_fields
+    - pdf: m20011-nutritional-info-sweets.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: false
+      instructions: >-
+        It is a nutrition table of sweets; all figures are per portion. section = the orange heading above the rows
+        ("PICK'N'MIX"). name = the bold item name exactly as printed (it may contain " - "); size = empty;
+        portion = the Portion/Pack Size cell ("100g").
+      fields: *vue_fields

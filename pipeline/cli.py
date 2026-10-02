@@ -60,7 +60,7 @@ def run(inputs: Path, chains_file: Path, outputs: Path, only: str | None = None)
             cache_key = (text_sha(page_texts(pdf)), json.dumps(options, sort_keys=True))   # every parse-affecting option
             if cache_key not in parsed:
                 parsed[cache_key] = PARSERS[source["parser"]](pdf, source)
-            rows += [r | {"region": source["region"], "source_file": pdf.name, "method": "parser"}
+            rows += [{"method": "parser"} | r | {"region": source["region"], "source_file": pdf.name}
                      for r in parsed[cache_key]]
         rows = finalise(rows, columns)
         path = outputs / f"{key}.csv"

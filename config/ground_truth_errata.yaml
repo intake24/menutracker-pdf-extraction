@@ -4,3 +4,39 @@
   item: Tango Orange Sugar Free - Diet Pepsi
   column: "*"
   why: The PDF lists "Diet Pepsi, 200 ml, 1.2 kcal" as an item of its own, below the Tango Orange Sugar Free group; Pearl Scan filed it as a size of Tango.
+- file: m19982-nutritional-info-food.csv
+  item: Pork Frankfurter - Large
+  column: fibre
+  why: The PDF prints a stray "g" after this figure ("0g", "2.7g"); Pearl Scan removed it. We keep it as printed and the row is flagged.
+- file: m19982-nutritional-info-food.csv
+  item: Pork Frankfurter - Regular
+  column: fibre
+  why: The PDF prints a stray "g" after this figure ("0g", "2.7g"); Pearl Scan removed it. We keep it as printed and the row is flagged.
+- file: m19982-nutritional-info-food.csv
+  item: Bread Roll - Regular
+  column: fibre
+  why: The PDF prints a stray "g" after this figure ("0g", "2.7g"); Pearl Scan removed it. We keep it as printed and the row is flagged.
+- file: m19982-nutritional-info-food.csv
+  item: Nacho Libre - Large
+  column: sodium
+  why: The PDF prints a stray "g" after this figure ("0g", "2.7g"); Pearl Scan removed it. We keep it as printed and the row is flagged.
+- file: m19982-nutritional-info-food.csv
+  item: Harlem Hot - Large
+  column: satfat
+  why: The PDF prints a stray "g" after this figure ("0g", "2.7g"); Pearl Scan removed it. We keep it as printed and the row is flagged.
+- file: m19982-nutritional-info-food.csv
+  item: Doritos Tangy Cheese
+  column: protein
+  why: The PDF prints a stray "g" after this figure ("0g", "2.7g"); Pearl Scan removed it. We keep it as printed and the row is flagged.
+- file: m19982-nutritional-info-food.csv
+  item: Sweet Popcorn - Kids/Snackit
+  column: "*"
+  why: The PDF has several popcorn tables (the last is "Salted Popcorn (Dublin)"); Pearl Scan dropped "(Dublin)" and shifted rows, so rows of this name pair with the wrong table. Our rows were read from the page image.
+- file: m19982-nutritional-info-food.csv
+  item: Salted Popcorn - Kids/Snackit
+  column: "*"
+  why: The PDF has several popcorn tables (the last is "Salted Popcorn (Dublin)"); Pearl Scan dropped "(Dublin)" and shifted rows, so rows of this name pair with the wrong table. Our rows were read from the page image.
+- file: m19982-nutritional-info-food.csv
+  item: Salted Popcorn - Junior
+  column: "*"
+  why: The PDF has several popcorn tables (the last is "Salted Popcorn (Dublin)"); Pearl Scan dropped "(Dublin)" and shifted rows, so rows of this name pair with the wrong table. Our rows were read from the page image.

@@ -26,9 +26,9 @@ def test_identical_pdfs_share_text_sha():
     assert len({text_sha(page_texts(INPUTS / f)) for f in BREAKFAST}) == 1
 
 
-def test_one_pdf_per_source_and_seven_chains_configured():
+def test_one_pdf_per_source_and_eight_chains_configured():
     chains = load_chains()
-    assert set(chains) == {"11_PizzaExpress", "6_Dominos", "16_Beefeater", "17_Brewersfayre", "21_TableTable", "46_Cineworld", "52_FiveGuys"}
+    assert set(chains) == {"11_PizzaExpress", "6_Dominos", "58_Vue", "16_Beefeater", "17_Brewersfayre", "21_TableTable", "46_Cineworld", "52_FiveGuys"}
     assert all(len(users) == 1 for users in sources_by_pdf(chains).values())
 
 
