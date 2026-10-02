@@ -5,6 +5,7 @@ import subprocess
 from pathlib import Path
 from typing import NamedTuple
 
+import pdfplumber
 import yaml
 
 CHAINS_FILE = Path(__file__).resolve().parent.parent / "config" / "chains.yaml"
@@ -33,6 +34,28 @@ def page_words(pdf: Path) -> list[list[Word]]:
                          check=True, capture_output=True, text=True).stdout
     return [[Word(float(a), float(b), float(c), float(d), html.unescape(t)) for a, b, c, d, t in WORD.findall(page)]
             for page in out.split("<page ")[1:]]
+
+
+NUMERIC_CHARS = re.compile(r"^[\d.<]+$")
+
+
+def page_words_fine(pdf: Path, gap: float = 0.5) -> list[list[Word]]:
+    """Words like page_words, but runs of digits are split wherever two characters are more than `gap` pt apart."""
+    out = []
+    with pdfplumber.open(pdf) as doc:
+        for page in doc.pages:
+            coarse = page.extract_words(x_tolerance=3, y_tolerance=3)
+            fine = page.extract_words(x_tolerance=gap, y_tolerance=3)
+            words = []
+            for w in coarse:
+                if NUMERIC_CHARS.match(w["text"]):
+                    inside = [f for f in fine if f["x0"] >= w["x0"] - 0.1 and f["x1"] <= w["x1"] + 0.1
+                              and abs(f["top"] - w["top"]) < 1]
+                    words += [Word(f["x0"], f["top"], f["x1"], f["bottom"], f["text"]) for f in inside]
+                else:
+                    words.append(Word(w["x0"], w["top"], w["x1"], w["bottom"], w["text"]))
+            out.append(words)
+    return out
 
 
 def text_sha(pages: list[str]) -> str:

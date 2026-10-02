@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from pipeline.ingest import load_chains, manifest_row, page_texts, page_words, sources_by_pdf, text_sha
+from pipeline.ingest import load_chains, manifest_row, page_texts, page_words, page_words_fine, sources_by_pdf, text_sha
 
 INPUTS = Path(__file__).resolve().parent.parent / "inputs"
 BREAKFAST = [
@@ -35,3 +35,15 @@ def test_image_only_pages_reported():
     row = manifest_row(INPUTS / "nutritional-information.pdf", {})
     assert row["chains"] == "" and row["parser"] == "unassigned"
     assert len(row["image_pages"].split()) == 79
+
+
+def test_fine_words_split_cells_that_poppler_returns_as_one_word():
+    pdf = INPUTS / "PEX-Nutritional-Menu---May-2025.ashx.pdf"
+    assert any(w.text == "123211.1" for w in page_words(pdf)[18])           # poppler: two cells, one word
+    texts = [w.text for w in page_words_fine(pdf)[18]]
+    assert "123211.1" not in texts and "1232" in texts and "11.1" in texts   # pdfplumber, by character gap
+
+
+def test_fine_words_keep_ordinary_words_whole():
+    texts = {w.text for w in page_words_fine(INPUTS / "PEX-Nutritional-Menu---May-2025.ashx.pdf")[10]}
+    assert {"Goats", "Cheese", "Buddha", "Bowl"} <= texts
