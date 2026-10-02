@@ -12,6 +12,9 @@ Source options (config/chains.yaml):
   text_values    words that may stand in a cell ("Portion", "Piece"); allowed only under a column that has no basis
   furniture      lines above a table header that are page furniture, not a title (running heads); ignored
   name_amount    a trailing amount in the name ("BBQ Dip 25g") becomes Serving_Size and Serving_Size_Unit
+  text_flow      read words in drawing order and keep rows printed over each other apart (an Odeon PDF defect)
+  invalid_values cell values that are errors in the source ("#N/A"); kept as printed, the row is flagged
+  free_sections  name-only text that is not directly above a row is a sub-section label (needs wrapped_names)
   wrapped_names  join a name-only line directly above a data row onto that row's name
   titles         page titles allowed above a table header, e.g. "Breakfast (selected restaurants only)"; each
                  persists as a parent in Category until the next one. Any other text there raises.
@@ -26,10 +29,10 @@ from pathlib import Path
 from pipeline.ingest import Word, page_words_fine
 
 NUMBER = re.compile(r"^(?:<\s?)?\d+(?:\.\d+)?$|^(?:Negligible|Traces?|Tr)$")
-AMOUNT = re.compile(r"^(.*?\S)(?:\s+-)?\s+(\d+(?:\.\d+)?)\s?(g|ml|oz)(\s+[A-Za-z].*)?$")
+AMOUNT = re.compile(r"^(.*?\S)(?:\s+-)?\s+(\d+(?:\.\d+)?)\s?(g|ml|oz)(\s+[A-Za-z(].*)?$")
 MIN_NUMBERS = 3          # a line needs this many trailing numeric cells to be a data row
 SECTION_INDENT = 12      # section headings start at the left margin; wrapped text and notes are indented more
-VALUELIKE = re.compile(r"\d|^(?:-|–|N/?A)$", re.I)   # a token that looks like a cell value, readable or not
+VALUELIKE = re.compile(r"\d|^(?:-|–|#?N/?A)$", re.I)   # a token that looks like a cell value, readable or not
 NOTE_START = ("-", "*", "†")                          # a line starting like this is a note, not a name
 LINE_GAP = 3             # words whose vertical centres are this close are on one line
 WRAP_LINES = 1.5         # a name-only line within this many line heights above a data row continues its name
@@ -38,11 +41,15 @@ COLUMN_GAP = 9           # right edges further apart than this (pt) belong to di
 
 
 def _lines(words: list[Word]) -> list[list[Word]]:
+    """Group words into lines by vertical centre; words of different layers (rows printed over each other) never
+    share a line."""
     lines: list[list[Word]] = []
-    for w in sorted(words, key=lambda w: (w.y0 + w.y1) / 2):
+    for w in sorted(words, key=lambda w: ((w.y0 + w.y1) / 2, w.layer)):
         centre = (w.y0 + w.y1) / 2
-        if lines and centre - (lines[-1][0].y0 + lines[-1][0].y1) / 2 <= LINE_GAP:
-            lines[-1].append(w)
+        for line in reversed(lines[-3:]):
+            if line[0].layer == w.layer and centre - (line[0].y0 + line[0].y1) / 2 <= LINE_GAP:
+                line.append(w)
+                break
         else:
             lines.append([w])
     return [sorted(line, key=lambda w: w.x0) for line in lines]
@@ -128,7 +135,8 @@ def _classify(lines: list[list[Word]], tables: list[list[float]], table_of: dict
 
 
 def _row(line: list[Word], lead: list[Word], anchors: list[float], columns: list[str], category: str,
-         page_no: int, number: re.Pattern = NUMBER, name_amount: bool = False) -> dict:
+         page_no: int, number: re.Pattern = NUMBER, name_amount: bool = False,
+         anywhere: re.Pattern = NUMBER) -> dict:
     edge = anchors[0] - COLUMN_GAP                         # words wholly left of this are the name
     name = [w for w in line if w.x1 < edge]
     if not name:
@@ -144,7 +152,7 @@ def _row(line: list[Word], lead: list[Word], anchors: list[float], columns: list
         if not number.match(w.text):
             raise ValueError(f"page {page_no}: unreadable cell {w.text!r} in row {product!r}")
         nearest = min(range(len(anchors)), key=lambda j: abs(anchors[j] - w.x1))
-        if not NUMBER.match(w.text) and "_Per " in columns[nearest]:
+        if not anywhere.match(w.text) and "_Per " in columns[nearest]:
             raise ValueError(f"page {page_no}: the word {w.text!r} in row {product!r} is under the nutrient column "
                              f"{columns[nearest]!r}")
         if abs(anchors[nearest] - w.x1) > COLUMN_GAP:
@@ -156,8 +164,11 @@ def _row(line: list[Word], lead: list[Word], anchors: list[float], columns: list
 
 
 def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None = None,
-                wrapped_names: bool = False, titles: list[str] = (), text_values: list[str] = (), furniture: list[str] = (), name_amount: bool = False) -> list[dict]:
-    number = re.compile(NUMBER.pattern + "|^(?:" + "|".join(map(re.escape, text_values)) + ")$") if text_values else NUMBER
+                wrapped_names: bool = False, titles: list[str] = (), text_values: list[str] = (), furniture: list[str] = (), name_amount: bool = False, free_sections: bool = False, invalid_values: list[str] = ()) -> list[dict]:
+    def extend(words):
+        return re.compile(NUMBER.pattern + "|^(?:" + "|".join(map(re.escape, words)) + ")$") if words else NUMBER
+    number = extend([*text_values, *invalid_values])
+    anywhere = extend(invalid_values)   # may stand under a nutrient column: kept as printed and flagged downstream
     rows = []
     parent = section = ""   # parent: a page title that persists ("Breakfast (selected restaurants only)")
     for page_no, words in enumerate(pages, start=1):
@@ -238,7 +249,18 @@ def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None 
                         raise ValueError(f"page {page_no}: text between the column headers and the first row "
                                          f"(a wrapped name?): {' '.join(w.text for w in pending[0])!r}")
                 lead: list[Word] = []
-                if pending:
+                if pending and free_sections:
+                    # Name-only lines directly above the row (and not reaching into the columns) are its wrapped
+                    # name; any line before them is a sub-section label that applies from here on.
+                    below, keep = line, []
+                    while pending and (below[0].y0 - pending[-1][0].y0 <= WRAP_LINES * (below[0].y1 - below[0].y0)
+                                       and not any(w.x1 >= anchors[0] - COLUMN_GAP for w in pending[-1])):
+                        keep.insert(0, pending.pop())
+                        below = keep[0]
+                    if pending:
+                        section = " - ".join(" ".join(w.text for w in l) for l in pending)
+                    lead, pending = [w for l in keep for w in l], []
+                elif pending:
                     if line[0].y0 - pending[-1][0].y0 > WRAP_LINES * (line[0].y1 - line[0].y0):
                         raise ValueError(f"page {page_no}: text above a row is too far away to be a wrapped name: "
                                          f"{' '.join(w.text for w in pending[-1])!r}")
@@ -246,10 +268,11 @@ def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None 
                     if any(w.x1 >= anchors[0] - COLUMN_GAP for w in lead):
                         raise ValueError(f"page {page_no}: text above a row reaches into the columns, so it is not "
                                          f"a name: {' '.join(w.text for w in lead)!r}")
-                rows.append(_row(line, lead, anchors, columns, " - ".join(c for c in (parent, section) if c), page_no, number, name_amount))
+                rows.append(_row(line, lead, anchors, columns, " - ".join(c for c in (parent, section) if c), page_no, number, name_amount, anywhere))
     return rows
 
 
 def parse(pdf: Path, source: dict) -> list[dict]:
-    return parse_pages(page_words_fine(pdf), source["columns"], source.get("header"),
-                       source.get("wrapped_names", False), source.get("titles", ()), source.get("text_values", ()), source.get("furniture", ()), source.get("name_amount", False))
+    return parse_pages(page_words_fine(pdf, text_flow=source.get("text_flow", False)), source["columns"], source.get("header"),
+                       source.get("wrapped_names", False), source.get("titles", ()), source.get("text_values", ()), source.get("furniture", ()), source.get("name_amount", False), source.get("free_sections", False),
+                       source.get("invalid_values", ()))

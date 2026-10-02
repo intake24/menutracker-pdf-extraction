@@ -352,3 +352,41 @@ def test_a_ruler_line_of_consecutive_column_numbers_is_page_furniture():
     ruler = [Word(RIGHT_EDGES[i] - 5, 60, RIGHT_EDGES[i], 68, str(i + 4)) for i in range(6)]
     rows = [w for y in (100, 112, 124) for w in line(y, "Item", FULL)]
     assert len(parse_pages([ruler + rows], COLUMNS)) == 3
+
+
+def test_free_sections_turn_distant_name_only_lines_into_the_category_and_wrapped_names_still_join():
+    rows = [line(100, "Item A", FULL), [Word(5, 130, 100, 138, "Cold Drinks")], [Word(5, 150, 60, 158, "Long")],
+            line(160, "name", FULL)]
+    out = parse_pages([[w for r in rows for w in r]], COLUMNS, wrapped_names=True, free_sections=True)
+    assert [(r["Product_Name"], r["Category"]) for r in out] == [("Item A", ""), ("Long name", "Cold Drinks")]
+
+
+def test_rows_overlaid_at_the_same_position_are_separate_rows_when_words_carry_layers():
+    a = [w._replace(y0=100, y1=108) for w in line(100, "Onions", FULL)]
+    b = [w._replace(layer=1) for w in line(100, "Guacamole", {0: "99", 1: "20", 2: "1.5", 3: "400", 4: "95", 5: "6"})]
+    rows = parse_pages([a + b + line(112, "Chips", FULL)], COLUMNS)
+    assert sorted(r["Product_Name"] for r in rows) == ["Chips", "Guacamole", "Onions"]
+    assert {r["Product_Name"]: r["energykJ_Per Portion"] for r in rows}["Guacamole"] == "99"
+
+
+def test_odeon_page_1_overlaid_rows_are_read_in_drawing_order():
+    import yaml
+
+    from pipeline.ingest import page_words_fine
+    src = yaml.safe_load((Path(__file__).resolve().parent.parent / "docs" / "odeon-uk-config-draft.yaml").read_text())["59_Odeon"]["sources"][0]
+    pdf = Path(__file__).resolve().parent.parent / "inputs" / src["pdf"]
+    words = page_words_fine(pdf, text_flow=True)[0]
+    rows = parse_pages([words], src["columns"], src["header"], True, (), (), (), True, True, ["#N/A"])
+    names = {r["Product_Name"]: r for r in rows}
+    assert names["Onions"]["Serving_Size"] == "142" and names["Guacamole (New)"]["Serving_Size"] == "90"
+    assert names["Onions"]["energykCal_Per Portion"] != names["Guacamole (New)"]["energykCal_Per Portion"]
+
+
+def test_invalid_values_are_kept_as_printed_under_any_column_and_other_words_still_raise():
+    cols = ["energykCal_Per Portion", "fat_Per Portion", "protein_Per Portion"]
+    ok = [line(100, "Hidden", {0: "#N/A", 1: "#N/A", 2: "#N/A"}), line(112, "Real", {0: "5", 1: "6", 2: "7"}),
+          line(124, "Other", {0: "8", 1: "9", 2: "1"})]
+    out = parse_pages([[w for r in ok for w in r]], cols, invalid_values=["#N/A"])
+    assert out[0]["energykCal_Per Portion"] == "#N/A"
+    with pytest.raises(ValueError):
+        parse_pages([[w for r in ok for w in r]], cols)

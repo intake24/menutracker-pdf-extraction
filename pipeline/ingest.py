@@ -19,6 +19,7 @@ class Word(NamedTuple):
     x1: float
     y1: float
     text: str
+    layer: int = 0   # rows printed over each other at one position get different layers (see page_words_fine)
 
 
 def page_texts(pdf: Path) -> list[str]:
@@ -39,28 +40,49 @@ def page_words(pdf: Path) -> list[list[Word]]:
 NUMERIC_CHARS = re.compile(r"^[\d.<]+$")
 
 
-def page_words_fine(pdf: Path, gap: float = 0.5) -> list[list[Word]]:
-    """Words like page_words, but runs of digits are split wherever two characters are more than `gap` pt apart."""
+def _layered(words: list[dict]) -> list[tuple[dict, int]]:
+    """Words in drawing order with a layer number: two rows printed over each other at the same position are drawn one
+    after the other, so the second starts further left than the first ended, on the same line. Layer 0 again at the
+    next line."""
+    out, layer, prev = [], 0, None
+    for w in words:
+        if prev is not None:
+            if abs(w["top"] - prev["top"]) > 1.5:
+                layer = 0
+            elif w["x0"] < prev["x1"] - 1:
+                layer += 1
+        out.append((w, layer))
+        prev = w
+    return out
+
+
+def page_words_fine(pdf: Path, gap: float = 0.5, text_flow: bool = False) -> list[list[Word]]:
+    """Words like page_words, but runs of digits are split wherever two characters are more than `gap` pt apart.
+
+    `text_flow` reads words in drawing order and gives rows that were printed over each other (a PDF defect) their own
+    layers, so they don't interleave."""
     out = []
     with pdfplumber.open(pdf) as doc:
         for page in doc.pages:
-            coarse = page.extract_words(x_tolerance=3, y_tolerance=3)
-            fine = page.extract_words(x_tolerance=gap, y_tolerance=3)
+            coarse = page.extract_words(x_tolerance=3, y_tolerance=3, use_text_flow=text_flow)
+            fine = page.extract_words(x_tolerance=gap, y_tolerance=3, use_text_flow=text_flow)
+            coarse = _layered(coarse) if text_flow else [(w, 0) for w in coarse]
+            fine = _layered(fine) if text_flow else [(w, 0) for w in fine]
             by_line: dict[int, list] = {}   # fine words bucketed by the whole-point row of their top edge
-            for f in fine:
-                by_line.setdefault(int(f["top"]), []).append(f)
+            for f, layer in fine:
+                by_line.setdefault(int(f["top"]), []).append((f, layer))
             words = []
-            for w in coarse:
+            for w, layer in coarse:
                 if NUMERIC_CHARS.match(w["text"]):
-                    near = [f for k in range(int(w["top"]) - 1, int(w["top"]) + 2) for f in by_line.get(k, [])]
-                    inside = [f for f in near if f["x0"] >= w["x0"] - 0.1 and f["x1"] <= w["x1"] + 0.1
-                              and abs(f["top"] - w["top"]) < 1]
-                    if "".join(f["text"] for f in sorted(inside, key=lambda f: f["x0"])) != w["text"]:
+                    near = [fl for k in range(int(w["top"]) - 1, int(w["top"]) + 2) for fl in by_line.get(k, [])]
+                    inside = [(f, ly) for f, ly in near if f["x0"] >= w["x0"] - 0.1 and f["x1"] <= w["x1"] + 0.1
+                              and abs(f["top"] - w["top"]) < 1 and ly == layer]
+                    if "".join(f["text"] for f, _ in sorted(inside, key=lambda t: t[0]["x0"])) != w["text"]:
                         raise ValueError(f"page {len(out) + 1}: could not split {w['text']!r} into cells "
                                          f"(slanted text?); refusing to guess")
-                    words += [Word(f["x0"], f["top"], f["x1"], f["bottom"], f["text"]) for f in inside]
+                    words += [Word(f["x0"], f["top"], f["x1"], f["bottom"], f["text"], ly) for f, ly in inside]
                 else:
-                    words.append(Word(w["x0"], w["top"], w["x1"], w["bottom"], w["text"]))
+                    words.append(Word(w["x0"], w["top"], w["x1"], w["bottom"], w["text"], layer))
             out.append(words)
     return out
 

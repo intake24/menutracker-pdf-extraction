@@ -1,4 +1,3 @@
-
 59_Odeon:
   chain: Odeon
   sources:
@@ -6,10 +5,13 @@
       parser: numeric_table
       region: UK
       category: food
-      approved: false
+      approved: true
       # No allergen information in this PDF (the pre-packed product matrix is a separate PDF), so no `markers`.
       header: Energy
       wrapped_names: true
+      text_flow: true # page 1 has rows printed over each other
+      free_sections: true # sub-section titles ("Toppings (Condiments)") sit between rows
+      invalid_values: ['#N/A'] # a hidden row under "Guacamole" has Excel errors instead of figures
       name_amount: true # "Bacon Bits - 18g", "Regular Lemonade - 22oz Freestyle": the amount is the serving size
       columns:
         - energykJ_Per Portion
