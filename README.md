@@ -56,6 +56,8 @@ uv run python -m pipeline.cli eval         # compare outputs with Pearl Scan and
 
 New batches have no Pearl Scan file to compare with. `docs/playbook-new-batches.md` lists the checks that stand in for it (fail-loud parsing, `python -m pipeline.cli coverage`, arithmetic flags, golden rows), the order of work, the layouts handled and the PDF defects met.
 
+Findings from the first round (errors per source, Pearl Scan mistakes, lessons): `docs/findings-report-2026-10.md`.
+
 ## Status
 
 | Done | Chains |
