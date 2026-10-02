@@ -1,0 +1,114 @@
+# Draft sources for 59_Odeon (parser product_matrix). Not in config/chains.yaml: against Pearl Scan the UK file has 106 rows,
+# 87-90% matched by name; see docs/playbook-new-batches.md and the project notes for what is left.
+59_Odeon_extra_sources:
+    - pdf: pre-packed-product-matrix-april-2025-edition-v88-28_04_2025-uk-version.pdf
+      parser: product_matrix
+      region: UK # v88, 28 April 2025
+      category: food
+      approved: false
+      # Pre-packed product matrix: ingredients with allergens in bold (the bold is not in the text layer, so allergens are NOT
+      # derived: the PDF has no allergen column, and the allergen columns stay absent), storage and use text, serving size,
+      # nutrition per 100g and per serving, one product per row. Figures printed with their unit ("22g", "498 kcal") lose
+      # the column's own unit; "N/A" is kept as printed; a dash is kept as printed.
+      text_columns:
+        - { column: Product_Name, x0: 38 }
+        - { column: Pack_Size, x0: 112 }
+        - { column: Ingredients, x0: 134 }
+        - { column: Storage, x0: 258 }
+        - { column: Instructions, x0: 284 }
+        - { column: Serving, x0: 333 }
+      serving_column: Serving
+      pearlscan: { servingsize: ~, servingsizeunit: ~ } # Pearl Scan filled serving sizes the PDF does not print (250 ml for a 500 ml bottle) and left counts blank
+      numeric_columns:
+        - { column: energykJ_Per 100g/ml, x: 373 }
+        - { column: energykCal_Per 100g/ml, x: 396 }
+        - { column: fat_Per 100g/ml, x: 418 }
+        - { column: saturates_Per 100g/ml, x: 447 }
+        - { column: carbohydrates_Per 100g/ml, x: 464 }
+        - { column: sugars_Per 100g/ml, x: 492 }
+        - { column: fibre_Per 100g/ml, x: 514 }
+        - { column: protein_Per 100g/ml, x: 540 }
+        - { column: salt_Per 100g/ml, x: 562 }
+        - { column: energykJ_Per Portion, x: 588 }
+        - { column: energykCal_Per Portion, x: 611 }
+        - { column: fat_Per Portion, x: 633 }
+        - { column: saturates_Per Portion, x: 662 }
+        - { column: carbohydrates_Per Portion, x: 679 }
+        - { column: sugars_Per Portion, x: 707 }
+        - { column: fibre_Per Portion, x: 729 }
+        - { column: protein_Per Portion, x: 755 }
+        - { column: salt_Per Portion, x: 777 }
+    - pdf: pre-packed-product-matrix-april-2025-edition-v87-25_04_2025-belfast-version.pdf
+      parser: product_matrix
+      region: NI # Belfast, v87
+      category: food
+      approved: false
+      # Pre-packed product matrix: ingredients with allergens in bold (the bold is not in the text layer, so allergens are NOT
+      # derived: the PDF has no allergen column, and the allergen columns stay absent), storage and use text, serving size,
+      # nutrition per 100g and per serving, one product per row. Figures printed with their unit ("22g", "498 kcal") lose
+      # the column's own unit; "N/A" is kept as printed; a dash is kept as printed.
+      text_columns:
+        - { column: Product_Name, x0: 46 }
+        - { column: Pack_Size, x0: 118 }
+        - { column: Ingredients, x0: 136 }
+        - { column: Storage, x0: 268 }
+        - { column: Instructions, x0: 294 }
+        - { column: Serving, x0: 342 }
+      serving_column: Serving
+      pearlscan: { servingsize: ~, servingsizeunit: ~ } # Pearl Scan filled serving sizes the PDF does not print (250 ml for a 500 ml bottle) and left counts blank
+      numeric_columns:
+        - { column: energykJ_Per 100g/ml, x: 380 }
+        - { column: energykCal_Per 100g/ml, x: 403 }
+        - { column: fat_Per 100g/ml, x: 424 }
+        - { column: saturates_Per 100g/ml, x: 451 }
+        - { column: carbohydrates_Per 100g/ml, x: 467 }
+        - { column: sugars_Per 100g/ml, x: 495 }
+        - { column: fibre_Per 100g/ml, x: 516 }
+        - { column: protein_Per 100g/ml, x: 541 }
+        - { column: salt_Per 100g/ml, x: 562 }
+        - { column: energykJ_Per Portion, x: 587 }
+        - { column: energykCal_Per Portion, x: 609 }
+        - { column: fat_Per Portion, x: 630 }
+        - { column: saturates_Per Portion, x: 658 }
+        - { column: carbohydrates_Per Portion, x: 673 }
+        - { column: sugars_Per Portion, x: 701 }
+        - { column: fibre_Per Portion, x: 723 }
+        - { column: protein_Per Portion, x: 748 }
+        - { column: salt_Per Portion, x: 768 }
+    - pdf: pre-packed-product-matrix-april-2025-edition-v87-25_04_2025-roi-version.pdf
+      parser: product_matrix
+      region: ROI # Republic of Ireland, v87
+      category: food
+      approved: false
+      # Pre-packed product matrix: ingredients with allergens in bold (the bold is not in the text layer, so allergens are NOT
+      # derived: the PDF has no allergen column, and the allergen columns stay absent), storage and use text, serving size,
+      # nutrition per 100g and per serving, one product per row. Figures printed with their unit ("22g", "498 kcal") lose
+      # the column's own unit; "N/A" is kept as printed; a dash is kept as printed.
+      text_columns:
+        - { column: Product_Name, x0: 46 }
+        - { column: Pack_Size, x0: 118 }
+        - { column: Ingredients, x0: 136 }
+        - { column: Storage, x0: 268 }
+        - { column: Instructions, x0: 294 }
+        - { column: Serving, x0: 342 }
+      serving_column: Serving
+      pearlscan: { servingsize: ~, servingsizeunit: ~ } # Pearl Scan filled serving sizes the PDF does not print (250 ml for a 500 ml bottle) and left counts blank
+      numeric_columns:
+        - { column: energykJ_Per 100g/ml, x: 380 }
+        - { column: energykCal_Per 100g/ml, x: 403 }
+        - { column: fat_Per 100g/ml, x: 424 }
+        - { column: saturates_Per 100g/ml, x: 451 }
+        - { column: carbohydrates_Per 100g/ml, x: 467 }
+        - { column: sugars_Per 100g/ml, x: 495 }
+        - { column: fibre_Per 100g/ml, x: 516 }
+        - { column: protein_Per 100g/ml, x: 541 }
+        - { column: salt_Per 100g/ml, x: 562 }
+        - { column: energykJ_Per Portion, x: 587 }
+        - { column: energykCal_Per Portion, x: 609 }
+        - { column: fat_Per Portion, x: 630 }
+        - { column: saturates_Per Portion, x: 658 }
+        - { column: carbohydrates_Per Portion, x: 673 }
+        - { column: sugars_Per Portion, x: 701 }
+        - { column: fibre_Per Portion, x: 723 }
+        - { column: protein_Per Portion, x: 748 }
+        - { column: salt_Per Portion, x: 768 }
