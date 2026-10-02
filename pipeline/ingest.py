@@ -46,10 +46,14 @@ def page_words_fine(pdf: Path, gap: float = 0.5) -> list[list[Word]]:
         for page in doc.pages:
             coarse = page.extract_words(x_tolerance=3, y_tolerance=3)
             fine = page.extract_words(x_tolerance=gap, y_tolerance=3)
+            by_line: dict[int, list] = {}   # fine words bucketed by the whole-point row of their top edge
+            for f in fine:
+                by_line.setdefault(int(f["top"]), []).append(f)
             words = []
             for w in coarse:
                 if NUMERIC_CHARS.match(w["text"]):
-                    inside = [f for f in fine if f["x0"] >= w["x0"] - 0.1 and f["x1"] <= w["x1"] + 0.1
+                    near = [f for k in range(int(w["top"]) - 1, int(w["top"]) + 2) for f in by_line.get(k, [])]
+                    inside = [f for f in near if f["x0"] >= w["x0"] - 0.1 and f["x1"] <= w["x1"] + 0.1
                               and abs(f["top"] - w["top"]) < 1]
                     if "".join(f["text"] for f in sorted(inside, key=lambda f: f["x0"])) != w["text"]:
                         raise ValueError(f"page {len(out) + 1}: could not split {w['text']!r} into cells "
