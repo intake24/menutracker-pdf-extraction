@@ -30,7 +30,9 @@ def same(want: str, got: str) -> bool:
 
 
 def norm(text: str) -> str:
-    return re.sub(r"[^a-z0-9]", "", text.casefold())
+    """Name key: letters and digits only, accents dropped (Pearl Scan lost some: BACARDI for BACARDÍ)."""
+    plain = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode()
+    return re.sub(r"[^a-z0-9]", "", plain.casefold())
 
 
 def _stem_key(stem: str) -> str:
@@ -48,6 +50,11 @@ def ground_truth_file(gt_dir: Path, pdf_stem: str) -> Path | None:
     return max(found, key=lambda p: p.stem.endswith("_v0.1"), default=None)
 
 
+def _clean(name: str) -> str:
+    """A name without bracketed notes and anything after a star: Pearl Scan dropped those from item names."""
+    return re.sub(r"\*.*$|\([^)]*\)", " ", name)
+
+
 def compare_ground_truth(truth: list[dict], ours: list[dict], mapping: dict[str, str],
                          errata: set[tuple[str, str]]) -> dict:
     """Match rows on name (+ size), then compare every mapped cell.
@@ -57,15 +64,30 @@ def compare_ground_truth(truth: list[dict], ours: list[dict], mapping: dict[str,
     by_key: dict[str, list[dict]] = {}
     for r in ours:
         by_key.setdefault(norm(r["Product_Name"] + r.get("Size", "")), []).append(r)
+    used: set[int] = set()
     seen: dict[str, int] = {}   # repeated names pair up by order of occurrence: 1st with 1st, 2nd with 2nd
-    unmatched, mismatches, cells = [], [], 0
+    pairs: list[tuple[dict, dict | None]] = []
     for t in truth:
+        key = norm(t["item_name"])
+        n = seen[key] = seen.get(key, -1) + 1
+        o = by_key.get(key, [])[n] if n < len(by_key.get(key, [])) else None
+        if o is not None:
+            used.add(id(o))
+        pairs.append((t, o))
+    # Second chance for names Pearl Scan shortened: the start of our name once notes are removed, on a row not yet used.
+    for i, (t, o) in enumerate(pairs):
+        if o is None and (t["item_name"], "*") not in errata:
+            key = norm(t["item_name"])
+            for r in ours:
+                if id(r) not in used and norm(_clean(r["Product_Name"] + " " + r.get("Size", ""))).startswith(key):
+                    used.add(id(r))
+                    pairs[i] = (t, r)
+                    break
+    unmatched, mismatches, cells = [], [], 0
+    for t, o in pairs:
         name = t["item_name"]
         if (name, "*") in errata:
             continue
-        key = norm(name)
-        n = seen[key] = seen.get(key, -1) + 1
-        o = by_key.get(key, [])[n] if n < len(by_key.get(key, [])) else None
         if o is None:
             unmatched.append(name)
             continue

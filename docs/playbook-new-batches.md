@@ -1,7 +1,7 @@
 # Playbook: onboarding chains without Pearl Scan
 
 Written 2026-10-02 from the first 9 chains (Beefeater, Brewers Fayre, Table Table, Five Guys, Pizza Express, Cineworld,
-Domino's sides, Vue; Odeon in progress). Later batches have no Pearl Scan CSV to compare with, so this lists what the
+Domino's sides, Vue, Odeon nutrition tables). Later batches have no Pearl Scan CSV to compare with, so this lists what the
 pipeline checks on its own, the order of work, what each layout needed, the PDF defects met, and what Pearl Scan got
 wrong (so its files are never treated as perfect). Spec: `pipeline-design.md`. Plan: `superpowers/plans/`.
 
@@ -46,6 +46,8 @@ position type pass, and (e) a person has checked markers, disclaimer and columns
 | Rows printed over each other (hidden stale row) | Odeon p1 | `text_flow` (+ `invalid_values` for `#N/A`) |
 | Running heads above a table header | Domino's | `furniture` |
 | Column-number ruler (`4 5 6 7 ...`) | Odeon | skipped automatically |
+| Name printed under its figures (Belfast/ROI) | Odeon | `name_below` |
+| Amount inside brackets or notes (`(Per Portion of 10g)`, `(16oz as served)`, `75cl`) | Odeon | `name_amount` (name stays as printed) |
 | Allergen grid, `Y` marks, rotated headers | Whitbread drinks | `whitbread_drinks_grid` |
 | Allergen text list per item | Whitbread breakfast | `premier_inn_breakfast` |
 | Allergen matrix, marks by column, merged cells, size groups, per-100g items | Cineworld | `allergen_matrix` |
@@ -65,6 +67,10 @@ position type pass, and (e) a person has checked markers, disclaimer and columns
 - Stray `g` after a figure (`2.7g`) printed in the PDF: kept as printed, row flagged.
 - Spelling in the PDFs is kept (`Peacan`, `Blackcurrent`). Pearl Scan sometimes corrected it, sometimes added typos.
 - Files: soft hyphen in a Pearl Scan file name; 12 Pearl Scan CSVs are Windows-1252, one mixes UTF-8 lines.
+- The Odeon PDFs' own data is inconsistent: kJ is 5 x kcal on many drinks (166 rows flagged `kJ/kcal mismatch`), which
+  is the source, not a parser fault. Check the first flagged rows against the page, then accept the pattern.
+- Belfast and ROI are not copies of UK: some rows print the name under the figures, notes follow the amount
+  (`454ml *This product is not recommended...`). Never assume two regions parse alike; run each against `coverage`/`eval`.
 - YAML: unquoted `Yes`/`No` become booleans; quote them.
 
 ## 5. What Pearl Scan got wrong (and its conventions)
@@ -74,6 +80,10 @@ position type pass, and (e) a person has checked markers, disclaimer and columns
 - Stray `g` removed from printed figures; typos added to names (`Rasoberry`, `Cherrv`), others corrected.
 - Conventions, not errors: a per-100g-only row written as a 100 g serving; amounts split off names into
   `servingsize`/`servingsizeunit`; name = group - sub-group - size. We keep what the PDF prints and map in `eval`.
+- Odeon names: Pearl Scan dropped bracketed notes and `*` notes from names, moved amounts into the serving size
+  (also from inside brackets), dropped accents (BACARDI for BACARDÍ), and typed several typos (Cherrv, Berrv, Rasoberry,
+  Crispv, `Sig` as `Sia`). `eval` now falls back to a start-of-name match (notes removed) on a row not yet paired, and
+  compares every cell on it; typos and shortened names that still don't pair go to errata.
 - Each confirmed mistake is an entry in `config/ground_truth_errata.yaml` with the reason.
 - Consequence: where Pearl Scan is the only check, an unexplained mismatch needs a look at the page before either side
   is changed. In every case so far both explanations existed (the model once, Pearl Scan several times).
@@ -90,7 +100,8 @@ position type pass, and (e) a person has checked markers, disclaimer and columns
 
 ## 7. Effort observed (to plan windows)
 
-Config-only chain on an existing parser: 1-3 points. New option on a parser: 3-5. New parser: 6-10 plus a fresh review
+Config-only chain on an existing parser: 1-3 points. New option on a parser: 3-5 (Odeon UK needed five options, a word-reader
+change and an evaluator change: about 12 points in total, most of it diagnosing PDF defects). New parser: 6-10 plus a fresh review
 (3-4 points) for matrix or LLM work. Reviews found real bugs every time (8 on Cineworld, 6 on the backend); keep them.
 
 ## 8. Open improvements

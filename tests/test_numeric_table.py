@@ -390,3 +390,21 @@ def test_invalid_values_are_kept_as_printed_under_any_column_and_other_words_sti
     assert out[0]["energykCal_Per Portion"] == "#N/A"
     with pytest.raises(ValueError):
         parse_pages([[w for r in ok for w in r]], cols)
+
+
+def test_name_amount_reads_an_amount_inside_brackets_and_after_a_dash_note():
+    rows = [line(100, "Mix (Per Portion of 10g)", FULL), line(112, "Topper 15g - Contain E", FULL), line(124, "Ice - Regular (16oz as served)", FULL)]
+    out = parse_pages([[w for r in rows for w in r]], COLUMNS, name_amount=True)
+    assert [(r["Product_Name"], r["Serving_Size"], r["Serving_Size_Unit"]) for r in out] == [
+        ("Mix (Per Portion of 10g)", "10", "g"), ("Topper - Contain E", "15", "g"), ("Ice - Regular (16oz as served)", "16", "oz")]
+
+
+def test_name_below_takes_the_name_printed_under_a_line_of_numbers():
+    rows = [line(100, "Item A", FULL),
+            [w for w in line(112, "", FULL) if w.text],
+            [Word(5, 122, 130, 130, "Wheat peanuts - 150g")],
+            line(134, "Item C", FULL)]
+    out = parse_pages([[w for r in rows for w in r]], COLUMNS, name_below=True, name_amount=True)
+    assert [(r["Product_Name"], r.get("Serving_Size")) for r in out] == [("Item A", None), ("Wheat peanuts", "150"), ("Item C", None)]
+    with pytest.raises(ValueError, match="numbers without a name"):
+        parse_pages([[w for r in rows for w in r]], COLUMNS)

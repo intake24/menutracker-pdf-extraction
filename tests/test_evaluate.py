@@ -119,3 +119,16 @@ def test_the_per_100g_rule_does_not_excuse_a_row_that_also_has_per_portion_value
     ours = [{"Product_Name": "Pizza", "Size": "", "energykCal_Per Portion": "900", "energykCal_Per 100g/ml": "250"}]
     r = compare_ground_truth(truth, ours, mapping, set())
     assert not r["passed"] and len(r["mismatches"]) == 2
+
+
+def test_a_pearl_scan_name_that_is_the_start_of_ours_without_notes_still_matches_when_cells_agree():
+    mapping = {"item_name": "Product_Name", "kcal": "energykCal_Per Portion"}
+    ours = [{"Product_Name": "Tango Raspberry - Regular (16oz as served) *Not for children", "Size": "", "energykCal_Per Portion": "59"},
+            {"Product_Name": "Popcorn Topper - Contain E Numbers which may affect", "Size": "", "energykCal_Per Portion": "67"}]
+    truth = [{"item_name": "Tango Raspberry Regular", "kcal": "59"}, {"item_name": "Popcorn Topper", "kcal": "67"}]
+    assert compare_ground_truth(truth, ours, mapping, set())["passed"]
+    truth[0]["kcal"] = "58"   # a prefix match still compares every cell
+    r = compare_ground_truth(truth, ours, mapping, set())
+    assert not r["passed"] and r["unmatched"] == []
+    r = compare_ground_truth([{"item_name": "Cola", "kcal": "1"}], ours, mapping, set())
+    assert r["unmatched"] == ["Cola"]

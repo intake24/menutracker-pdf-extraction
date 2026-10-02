@@ -329,3 +329,74 @@
         ("PICK'N'MIX"). name = the bold item name exactly as printed (it may contain " - "); size = empty;
         portion = the Portion/Pack Size cell ("100g").
       fields: *vue_fields
+59_Odeon:
+  chain: Odeon
+  sources:
+    - pdf: nutritional-information-may-2025-pdf-version-10-23_05_2025-uk-version.pdf
+      parser: numeric_table
+      region: UK
+      category: food
+      approved: true
+      # No allergen information in this PDF (the pre-packed product matrix is a separate PDF), so no `markers`.
+      header: Energy
+      text_flow: true # page 1 has rows printed over each other
+      free_sections: true # sub-section titles ("Toppings (Condiments)") sit between rows
+      invalid_values: ['#N/A'] # a hidden row under "Guacamole" has Excel errors instead of figures
+      name_amount: true # "Bacon Bits - 18g", "Regular Lemonade - 22oz Freestyle": the amount is the serving size
+      columns:
+        - energykJ_Per Portion
+        - energykCal_Per Portion
+        - fat_Per Portion
+        - saturates_Per Portion
+        - carbohydrates_Per Portion
+        - sugars_Per Portion
+        - protein_Per Portion
+        - sodium_Per Portion
+        - salt_Per Portion
+        - fibre_Per Portion
+    - pdf: nutritional-information-may-2025-pdf-version-10-23_05_2025-belfast-version.pdf
+      parser: numeric_table
+      region: NI # Belfast
+      category: food
+      approved: false # copy of the UK source: a person confirms the columns for this region
+      # No allergen information in this PDF (the pre-packed product matrix is a separate PDF), so no `markers`.
+      header: Energy
+      name_below: true # some rows print the name on the line under their figures
+      text_flow: true # page 1 has rows printed over each other
+      free_sections: true # sub-section titles ("Toppings (Condiments)") sit between rows
+      invalid_values: ['#N/A'] # a hidden row under "Guacamole" has Excel errors instead of figures
+      name_amount: true # "Bacon Bits - 18g", "Regular Lemonade - 22oz Freestyle": the amount is the serving size
+      columns:
+        - energykJ_Per Portion
+        - energykCal_Per Portion
+        - fat_Per Portion
+        - saturates_Per Portion
+        - carbohydrates_Per Portion
+        - sugars_Per Portion
+        - protein_Per Portion
+        - sodium_Per Portion
+        - salt_Per Portion
+        - fibre_Per Portion
+    - pdf: nutritional-information-may-2025-pdf-version-10-23_05_2025-roi-version.pdf
+      parser: numeric_table
+      region: ROI # Republic of Ireland
+      category: food
+      approved: false # copy of the UK source: a person confirms the columns for this region
+      # No allergen information in this PDF (the pre-packed product matrix is a separate PDF), so no `markers`.
+      header: Energy
+      name_below: true # some rows print the name on the line under their figures
+      text_flow: true # page 1 has rows printed over each other
+      free_sections: true # sub-section titles ("Toppings (Condiments)") sit between rows
+      invalid_values: ['#N/A'] # a hidden row under "Guacamole" has Excel errors instead of figures
+      name_amount: true # "Bacon Bits - 18g", "Regular Lemonade - 22oz Freestyle": the amount is the serving size
+      columns:
+        - energykJ_Per Portion
+        - energykCal_Per Portion
+        - fat_Per Portion
+        - saturates_Per Portion
+        - carbohydrates_Per Portion
+        - sugars_Per Portion
+        - protein_Per Portion
+        - sodium_Per Portion
+        - salt_Per Portion
+        - fibre_Per Portion

@@ -14,7 +14,8 @@ Source options (config/chains.yaml):
   name_amount    a trailing amount in the name ("BBQ Dip 25g") becomes Serving_Size and Serving_Size_Unit
   text_flow      read words in drawing order and keep rows printed over each other apart (an Odeon PDF defect)
   invalid_values cell values that are errors in the source ("#N/A"); kept as printed, the row is flagged
-  free_sections  name-only text that is not directly above a row is a sub-section label (needs wrapped_names)
+  name_below     a line of only numbers followed by a line of only text: the text is that row's name
+  free_sections  name-only text that is not a wrapped name is a sub-section label; without wrapped_names, all of it is
   wrapped_names  join a name-only line directly above a data row onto that row's name
   titles         page titles allowed above a table header, e.g. "Breakfast (selected restaurants only)"; each
                  persists as a parent in Category until the next one. Any other text there raises.
@@ -29,7 +30,8 @@ from pathlib import Path
 from pipeline.ingest import Word, page_words_fine
 
 NUMBER = re.compile(r"^(?:<\s?)?\d+(?:\.\d+)?$|^(?:Negligible|Traces?|Tr)$")
-AMOUNT = re.compile(r"^(.*?\S)(?:\s+-)?\s+(\d+(?:\.\d+)?)\s?(g|ml|oz)(\s+[A-Za-z(].*)?$")
+AMOUNT = re.compile(r"^(.*?\S)(?:\s+-\s*|\s+)(\d+(?:\.\d+)?)\s?(g|ml|cl|oz)(\s+[-*A-Za-z(].*)?$")
+BRACKET_AMOUNT = re.compile(r"\([^)]*?(\d+(?:\.\d+)?)\s?(g|ml|cl|oz)\b[^)]*\)")   # "(Per Portion of 10g)", "(16oz as served)"
 MIN_NUMBERS = 3          # a line needs this many trailing numeric cells to be a data row
 SECTION_INDENT = 12      # section headings start at the left margin; wrapped text and notes are indented more
 VALUELIKE = re.compile(r"\d|^(?:-|–|#?N/?A)$", re.I)   # a token that looks like a cell value, readable or not
@@ -62,6 +64,23 @@ def _is_ruler(line: list[Word]) -> bool:
     except ValueError:
         return False
     return len(n) >= MIN_NUMBERS and n == list(range(n[0], n[0] + len(n)))
+
+
+def _names_from_below(lines: list[list[Word]], number: re.Pattern) -> list[list[Word]]:
+    """A line of only numbers followed by a line of only text: the text is that row's name, printed under it."""
+    out, i = [], 0
+    while i < len(lines):
+        line = lines[i]
+        nxt = lines[i + 1] if i + 1 < len(lines) else None
+        if (nxt and len(line) >= MIN_NUMBERS and all(number.match(w.text) for w in line)
+                and not any(number.match(w.text) for w in nxt) and nxt[0].y0 - line[0].y1 < 2 * (line[0].y1 - line[0].y0)):
+            dy = (line[0].y0 + line[0].y1) / 2 - (nxt[0].y0 + nxt[0].y1) / 2
+            out.append(sorted([w._replace(y0=w.y0 + dy, y1=w.y1 + dy) for w in nxt] + line, key=lambda w: w.x0))
+            i += 2
+        else:
+            out.append(line)
+            i += 1
+    return out
 
 
 def _split(line: list[Word], number: re.Pattern) -> tuple[list[Word], list[Word]]:
@@ -148,6 +167,8 @@ def _row(line: list[Word], lead: list[Word], anchors: list[float], columns: list
     row = {"Product_Name": product, "Category": category, "source_page": page_no}
     if name_amount and (m := AMOUNT.match(product)):   # "BBQ Dip 25g": the amount is the serving size
         row |= {"Product_Name": m.group(1) + (m.group(4) or ""), "Serving_Size": m.group(2), "Serving_Size_Unit": m.group(3)}
+    elif name_amount and (m := BRACKET_AMOUNT.search(product)):   # the name stays as printed; the amount is the serving size
+        row |= {"Serving_Size": m.group(1), "Serving_Size_Unit": m.group(2)}
     for w in (w for w in line if w.x1 >= edge):
         if not number.match(w.text):
             raise ValueError(f"page {page_no}: unreadable cell {w.text!r} in row {product!r}")
@@ -164,7 +185,7 @@ def _row(line: list[Word], lead: list[Word], anchors: list[float], columns: list
 
 
 def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None = None,
-                wrapped_names: bool = False, titles: list[str] = (), text_values: list[str] = (), furniture: list[str] = (), name_amount: bool = False, free_sections: bool = False, invalid_values: list[str] = ()) -> list[dict]:
+                wrapped_names: bool = False, titles: list[str] = (), text_values: list[str] = (), furniture: list[str] = (), name_amount: bool = False, free_sections: bool = False, invalid_values: list[str] = (), name_below: bool = False) -> list[dict]:
     def extend(words):
         return re.compile(NUMBER.pattern + "|^(?:" + "|".join(map(re.escape, words)) + ")$") if words else NUMBER
     number = extend([*text_values, *invalid_values])
@@ -173,6 +194,8 @@ def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None 
     parent = section = ""   # parent: a page title that persists ("Breakfast (selected restaurants only)")
     for page_no, words in enumerate(pages, start=1):
         lines = [l for l in _lines(words) if not _is_ruler(l)]
+        if name_below:
+            lines = _names_from_below(lines, number)
         split = [_split(line, number) for line in lines]
         found = [(i, cells) for i, (name, cells) in enumerate(split) if name and len(cells) >= MIN_NUMBERS]
         if not found:
@@ -230,7 +253,7 @@ def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None 
                 elif heading := _heading(line, left):
                     section = heading
                 elif i < last_row and not text.startswith(NOTE_START):
-                    if not wrapped_names:
+                    if not wrapped_names and not free_sections:
                         raise ValueError(f"page {page_no}: text between rows that is not a heading or note "
                                          f"(a wrapped name?): {text!r}")
                     pending.append(line)
@@ -253,7 +276,7 @@ def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None 
                     # Name-only lines directly above the row (and not reaching into the columns) are its wrapped
                     # name; any line before them is a sub-section label that applies from here on.
                     below, keep = line, []
-                    while pending and (below[0].y0 - pending[-1][0].y0 <= WRAP_LINES * (below[0].y1 - below[0].y0)
+                    while pending and wrapped_names and (below[0].y0 - pending[-1][0].y0 <= WRAP_LINES * (below[0].y1 - below[0].y0)
                                        and not any(w.x1 >= anchors[0] - COLUMN_GAP for w in pending[-1])):
                         keep.insert(0, pending.pop())
                         below = keep[0]
@@ -275,4 +298,4 @@ def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None 
 def parse(pdf: Path, source: dict) -> list[dict]:
     return parse_pages(page_words_fine(pdf, text_flow=source.get("text_flow", False)), source["columns"], source.get("header"),
                        source.get("wrapped_names", False), source.get("titles", ()), source.get("text_values", ()), source.get("furniture", ()), source.get("name_amount", False), source.get("free_sections", False),
-                       source.get("invalid_values", ()))
+                       source.get("invalid_values", ()), source.get("name_below", False))

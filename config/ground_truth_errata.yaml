@@ -2,7 +2,7 @@
 # column (Pearl Scan column, or "*" for the whole row), why.
 - file: 25-04-03_20Cineworld_20Allergen_20and_20Nutritional_20Information.csv
   item: Tango Orange Sugar Free - Diet Pepsi
-  column: "*"
+  column: '*'
   why: The PDF lists "Diet Pepsi, 200 ml, 1.2 kcal" as an item of its own, below the Tango Orange Sugar Free group; Pearl Scan filed it as a size of Tango.
 - file: m19982-nutritional-info-food.csv
   item: Pork Frankfurter - Large
@@ -30,13 +30,68 @@
   why: The PDF prints a stray "g" after this figure ("0g", "2.7g"); Pearl Scan removed it. We keep it as printed and the row is flagged.
 - file: m19982-nutritional-info-food.csv
   item: Sweet Popcorn - Kids/Snackit
-  column: "*"
-  why: The PDF has several popcorn tables (the last is "Salted Popcorn (Dublin)"); Pearl Scan dropped "(Dublin)" and shifted rows, so rows of this name pair with the wrong table. Our rows were read from the page image.
+  column: '*'
+  why: The PDF has several popcorn tables (the last is "Salted Popcorn (Dublin)"); Pearl Scan dropped "(Dublin)" and shifted rows, so rows of this name pair with the wrong table. Our rows were read from
+    the page image.
 - file: m19982-nutritional-info-food.csv
   item: Salted Popcorn - Kids/Snackit
-  column: "*"
-  why: The PDF has several popcorn tables (the last is "Salted Popcorn (Dublin)"); Pearl Scan dropped "(Dublin)" and shifted rows, so rows of this name pair with the wrong table. Our rows were read from the page image.
+  column: '*'
+  why: The PDF has several popcorn tables (the last is "Salted Popcorn (Dublin)"); Pearl Scan dropped "(Dublin)" and shifted rows, so rows of this name pair with the wrong table. Our rows were read from
+    the page image.
 - file: m19982-nutritional-info-food.csv
   item: Salted Popcorn - Junior
-  column: "*"
-  why: The PDF has several popcorn tables (the last is "Salted Popcorn (Dublin)"); Pearl Scan dropped "(Dublin)" and shifted rows, so rows of this name pair with the wrong table. Our rows were read from the page image.
+  column: '*'
+  why: The PDF has several popcorn tables (the last is "Salted Popcorn (Dublin)"); Pearl Scan dropped "(Dublin)" and shifted rows, so rows of this name pair with the wrong table. Our rows were read from
+    the page image.
+- file: nutritional-information-may-2025-pdf-version-10-23_05_2025-uk-version_v0.1.csv
+  item: Large Diet Coke Cherrv Vanilla Freestyle
+  column: '*'
+  why: 'Pearl Scan typo: the PDF prints Cherry'
+- file: nutritional-information-may-2025-pdf-version-10-23_05_2025-uk-version_v0.1.csv
+  item: Medium Dr Pepper Cherrv Vanilla Freestyle
+  column: '*'
+  why: 'Pearl Scan typo: the PDF prints Cherry'
+- file: nutritional-information-may-2025-pdf-version-10-23_05_2025-uk-version_v0.1.csv
+  item: Large Powerade Zero Berrv Tropical Freestyle
+  column: '*'
+  why: 'Pearl Scan typo: the PDF prints Berry'
+- file: nutritional-information-may-2025-pdf-version-10-23_05_2025-uk-version_v0.1.csv
+  item: Regular Schweppes Lemonade Cherrv Freestyle
+  column: '*'
+  why: 'Pearl Scan typo: the PDF prints Cherry'
+- file: nutritional-information-may-2025-pdf-version-10-23_05_2025-uk-version_v0.1.csv
+  item: Large Sprite Zero Rasoberry Freestyle
+  column: '*'
+  why: 'Pearl Scan typo: the PDF prints Raspberry'
+- file: nutritional-information-may-2025-pdf-version-10-23_05_2025-uk-version_v0.1.csv
+  item: Arber Rhubarb Gin 25ml (Information Not Available, please check product for further information)
+  column: '*'
+  why: Pearl Scan kept the amount in this name and dropped it in the 50 ml row, so the two rows pair in the wrong order
+- file: nutritional-information-may-2025-pdf-version-10-23_05_2025-uk-version_v0.1.csv
+  item: 'Arber Rhubarb Gin (Information Not Available, please check product for further information) '
+  column: '*'
+  why: same inconsistency as the 25 ml row
+- file: nutritional-information-may-2025-pdf-version-10-23_05_2025-uk-version_v0.1.csv
+  item: Old Pineapple Spiced Rum 25ml (Information Not Available, please check product for further information)
+  column: '*'
+  why: the PDF prints Old J Pineapple Spiced Rum; Pearl Scan dropped the J and kept the amount only in this row
+- file: nutritional-information-may-2025-pdf-version-10-23_05_2025-uk-version_v0.1.csv
+  item: 'Old Pineapple Spiced Rum (Information Not Available, please check product for further information) '
+  column: '*'
+  why: the PDF prints Old J Pineapple Spiced Rum; Pearl Scan dropped the J
+- file: nutritional-information-may-2025-pdf-version-10-23_05_2025-uk-version_v0.1.csv
+  item: Old Pineapple Spiced Rum (Information Not Available, please check product for further information)
+  column: '*'
+  why: the PDF prints Old J Pineapple Spiced Rum; Pearl Scan dropped the J
+- file: nutritional-information-may-2025-pdf-version-10-23_05_2025-belfast-version.csv
+  item: 'Side of McCains Our Menu Sia Crispers '
+  column: '*'
+  why: 'Pearl Scan typo: the PDF prints Sig Crispers'
+- file: nutritional-information-may-2025-pdf-version-10-23_05_2025-belfast-version.csv
+  item: 'Crispv Onion '
+  column: '*'
+  why: 'Pearl Scan typo: the PDF prints Crispy Onion'
+- file: nutritional-information-may-2025-pdf-version-10-23_05_2025-roi-version.csv
+  item: 'Side of McCains Our Menu Sia Crispers '
+  column: '*'
+  why: 'Pearl Scan typo: the PDF prints Sig Crispers'
