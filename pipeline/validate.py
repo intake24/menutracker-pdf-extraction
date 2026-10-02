@@ -36,7 +36,7 @@ def check_row(row: dict) -> list[str]:
 
 
 def duplicate_issues(rows: list[dict],
-                     key_cols: tuple[str, ...] = ("Product_Name", "Category", "Size", "Milk", "region")) -> dict[int, str]:
+                     key_cols: tuple[str, ...] = ("Product_Name", "Category", "Cheese", "Crust", "Size", "Serving_Size", "Milk", "region")) -> dict[int, str]:
     def values(r: dict) -> dict:
         return {k: v for k, v in r.items() if k not in PROVENANCE}
 

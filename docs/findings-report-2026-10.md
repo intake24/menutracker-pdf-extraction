@@ -10,14 +10,14 @@ Status date 2026-10-02. This report records what was found when every extracted 
 | Five Guys | 1 | 54 | 972 cells, 0 mismatches | 0 | Approved; 4 rows carry the PDF's own arithmetic flags |
 | Pizza Express (UK, NI) | 2 | 818 | 8,154 + 6,570 cells, 0 mismatches | 1 critical + 5 important (review) | Approved |
 | Cineworld | 1 | 284 | 225 rows, 633 cells, 0 mismatches; 8 golden allergen rows | 8 findings (review) | Approved |
-| Domino's sides and dips | 1 of 2 | 82 | 82 rows, 2,788 cells, 0 mismatches | 0 | Approved; pizzas PDF (1,422 rows) not done |
+| Domino's (sides, dips, pizzas) | 2 | 1,504 | sides 82 rows / 2,788 cells; pizzas 1,420 rows / 56,799 cells; 0 mismatches | 0 (one false-duplicate rule fixed) | Approved; 1 row carries the PDF's own placeholder figures |
 | Vue | 3 (image text) | 349 | 342 rows, 0 mismatches after 9 errata | model misread 2 digits at 110 dpi | Approved |
 | Odeon nutrition tables (UK, Belfast, ROI) | 3 | 1,013 | 705 + 147 + 148 rows, 0 mismatches after errata | 0 after fixes | Approved |
 | Odeon pre-packed matrices (UK, Belfast, ROI) | 3 | 286 | 97 + 82 + 79 rows, 0 mismatches after 33 errata | name glue (fixed) | Approved |
 | Papa John's | 1 (image pages) | 435 | 434 rows, 6,943 cells, 0 mismatches after 7 errata | 1 critical + 4 important (review) | Approved |
 | Krispy Kreme, Domino's pizzas, Pizza Hut, Coffee #1, Starbucks, Brewhouse, Cookhouse, Top Golf | not done | | | | Surveyed or not started, see section 4 |
 
-Totals in `outputs/`: 10 chain CSVs, 3,942 rows. Pearl Scan agreement is exact on every compared cell once the 63 confirmed Pearl Scan mistakes are excused. Allergen data has no ground truth anywhere; it is checked by hand-verified golden rows only.
+Totals in `outputs/`: 10 chain CSVs, 5,364 rows. Pearl Scan agreement is exact on every compared cell once the 63 confirmed Pearl Scan mistakes are excused. Allergen data has no ground truth anywhere; it is checked by hand-verified golden rows only.
 
 ## 2. How the checks worked and who decides
 
@@ -153,7 +153,7 @@ On Domino's page 2 (a text PDF, 4-5 pt print) one model read of the whole page r
 ## 8. Known limits (what a user of the CSVs should know)
 
 - Allergen cells are "Yes", "May contain", "No" (only where the PDF declares absence) or blank (not stated).
-- Values are exactly as printed, including decimal commas, stray units and the PDF's own arithmetic errors; the `flags` column records them. About 16% of Odeon rows carry error flags (212 of 1,299), almost all from the PDF itself.
+- Values are exactly as printed, including decimal commas, stray units and the PDF's own arithmetic errors; the `flags` column records them. About 16% of Odeon rows carry error flags (203 of 1,299), almost all from the PDF itself.
 - Model-read sources (Vue, Papa John's) depend on a model reading small print; two misreads in 3,600 cells at the wrong resolution show the risk. There is no automatic row-count check on those pages yet; use `pages` and `reread`.
 - Ingredients text is as printed; bold allergens inside it are not parsed into allergen columns.
 - Serving sizes of Odeon pre-packed products are as printed; Pearl Scan's invented ones are not reproduced.

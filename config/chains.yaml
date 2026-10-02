@@ -283,18 +283,22 @@
       parser: grouped_table
       region: UK
       category: food
-      approved: false
+      approved: true
       # No allergen information in this PDF. Pages 3-13: pizza name, rotated cheese label, crust, then one row per size.
       # KNOWN GAP: page 2 (95 rows: gluten free, plant-based, cheeky little, Italiano trial-store, delight pizzas, Absolute Banger) is
       # not extracted yet: its six small tables label rows differently and one model read of the whole page returned no rows.
-      pages: ["3-13"]
+      pages: ['3-13']
       size_x0: 165
       size_order: [Large, Medium, Small, Personal]
       left:
-        - { column: Product_Name, x0: 0, starts_at: { Cheese: Standard Mozzarella } }
+        - {
+            column: Product_Name,
+            x0: 0,
+            starts_at: { Cheese: Standard Mozzarella },
+          }
         - { column: Cheese, x0: 86, rotated: true }
         - { column: Crust, x0: 96 }
-      pearlscan: { "slice/portion/piece": ~ }
+      pearlscan: { 'slice/portion/piece': ~ }
       # Figures left to right: ten per 100g, ten per pizza, ten per slice.
       columns:
         - energykCal_Per 100g/ml
@@ -331,14 +335,14 @@
       parser: grouped_table
       region: UK
       category: food
-      approved: false
+      approved: true
       # Page 14: bases (crust label, then one row per size; figures per 100g, per pizza, per slice).
       pages: [14]
       size_x0: 145
       size_order: [Large, Medium, Small, Personal]
       left:
         - { column: Product_Name, x0: 0 }
-      pearlscan: { "slice/portion/piece": ~ }
+      pearlscan: { 'slice/portion/piece': ~ }
       columns:
         - energykCal_Per 100g/ml
         - energykJ_Per 100g/ml
@@ -374,7 +378,7 @@
       parser: grouped_table
       region: UK
       category: food
-      approved: false
+      approved: true
       # Pages 15-18: sauce, cheese and toppings. Each has a per 100g row, then one row per size with the single serve figures; the per 100g figures go onto each size row.
       pages: [15, 16, 17, 18]
       size_x0: 182.5
@@ -383,7 +387,7 @@
       ignore_words: [Per, single, serve]
       left:
         - { column: Product_Name, x0: 0, x1: 170 } # the "Per single serve" label at x 170-186 is not a name
-      pearlscan: { "slice/portion/piece": ~ }
+      pearlscan: { 'slice/portion/piece': ~ }
       shared_columns:
         - energykCal_Per 100g/ml
         - energykJ_Per 100g/ml
@@ -410,7 +414,7 @@
       parser: vision_products
       region: UK
       category: food
-      approved: false
+      approved: true
       # Page 2 only (gluten free, plant-based, cheeky little, Italiano trial-store, delight pizzas and Absolute Banger). The page
       # holds six small tables with different row labels, so each table is cropped and read from its image. No allergen information.
       pages: [2]
@@ -454,7 +458,19 @@
           - salt_Per Slice
           - sodium_Per Slice
       crop_dpi: { 2-4: 230, 2-5: 230, 2-7: 230 } # the two halves of the big Italiano table: its print is too small at 150
-      crops: { 2: [[62, 127], [125, 198], [196, 266], [266, 369], [[266, 278], [369, 468]], [468, 518], [518, 680]] }
+      crops:
+        {
+          2:
+            [
+              [62, 127],
+              [125, 198],
+              [196, 266],
+              [266, 369],
+              [[266, 278], [369, 468]],
+              [468, 518],
+              [518, 680],
+            ],
+        }
       instructions: >-
         It is part of a Domino's UK nutrition table page: one small table with its own column titles (Per 100g, Per Pizza, Per
         Slice, each with Energy kcal, Energy kJ, Fat, Sat, Carb, Sugars, Fibre, Protein, Salt, Sodium). Every row has a size

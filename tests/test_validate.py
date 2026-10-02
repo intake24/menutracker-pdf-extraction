@@ -47,3 +47,20 @@ def test_duplicates():
     assert duplicate_issues([a, a | {"source_page": 3}]) == {}
     assert list(duplicate_issues([a, a | {"energykCal_Per Portion": "95"}])) == [1]
     assert duplicate_issues([a | {"region": "UK"}, a | {"region": "NI", "energykCal_Per Portion": "95"}]) == {}
+
+
+def test_rows_that_differ_in_cheese_or_crust_are_not_duplicates():
+    from pipeline.validate import duplicate_issues
+    base = {"Product_Name": "American Hot", "Category": "", "Size": "Large", "region": "UK", "energykCal_Per Pizza": "1"}
+    rows = [base | {"Cheese": "Standard Mozzarella", "Crust": "Classic Crust"},
+            base | {"Cheese": "Standard Mozzarella", "Crust": "Stuffed Crust", "energykCal_Per Pizza": "2"},
+            base | {"Cheese": "Reduced Fat Mozzarella", "Crust": "Classic Crust", "energykCal_Per Pizza": "3"}]
+    assert duplicate_issues(rows) == {}
+    rows[1]["Crust"] = "Classic Crust"; rows[1]["Cheese"] = "Standard Mozzarella"
+    assert 1 in duplicate_issues(rows)
+
+
+def test_the_same_name_with_different_serving_sizes_is_not_a_duplicate():
+    from pipeline.validate import duplicate_issues
+    a = {"Product_Name": "BBQ Dip", "Category": "Dips", "Serving_Size": "100", "region": "UK", "energykCal_Per Portion": "1"}
+    assert duplicate_issues([a, a | {"Serving_Size": "25", "energykCal_Per Portion": "2"}]) == {}

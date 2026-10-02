@@ -60,8 +60,6 @@ Findings from the first round (errors per source, Pearl Scan mistakes, lessons):
 
 ## Status
 
-Live and approved (`config/chains.yaml`, output in `outputs/`): Beefeater, Brewers Fayre, Table Table (Whitbread), Five Guys, Pizza Express (UK, NI), Cineworld, Domino's sides and dips, Vue, Odeon (nutrition tables and pre-packed matrices for UK, NI, ROI), Papa John's. Ten chain CSVs, 3,942 rows. Every compared figure agrees with Pearl Scan except the 63 mistakes recorded in `config/ground_truth_errata.yaml`.
-
-Domino's (sides, dips and pizzas) is complete in `config/chains.yaml` and waits for your approval: 1,420 pizza rows agree with Pearl Scan on every compared cell.
+Live and approved (`config/chains.yaml`, output in `outputs/`): Beefeater, Brewers Fayre, Table Table (Whitbread), Five Guys, Pizza Express (UK, NI), Cineworld, Domino's (sides, dips, pizzas), Vue, Odeon (nutrition tables and pre-packed matrices for UK, NI, ROI), Papa John's. Ten chain CSVs, 5,364 rows. Every compared figure agrees with Pearl Scan except the 63 mistakes recorded in `config/ground_truth_errata.yaml`.
 
 Not done: Krispy Kreme (needs a step that joins its allergen matrix pages to its nutrition pages), Pizza Hut, Coffee #1, Starbucks, Brewhouse, Cookhouse, Top Golf. The order and the cost estimates are in `docs/findings-report-2026-10.md` and `docs/playbook-new-batches.md`.
