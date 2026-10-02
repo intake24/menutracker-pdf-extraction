@@ -96,7 +96,7 @@ Every mismatch was settled by looking at the page. In every case so far one of f
 | Source | PDF | Why not done yet | What the survey found |
 |---|---|---|---|
 | Krispy Kreme | 61 pages, no text layer | needs a join of two page types | page pairs: an allergen matrix page (dietary YES/NO and ticks in 25 columns) then a nutrition page; plus ingredient-declaration text pages and beverage pages. One CSV row per product needs the two joined by name, which the pipeline cannot do yet. |
-| Domino's pizzas | 18 pages, 1,422 GT rows | new grouping parser | name = pizza - cheese - crust - size from three nested vertically merged columns; other sections have other layouts |
+| Domino's pizzas | 18 pages, 1,422 GT rows | parser written, pages 3-13 only | `grouped_table` reads pizza, sideways cheese label and crust labels by position and size order; pages 3-13 give 1,148 rows, all cells agree with Pearl Scan (recall 80.6%, one Pearl Scan figure wrong: 6.7 for the PDF's 5.7). Page 2 (rows sorted by size across pizzas, then trios), bases, sauces/cheese and the three toppings pages (per-100g row plus four size rows per topping) still need sources; two pizzas ('Absolute Banger', trial-stores pizzas) are missing from pages 3-13's output. |
 | Pizza Hut | 24 pages, 483 GT rows | three layouts in one PDF | allergen tables with Yes/No and `●`/`○`, ingredient prose, per-slice nutrition tables |
 | Coffee #1 | food 18 pp (vertical blocks), drinks 28 pp (slanted text) | slanted text defeats the word reader | vision route likely for the drinks |
 | Starbucks | food 20 pp, drinks 73 pp | not started | wrapped names, size rows, milk type in the product line |

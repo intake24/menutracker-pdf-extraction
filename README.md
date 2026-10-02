@@ -60,11 +60,6 @@ Findings from the first round (errors per source, Pearl Scan mistakes, lessons):
 
 ## Status
 
-| Done | Chains |
-|---|---|
-| Phase 1 | Beefeater, Brewers Fayre, Table Table |
-| Phase 2a | Five Guys |
-| Phase 2b | Pizza Express (UK and Northern Ireland PDFs) |
-| Slice 1 (part) | Cineworld, through the `allergen_matrix` parser (marks matched to allergens by position; `✓` Yes, `▲` May contain, blank = not stated). Pizza Hut is still to do. |
+Live and approved (`config/chains.yaml`, output in `outputs/`): Beefeater, Brewers Fayre, Table Table (Whitbread), Five Guys, Pizza Express (UK, NI), Cineworld, Domino's sides and dips, Vue, Odeon (nutrition tables and pre-packed matrices for UK, NI, ROI), Papa John's. Ten chain CSVs, 3,942 rows. Every compared figure agrees with Pearl Scan except the 63 mistakes recorded in `config/ground_truth_errata.yaml`.
 
-Next: Pizza Hut, then the other text-based layouts (roadmap: `docs/superpowers/plans/2026-10-02-complete-the-pipeline.md`). Vue, Papa John's and Krispy Kreme need a vision route because their text layers are unusable. See §10 of the design doc.
+Not done: Domino's pizzas (parser written, pages 3-13 match 1,148 of 1,422 Pearl Scan rows; draft in `docs/dominos-pizzas-config-draft.yaml`, other pages need sources), Krispy Kreme (needs a step that joins its allergen matrix pages to its nutrition pages), Pizza Hut, Coffee #1, Starbucks, Brewhouse, Cookhouse, Top Golf. The order and the cost estimates are in `docs/findings-report-2026-10.md` and `docs/playbook-new-batches.md`.
