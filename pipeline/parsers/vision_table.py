@@ -57,20 +57,26 @@ def rows_from_answer(answer: dict, fields: dict[str, str], page_no: int) -> list
     return rows
 
 
-def parse(pdf: Path, source: dict) -> list[dict]:
+def page_rows(pdf: Path, source: dict, page_no: int, pages_dir: Path | None = None) -> list[dict]:
+    """One page's rows. `pages_dir` lets a re-read render elsewhere so the images of the real run are never touched."""
     fields, schema = source["fields"], schema_for(source["fields"])
-    pages_dir = WORK / "pages"
+    pages_dir = pages_dir or WORK / "pages"
     pages_dir.mkdir(parents=True, exist_ok=True)
-    rows = []
-    for page_no in range(1, len(page_texts(pdf)) + 1):
-        stem = pages_dir / f"{pdf.stem}-{page_no}"
-        subprocess.run(["pdftoppm", "-r", str(source.get("dpi", 110)), "-f", str(page_no), "-l", str(page_no),
-                        "-png", "-singlefile", str(pdf), str(stem)], check=True)
-        png = stem.with_suffix(".png")
-        prompt = (f"Read the image {png}. {source['instructions']} Return EVERY data row on the page, in order. "
-                  "Copy every cell exactly as printed, as a string, including words like Trace and typos; use an "
-                  "empty string for a blank cell. Do not correct, convert or calculate anything.")
-        answer = llm.call(prompt, schema, png, runner=RUNNER, cache_dir=WORK / "llm", budget=BUDGET,
-                          validate=lambda a, n=page_no: check_answer(a, n))
-        rows += rows_from_answer(answer, fields, page_no)
-    return rows
+    stem = pages_dir / f"{pdf.stem}-{page_no}"
+    subprocess.run(["pdftoppm", "-r", str(source.get("dpi", 110)), "-f", str(page_no), "-l", str(page_no),
+                    "-png", "-singlefile", str(pdf), str(stem)], check=True)
+    png = stem.with_suffix(".png")
+    prompt = (f"Read the image {png}. {source['instructions']} Return EVERY data row on the page, in order. "
+              "Copy every cell exactly as printed, as a string, including words like Trace and typos; use an "
+              "empty string for a blank cell. Do not correct, convert or calculate anything.")
+    answer = llm.call(prompt, schema, png, runner=RUNNER, cache_dir=WORK / "llm", budget=BUDGET,
+                      validate=lambda a: check_answer(a, page_no))
+    return rows_from_answer(answer, fields, page_no)
+
+
+def pages_of(pdf: Path, source: dict) -> list[int]:
+    return list(range(1, len(page_texts(pdf)) + 1))
+
+
+def parse(pdf: Path, source: dict) -> list[dict]:
+    return [row for n in pages_of(pdf, source) for row in page_rows(pdf, source, n)]

@@ -13,7 +13,8 @@ from pipeline.evaluate import compare_golden, compare_ground_truth, ground_truth
 from pipeline.export import finalise, write_csv
 from pipeline.llm import LlmError
 from pipeline.ingest import load_chains, manifest_row, page_texts, text_sha
-from pipeline.parsers import PARSERS
+from pipeline.parsers import PARSERS, vision_products, vision_table
+from pipeline.vision_check import diff_rows, summary
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -103,6 +104,34 @@ def coverage(inputs: Path, chains_file: Path) -> list[str]:
     return out
 
 
+VISION = {"vision_table": vision_table, "vision_products": vision_products}
+
+
+def vision_sources(chains_file: Path, key: str) -> list[tuple[dict, object]]:
+    chain = load_chains(chains_file)[key]
+    out = [(s, VISION[s["parser"]]) for s in chain["sources"] if s["parser"] in VISION]
+    if not out:
+        raise SystemExit(f"{key}: no source read by the model")
+    return out
+
+
+def reread(inputs: Path, chains_file: Path, key: str, pages: list[int], dpi: int, only_pdf: str = "") -> list[str]:
+    """Read pages again at another resolution (one model call per page) and list every cell that differs from the
+    cached first read. A difference means one of the two reads is wrong: look at the page."""
+    lines = []
+    for source, module in vision_sources(chains_file, key):
+        pdf = inputs / source["pdf"]
+        for page in pages:
+            if only_pdf not in source["pdf"] or page not in module.pages_of(pdf, source):
+                continue
+            first = module.page_rows(pdf, source, page)
+            second = module.page_rows(pdf, {**source, "dpi": dpi}, page, module.WORK / "pages_reread")
+            diffs = diff_rows(first, second)
+            lines += [f"{key} {pdf.stem} page {page}: {d}" for d in diffs]
+            print(f"{key} {pdf.stem} page {page}: {len(first)} rows, {len(diffs)} differences at {dpi} dpi")
+    return lines
+
+
 def evaluate(chains_file: Path, outputs: Path, ground_truth: Path, golden: Path, config: Path,
              only: str | None = None, strict: bool = False) -> list[str]:
     """Nutrition vs Pearl Scan ground truth, allergens vs hand-verified golden rows. Returns failure lines.
@@ -150,6 +179,13 @@ def main(argv: list[str] | None = None) -> None:
     run_p = sub.add_parser("run", help="extract every approved chain -> outputs/<key>.csv")
     run_p.add_argument("--chain", help="only this chain key, e.g. 16_Beefeater")
     sub.add_parser("coverage", help="pages where the text layer has more data-looking lines than parsed rows (no ground truth needed)")
+    pages_p = sub.add_parser("pages", help="per page of a model-read chain: rows, rows with errors, empty cells (from the cache)")
+    pages_p.add_argument("--chain", required=True)
+    reread_p = sub.add_parser("reread", help="re-read pages of a model-read chain at another dpi and list differing cells (1 call per page)")
+    reread_p.add_argument("--chain", required=True)
+    reread_p.add_argument("--pages", required=True, help="comma separated page numbers")
+    reread_p.add_argument("--dpi", type=int, default=200)
+    reread_p.add_argument("--pdf", default="", help="only sources whose file name contains this")
     eval_p = sub.add_parser("eval", help="compare outputs with ground truth and golden rows; exit 1 on any failure")
     eval_p.add_argument("--strict", action="store_true", help="a source with nothing to compare against fails")
     args = parser.parse_args(argv)
@@ -167,6 +203,17 @@ def main(argv: list[str] | None = None) -> None:
         if stopped:
             print("\n".join(stopped) + "\nrun again to resume: finished pages are cached", file=sys.stderr)
             sys.exit(1)
+    elif args.cmd == "pages":
+        vision_sources(chains_file, args.chain)
+        written = run(ROOT / "inputs", chains_file, ROOT / "work" / "pages_check", args.chain)
+        for rows in written.values():
+            for file in sorted({r["source_file"] for r in rows}):
+                for page, s in sorted(summary([r for r in rows if r["source_file"] == file]).items()):
+                    print(f"{file} page {page}: {s['rows']} rows, {s['flagged']} with errors, {s['empty_cells']} empty cells")
+    elif args.cmd == "reread":
+        lines = reread(ROOT / "inputs", chains_file, args.chain, [int(p) for p in args.pages.split(",")], args.dpi, args.pdf)
+        print("\n".join(lines) or "reread: both reads agree")
+        sys.exit(1 if lines else 0)
     elif args.cmd == "coverage":
         gaps = coverage(ROOT / "inputs", chains_file)
         print("\n".join(gaps) or "coverage: every data-looking line has a row")

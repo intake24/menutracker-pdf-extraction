@@ -120,8 +120,8 @@ def rows_from_answer(answer: dict, source: dict, page_no: int) -> list[dict]:
 WORKERS = 3   # calls in flight at once
 
 
-def page_rows(pdf: Path, source: dict, page_no: int) -> list[dict]:
-    pages_dir = WORK / "pages"
+def page_rows(pdf: Path, source: dict, page_no: int, pages_dir: Path | None = None) -> list[dict]:
+    pages_dir = pages_dir or WORK / "pages"
     pages_dir.mkdir(parents=True, exist_ok=True)
     stem = pages_dir / f"{pdf.stem}-{page_no}"
     subprocess.run(["pdftoppm", "-r", str(source.get("dpi", 150)), "-f", str(page_no), "-l", str(page_no),
@@ -138,7 +138,11 @@ def page_rows(pdf: Path, source: dict, page_no: int) -> list[dict]:
     return rows_from_answer(answer, source, page_no)
 
 
+def pages_of(pdf: Path, source: dict) -> list[int]:
+    return expand_pages(source["pages"])
+
+
 def parse(pdf: Path, source: dict) -> list[dict]:
-    pages = expand_pages(source["pages"])
+    pages = pages_of(pdf, source)
     with ThreadPoolExecutor(max_workers=WORKERS) as pool:   # results come back in page order
         return [row for rows in pool.map(lambda n: page_rows(pdf, source, n), pages) for row in rows]

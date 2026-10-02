@@ -14,7 +14,8 @@ wrong (so its files are never treated as perfect). Spec: `pipeline-design.md`. P
 | **`coverage`** | a data row lost: pages where `pdftotext` shows more number-carrying lines than parsed rows | `python -m pipeline.cli coverage` (numeric_table sources) | nothing |
 | **Arithmetic flags** | misread or mistyped figures: kJ vs kcal, saturates > fat, sugars > carbs, Atwater warning, duplicates with different values | `flags` column (`validate.py`) | nothing |
 | **Golden rows** | wrong allergen position (the matrix/grid logic) | `golden/<pdf stem>.csv`, 4–8 rows per PDF read off the rendered page | a person looking at the page |
-| **Second read** | model misreads on vision pages | re-read a page at a higher dpi or by a second prompt and diff (not automated yet) | LLM quota |
+| **Page summary** | which model-read pages to look at first: rows, rows with error flags, empty cells | `python -m pipeline.cli pages --chain KEY` (from the cache, free) | nothing |
+| **Second read** | model misreads on vision pages | `python -m pipeline.cli reread --chain KEY --pages 8,16 --dpi 200 [--pdf name]`: one call per page, lists every differing cell (dash style ignored) | LLM quota (~0.3% per page) |
 | **Cross-source** | the same product in two regions or PDFs disagreeing | not built; Belfast/ROI Odeon are the first candidates | nothing |
 | **Pearl Scan** (when it exists) | everything above, for nutrition and serving size only | `eval` | the CSV |
 
@@ -111,7 +112,9 @@ position type pass, and (e) a person has checked markers, disclaimer and columns
   running from an empty directory with `--setting-sources user --strict-mcp-config --disable-slash-commands` gave
   about $0.05 per call. 14 Vue pages cost roughly 6 points. 140 pages (Papa John's + Krispy Kreme) are about 40-55.
 - Accuracy on Vue after review: 3,600 cells, 2 misread at 110 dpi (small print), 0 at 150 dpi. Use 150 dpi for small print.
-- No coverage check yet for dropped rows on vision pages; the main gap. Plan: count rows against a second read.
+- Dropped rows on vision pages are only caught by a second read (`reread`) or Pearl Scan; run `pages` first and re-read the
+  pages with error flags or empty cells. Papa John's: 6 flagged pages re-read at 200 dpi agreed with the first read (the flags
+  are the PDF's own inconsistencies); the one difference was an en dash versus a hyphen.
 - Never run the model in tests (`tests/conftest.py` blocks it).
 
 ## 7. Effort observed (to plan windows)
@@ -122,7 +125,7 @@ change and an evaluator change: about 12 points in total, most of it diagnosing 
 
 ## 8. Open improvements
 
-1. Coverage for vision pages (second read at another dpi, row-count diff).
+1. Automatic row-count check for vision pages (today: `pages` + `reread` by hand).
 2. Cross-region checks (Odeon UK/NI/ROI share products).
 3. A `--dry-run` cost estimate and CLI-set caps for the model route; concurrency of 3.
 4. Mark accounting as a permanent `check` command for matrix sources, not a scratch script.
