@@ -1171,3 +1171,49 @@
         Lupin: lupin
         Peanuts: peanut
         Nuts: treeNuts
+
+47_Coffee1:
+  chain: Coffee1
+  sources:
+    # Food guide (text layer): one block per product. Allergens are the bold capital words of the ingredient declaration and the capital
+    # words after "May contain" (the guide: allergens are in bold capitals in the declaration, those that may be present at the end), so an
+    # allergen not named is "No". Diet tags (V), (Vg), (GF) are kept in Diet as printed.
+    - pdf: C1-Core-Food-May-2025-Issue-Date-06.05.25-V47-Nutritional-Ingredient-Info.pdf
+      parser: product_blocks
+      region: UK
+      category: food
+      approved: false
+      pages: ['3-18']
+      name_size: 5.8 # names and tags are 6 pt, the ingredient declaration 5.3 pt
+      title_size: 7 # section titles are 7.9 pt
+      nutrition_x0: 432
+      header_word: PRODUCT
+      markers: { '': 'No' }
+      furniture: [NUTRITIONAL, GUIDE, MAY, '2025', '*', '=', containing, allergen, P, cross, contamination, risk, at, mfg, site]
+      diet_tags: [V, Vg, GF]
+      may_phrases: [May contain, Made in a factory that handles]
+      allergen_words: { METBISULPHITE: Sulphites, BUTTERMILK: Milk } # METBISULPHITE is printed so
+      bases: [Per 100g/ml, Per Portion]
+      nutrients: { KJ: energykJ, Kcal: energykCal, Fat: fat, Sat: saturates, Carbs: carbohydrates, Sugar: sugars, Fibre: fibre, Protein: protein, Salt: salt }
+    # Beverage guide (text layer; the column titles over the figures are rotated, so the nine figures of a group are in the printed order KJ, Kcal,
+    # Fat, Sat, Carb, Sugar, Fibre, Protein, Salt). Product name and allergens are printed once beside the size rows. The guide says it
+    # lists all allergens of its drinks, so an allergen not listed is "No".
+    - pdf: C_1-Core-Beverage-Allergen-Nutritional-Information-March-2025-Issued-28.03.25-3.pdf
+      parser: drink_tables
+      region: UK
+      category: drinks
+      approved: false
+      pages: ['3-28']
+      markers: { '': 'No' }
+      furniture: [Core Beverage Allergen, 'Issued:']
+      sizes: [Single, Double, Regular, Large, Small, Medium, Mini, 12oz, 16oz, 8oz, 20oz]
+      extra_headers: [Vitamin Content]
+      allergen_text: { OAT: Oats (Gluten Free) } # page 1: the oat and coconut milks contain gluten free oats; OAT is listed because of avenin
+      nutrients: [energykJ, energykCal, fat, saturates, carbohydrates, sugars, fibre, protein, salt]
+      groups:
+        Per 100ml: { base: Per 100g/ml }
+        Per 100g: { base: Per 100g/ml }
+        Per product: { base: Per Portion }
+        Per serving: { base: Per Portion }
+        Per 15ml: { base: Per Portion, serving: 15 ml, split: true }
+        Per 22.5ml: { base: Per Portion, serving: 22.5 ml, split: true }

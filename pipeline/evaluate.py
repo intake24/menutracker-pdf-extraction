@@ -127,13 +127,18 @@ def compare_ground_truth(truth: list[dict], ours: list[dict], mapping: dict[str,
 
 
 def compare_golden(golden: list[dict], ours: list[dict]) -> list[str]:
-    """Every golden row (matched on Product_Name + Category + Size) must exist with identical cells."""
+    """Every golden row (matched on Product_Name + Category + Size, and Serving_Size when the golden row states one) must exist with identical cells."""
     by_key: dict[tuple, list[dict]] = {}
     for r in ours:
         by_key.setdefault((r["Product_Name"], r["Category"], r.get("Size", "")), []).append(r)
     failures = []
     for g in golden:
         matches = by_key.get((g["Product_Name"], g["Category"], g.get("Size", "")))
+        if matches and g.get("Serving_Size"):   # a product printed per 15 ml and per 22.5 ml is two rows: the serving size tells them apart
+            matches = [o for o in matches if o.get("Serving_Size") == g["Serving_Size"]]
+            if not matches:
+                failures.append(f"missing row: {g['Product_Name']} ({g['Category']}) with serving size {g['Serving_Size']}")
+                continue
         if matches is None:
             failures.append(f"missing row: {g['Product_Name']}{' ' + g['Size'] if g.get('Size') else ''} ({g['Category']})")
             continue

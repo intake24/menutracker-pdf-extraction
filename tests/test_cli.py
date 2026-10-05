@@ -5,7 +5,7 @@ import pytest
 from pipeline.cli import SourceNotApproved, evaluate, run
 
 ROOT = Path(__file__).resolve().parent.parent
-ROWS = {"11_PizzaExpress": 818, "46_Cineworld": 284, "59_Odeon": 1299, "16_Beefeater": 207, "17_Brewersfayre": 207, "21_TableTable": 207, "52_FiveGuys": 54, "8_Pizzahut": 715}
+ROWS = {"11_PizzaExpress": 818, "46_Cineworld": 284, "59_Odeon": 1299, "16_Beefeater": 207, "17_Brewersfayre": 207, "21_TableTable": 207, "52_FiveGuys": 54, "8_Pizzahut": 715, "47_Coffee1": 463}
 SOURCE_FLAGS = ("error: kJ/kcal", "error: saturates >", "error: sugars >", "warn: Atwater", "error: duplicate")   # the PDFs print these
 
 
@@ -27,8 +27,8 @@ def test_run_writes_one_csv_per_chain_and_passes_eval(tmp_path):
     assert {p.stem: len(rows) for p, rows in written.items()} == ROWS
     for path, rows in written.items():
         flagged = [r for r in rows if r["flags"]]
-        if path.stem in ("11_PizzaExpress", "52_FiveGuys", "59_Odeon", "8_Pizzahut"):   # their PDFs contain figures that fail the checks
-            assert all(f.startswith(SOURCE_FLAGS) or "String should match pattern" in f   # Odeon: a hidden #N/A row
+        if path.stem in ("11_PizzaExpress", "52_FiveGuys", "59_Odeon", "8_Pizzahut", "47_Coffee1"):   # their PDFs contain figures that fail the checks
+            assert all(f.startswith(SOURCE_FLAGS) or "String should match pattern" in f   # Odeon: a hidden #N/A row; Coffee #1: "1,702"
                        for r in flagged for f in r["flags"].split(" | "))
         else:
             assert not flagged

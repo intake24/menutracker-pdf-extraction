@@ -154,3 +154,11 @@ def test_known_gap_rows_may_be_unmatched_up_to_the_stated_number_but_cells_must_
     assert not compare_ground_truth(truth, ours, mapping, set())["passed"]
     assert compare_ground_truth(truth, ours, mapping, set(), allowed_unmatched=1)["passed"]
     assert not compare_ground_truth([{"item_name": "A", "kcal": "9"}], ours, mapping, set(), allowed_unmatched=1)["passed"]
+
+
+def test_a_golden_row_with_a_serving_size_is_compared_with_the_row_of_that_serving_size():
+    ours = [{"Product_Name": "Syrup", "Category": "S", "Serving_Size": "15", "kcal": "41"}, {"Product_Name": "Syrup", "Category": "S", "Serving_Size": "22.5", "kcal": "61"}]
+    golden = [{"Product_Name": "Syrup", "Category": "S", "Serving_Size": "15", "kcal": "41"}, {"Product_Name": "Syrup", "Category": "S", "Serving_Size": "22.5", "kcal": "61"}]
+    assert compare_golden(golden, ours) == []
+    assert compare_golden([{**golden[0], "kcal": "42"}], ours) == ["Syrup.kcal: expected '42', got '41'"]
+    assert compare_golden([{"Product_Name": "Syrup", "Category": "S", "Serving_Size": "30"}], ours) == ["missing row: Syrup (S) with serving size 30"]

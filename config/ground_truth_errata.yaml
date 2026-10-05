@@ -291,3 +291,7 @@
   item: ' Vegan Veggie Supreme - Gluten Free (9" Square)'
   column: num_of_slices
   why: The PDF (page 21) prints 6 slices for the individual and gluten free pizzas and 8 for the sharing ones; Pearl Scan has the counts the other way round.
+- file: C1-Core-Food-May-2025-Issue-Date-06.05.25-V47-Nutritional-Ingredient-Info.csv
+  item: Oat & Raisin Cookie
+  column: kj_100
+  why: The PDF (page 16) prints "1,702" with a thousands comma; Pearl Scan removed it. We keep it as printed and the row is flagged by the number check.
