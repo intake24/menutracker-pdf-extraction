@@ -866,3 +866,93 @@
           recommended_portions: [Recommended_Portions, Portion_Size],
           total_portions: [Total_Portions, Total_Pieces],
         }
+
+35_KrispyKreme:
+  chain: KrispyKreme
+  sources:
+    # No text layer: the page images are read by the model (parser vision_pairs). Each product has an allergen page (YES/NO
+    # diet cells, ticks) and a nutrition page; rows are paired in page order. Ingredient-declaration pages are not extracted.
+    # Key (page 2): a tick means the product contains the allergen; it does not say what a blank means (blank = not stated).
+    - pdf: 2025_Allergen_Nutrition_Book_230525_UK__Minions_.pdf
+      parser: vision_pairs
+      region: UK
+      category: food
+      approved: false
+      dpi: 200
+      name_fixes: { Original Glazed Birthday: Original Glazed } # Pearl Scan added "Birthday" to the name of the page 27/28 item
+      markers: { '✓': 'Yes', '': '' }
+      instructions: >-
+        It is a doughnut shop's allergen and nutrition guide; each page is one table of products grouped under grey headings.
+        The product name is the bold text beside the picture; some have an italic line under it in brackets.
+      joins:
+        - { matrix: [3], nutrition: [4] }
+        - { matrix: [5], nutrition: [6] }
+        - { matrix: [7], nutrition: [8] }
+        - { matrix: [9], nutrition: [10] }
+        - { matrix: [11], nutrition: [12] }
+        - { matrix: [22], nutrition: [] } # page 23 only says "see the matrix" and lacks two of the eight boxes
+        - { matrix: [24], nutrition: [] } # page 25 only says "see the matrix"
+        - { matrix: [26], nutrition: [] }
+        - { matrix: [27], nutrition: [28] }
+        - { matrix: [29], nutrition: [30] }
+        - { matrix: [36], nutrition: [37] }
+        - { matrix: [38], nutrition: [39] }
+        - { matrix: [40], nutrition: [41] }
+        - { matrix: [42], nutrition: [43] }
+        - { matrix: [42], nutrition: [44] }
+        - { matrix: [42], nutrition: [45] }
+        - { matrix: [46, 47], nutrition: [48, 49] }
+        - { matrix: [50], nutrition: [] }
+        # hot drinks with oat or dairy milk, iced lattes, tea, cold drinks, pistachio: the allergen pages list each drink once
+        # per kind of milk, the nutrition pages once per size, so these are matched by heading (and by drink name)
+        - { matrix: [51], matrix_section: 'oat', nutrition: [54], nutrition_section: 'OAT DRINK' }
+        - { matrix: [51], matrix_section: 'skimmed', nutrition: [54], nutrition_section: 'SEMI SKIMMED' }
+        - { matrix: [51], matrix_section: 'skimmed', nutrition: [54], nutrition_section: '(?<!semi )skimmed' }
+        - { matrix: [51], matrix_section: 'skimmed', nutrition: [54], nutrition_section: 'WHOLE' }
+        - { matrix: [51], matrix_section: '^TEA', nutrition: [55], nutrition_section: '^TEA' }
+        - { matrix: [52], matrix_section: 'oat', nutrition: [55], nutrition_section: 'ICED LATTE.*OAT' }
+        - { matrix: [52], matrix_section: 'skimmed', nutrition: [57], nutrition_section: 'SEMI SKIMMED', by_name: true }
+        - { matrix: [52], matrix_section: 'skimmed', nutrition: [57], nutrition_section: '(?<!semi )skimmed', by_name: true }
+        - { matrix: [52], matrix_section: 'skimmed', nutrition: [58], nutrition_section: 'ICED LATTE.*WHOLE', by_name: true }
+        - { matrix: [53], matrix_section: 'COLD DRINKS', nutrition: [58], nutrition_section: 'COLD DRINKS' }
+        - { matrix: [53], matrix_name: 'oat', nutrition: [55], nutrition_section: 'PISTACHIO', by_name: true }
+        - { matrix: [53], matrix_name: 'milk', nutrition: [56], nutrition_section: 'Semi', by_name: true }
+        - { matrix: [53], matrix_name: 'milk', nutrition: [56], nutrition_section: '(?<!semi-)skimmed', by_name: true }
+        - { matrix: [53], matrix_name: 'milk', nutrition: [56], nutrition_section: 'Whole', by_name: true }
+      tick_labels:
+        Wheat: wheat
+        Rye: rye
+        Barley: barley
+        Oat: oats
+        Soya: soya
+        Egg / Egg Products: egg
+        Milk / Milk Products: milk
+        Sulphites above 10ppm: sulphite
+        Sesame: sesame
+        Crustaceans: crustacean
+        Fish: fish
+        Lupin: lupin
+        Molluscs: mollusc
+        Mustard: mustard
+        Celery: celery
+        Peanut: peanut
+        Tree Nuts / Nut Derivatives: treeNuts
+      fields:
+        p100_kj: energykJ_Per 100g/ml
+        p100_kcal: energykCal_Per 100g/ml
+        p100_fat: fat_Per 100g/ml
+        p100_saturates: saturates_Per 100g/ml
+        p100_carbohydrate: carbohydrates_Per 100g/ml
+        p100_sugars: sugars_Per 100g/ml
+        p100_fibre: fibre_Per 100g/ml
+        p100_protein: protein_Per 100g/ml
+        p100_salt: salt_Per 100g/ml
+        pp_kj: energykJ_Per Portion
+        pp_kcal: energykCal_Per Portion
+        pp_fat: fat_Per Portion
+        pp_saturates: saturates_Per Portion
+        pp_carbohydrate: carbohydrates_Per Portion
+        pp_sugars: sugars_Per Portion
+        pp_fibre: fibre_Per Portion
+        pp_protein: protein_Per Portion
+        pp_salt: salt_Per Portion

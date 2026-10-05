@@ -13,7 +13,7 @@ from pipeline.evaluate import compare_golden, compare_ground_truth, ground_truth
 from pipeline.export import finalise, write_csv
 from pipeline.llm import LlmError
 from pipeline.ingest import load_chains, manifest_row, page_texts, text_sha
-from pipeline.parsers import PARSERS, vision_products, vision_table
+from pipeline.parsers import PARSERS, vision_pairs, vision_products, vision_table
 from pipeline.vision_check import diff_rows, summary
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -104,7 +104,7 @@ def coverage(inputs: Path, chains_file: Path) -> list[str]:
     return out
 
 
-VISION = {"vision_table": vision_table, "vision_products": vision_products}
+VISION = {"vision_table": vision_table, "vision_products": vision_products, "vision_pairs": vision_pairs}
 
 
 def vision_sources(chains_file: Path, key: str) -> list[tuple[dict, object]]:
