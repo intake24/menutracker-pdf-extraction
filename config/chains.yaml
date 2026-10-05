@@ -1492,3 +1492,88 @@
       instructions: *brew_instructions
       fields: *brew_fields
       name_fixes: { 'add ': '' } # Pearl Scan kept the word "add" of an add-on line, the add-on is the item
+
+49_CookhousePub:
+  chain: CookhousePub
+  sources:
+    # Pub menus read by the model (the text layer of the main menu is partly garbled, but it prints the figures). Only kcal is printed. A dish has a bold name, a description and
+    # "(429kcal)". Add-ons ("Add peppercorn sauce 1.79 (+39kcal)") are rows named by themselves, never with the name of the dish they go with; the figure is the digits only (the
+    # sign and thousands comma are not part of the number). The figures of the text layer are checked against the rows (`text_check`).
+    - pdf: cookhouse_and_pub_kids_menu_default.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: false
+      dpi: 200
+      text_check: &ck_check { field: kcal, pattern: '(\d[\d,]*)\s?kcal(?!\s*per serve)', strip: ',', ignore: [1800, 2000] } # the footer: adults need around 1800 or 2000 kcal
+      instructions: &ck_instructions >-
+        It is a pub menu page with section headings (for example "Scrummy STARTERS" or "Starters & SHARERS"; section = the heading as printed, with its mixed capitals;
+        a heading can have a sub-heading such as "ADD A DESSERT": then section = "<heading> - <sub-heading>"). A dish is a bold name, a description and the calories in
+        brackets, for example "(429kcal)", with a price or not. name = the bold name as printed, without the price, without footnote symbols (§ * ' ¥ and similar) and
+        without badges (House fave, EW). kcal = the digits of the figure only: no thousands comma, no plus or minus sign ("(1,706kcal serves 2, 853kcal per serve)" gives
+        1706 for the dish: the per-serve figure is not a row; "(+39kcal)" gives 39; "(-398kcal)" gives 398). EVERY figure in brackets with "kcal" on the page is one row, also
+        the figures of add-ons and options: a line such as "Add peppercorn sauce 1.79 (+39kcal)" or "Swap chips & onion rings for a fresh mixed salad (-398kcal)" or
+        "Upgrade your 4oz steak to an 8oz steak for 3.99 (+160kcal)" is a row named by the text of that line without its price and kcal (never with the name of the dish it is
+        printed under), notes = "Add-on to <the dish it goes with>" (or "Swap on <dish>"; add "printed as -398kcal" when the figure had a sign). A dish with several figures (one
+        per size, flavour or choice) gives one row per figure named "<dish> - <the choice as printed>". A line that changes the dish above it ("Vegan option available, just ask (150kcal)",
+        "Make it veggie, swap to ... (279kcal)") is a variant: name = "<that dish> - <the line as printed>" (an add-on, upgrade or swap that adds to the meal is not a variant and keeps
+        its own name). One sentence with several figures ("Swap your Skin-on Chips (158kcal) for Mash (110kcal) or Mini Jacket Potatoes (155kcal)") gives a row named by the first item
+        ("Skin-on Chips", 158) and a row for each next figure named by the whole phrase ("Swap your Skin-on Chips for Mash", 110). A name with alternatives ("Fruit Shoot Apple &
+        Blackcurrant or Orange") is one name, whole. Do not return prices, text without a kcal figure, the drinks list
+        without kcal, allergen keys or badges. Before you answer, count the brackets with "kcal" on the page and check that you return exactly that many rows.
+      fields: &ck_fields { kcal: energykCal_Per Portion, notes: notes }
+    - pdf: cookhouse_and_pub_main_menu_priceless.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: false
+      dpi: 200
+      pages: [2, 3, 4, 5, 6, 7, 8]
+      text_check: *ck_check
+      known_gaps: 40 # the names differ from Pearl Scan's curated names ("With mash", "Choose from:"); every Pearl Scan figure is among our rows and the text layer proves each printed figure is a row (Pearl Scan left out 7)
+      instructions: *ck_instructions
+      fields: *ck_fields
+
+73_TopGolf:
+  chain: TopGolf
+  sources:
+    # Limited-time menu (12 pages; pages 11 and 12 print no figures) read by the model. A dish is a name in capitals, a price, "(839 kcal.)" and a description. Only kcal is
+    # printed. The figures of the text layer are checked against the rows (`text_check`).
+    - pdf: watford_chigwell_menu_LTO_april22025.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: false
+      dpi: 200
+      pages: [1, 2, 3, 4, 5, 6, 7, 9, 10]
+      known_gaps: 12 # the names differ from Pearl Scan's ("8 BULL'S-EYE BBQ SAUCE" for "BULL'S-EYE BBQ SAUCE - 8", "OASIS SUMMER FRUITS"); every Pearl Scan figure is among our rows and the text layer proves each printed figure is a row
+      text_check: &tg_check { field: kcal, pattern: '(\d[\d,]*)\s?k?cal\b', strip: ',', page_ignore: { '7': [142] } } # page 7's text layer holds a Fruit Tea that is not on the page (hidden text) # "(952 cal. / 1044 kcal.)": both figures are printed
+      instructions: &tg_instructions >-
+        It is a menu page with sections (a heading such as "BURGERS" or "SHAKES"; section = the heading as printed; "LIMITED TIME ONLY" is not a section). A dish is a name in
+        capitals (it may wrap over two lines: join them), a price, the calories in brackets ("(839 kcal.)") and a description. name = the name as printed (keep its capitals),
+        without the price and the description. kcal = the digits of the figure in brackets (no thousands comma). EVERY figure in brackets followed by "cal" or "kcal" on the page is exactly one
+        row ("(952 cal. / 1044 kcal.)" is two figures: one per variant, bap or wrap): a dish with several figures (one per size or flavour) gives one row per figure named "<dish> - <the size or flavour as printed>"; an option line such as "ADD
+        BACON (104 kcal.)" is a row named by its text, notes = "Add-on to <the dish>". A figure printed inside a dish's description ("Served with house fries (197 kcal.) or house salad (82 kcal.)") is a row named "<the dish> - <the item as printed>" (for
+        example "HOT HONEY CHICKEN - house fries"), notes = "In the description of <the dish>"; a figure in a section note that applies to a whole section ("Our Kids meals are served with
+        either house fries (270 kcal.) or house salad (82 kcal.)") is a row named by the item ("house fries"), notes = "Served with Kids meals". Do not return prices, descriptions,
+        allergen keys or text without a kcal figure. Before
+        you answer, count the brackets with "kcal" on the page and check that you return exactly that many rows.
+      fields: { kcal: energykCal_Per Portion, notes: notes }
+    - pdf: watford_chigwell_menu_LTO_april22025.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: false
+      dpi: 200
+      pages: [8]
+      text_check: *tg_check
+      # page 8 has sub-headings (VEGAN SHAKES under SHAKES): the same instructions plus the sub-heading rule
+      instructions: >-
+        It is a menu page with sections (a heading such as "BURGERS" or "SHAKES"; section = the heading as printed; "LIMITED TIME ONLY" is not a section). A heading can have a
+        sub-heading (for example "VEGAN SHAKES" under "SHAKES"): then section = "<heading> - <sub-heading>" (for example "SHAKES - VEGAN SHAKES"). A dish is a name in capitals (it may
+        wrap over two lines: join them), a price, the calories in brackets ("(839 kcal.)") and a description. name = the name as printed (keep its capitals), without the price and
+        the description. kcal = the digits of the figure in brackets (no thousands comma). EVERY figure in brackets followed by "cal" or "kcal" on the page is exactly one row: a dish
+        with several figures (one per size or flavour) gives one row per figure named "<dish> - <the size or flavour as printed>"; an option line such as "ADD BACON (104 kcal.)" is a row
+        named by its text, notes = "Add-on to <the dish>". Do not return prices, descriptions, allergen keys or text without a kcal figure. Before you answer, count the brackets with
+        "kcal" on the page and check that you return exactly that many rows.
+      fields: { kcal: energykCal_Per Portion, notes: notes }

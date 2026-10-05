@@ -81,3 +81,34 @@ def test_text_check_tags_can_be_limited_to_the_tags_that_are_read():
     from pipeline.parsers.vision_table import check_text_figures
     spec = {"field": "kcal", "pattern": r"(\d+)\s?kcal", "tags": {"field": "diet", "pattern": r"((?:\b(?:VE|V|T|I)\b\s+)*)\((\d+)\s?kcal\)", "keep": "VE|V"}}
     check_text_figures({"rows": [{"kcal": "457", "diet": "VE"}]}, "Buddha bowl VE T (457kcal) 12.00", spec, 1)
+
+
+def test_text_check_can_strip_commas_and_signs_before_comparing():
+    from pipeline.parsers.vision_table import check_text_figures
+    spec = {"field": "kcal", "pattern": r"(\d[\d,]*)\s?kcal(?!\s*per serve)", "strip": ","}
+    text = "Platter (1,706kcal serves 2, 853kcal per serve)  Rump (816kcal)  Add sauce 1.79 (+39kcal)"
+    check_text_figures({"rows": [{"kcal": "1706"}, {"kcal": "816"}, {"kcal": "39"}]}, text, spec, 1)
+
+
+def test_text_check_ignores_a_figure_after_stripping_commas():
+    from pipeline.parsers.vision_table import check_text_figures
+    spec = {"field": "kcal", "pattern": r"(\d[\d,]*)\s?kcal", "strip": ",", "ignore": [1800]}
+    check_text_figures({"rows": [{"kcal": "50"}]}, "Fruit (50kcal)  Children need around 1,800kcal a day", spec, 1)
+
+
+def test_vision_table_reads_only_the_listed_pages():
+    from pathlib import Path
+
+    from pipeline.parsers import vision_table as vt
+    pdf = Path(__file__).resolve().parent.parent / "inputs" / "cookhouse_and_pub_main_menu_priceless.pdf"
+    assert vt.pages_of(pdf, {"pages": [2, "4-5"]}) == [2, 4, 5] and vt.pages_of(pdf, {}) == list(range(1, 9))
+
+
+def test_text_check_can_ignore_a_figure_on_one_page_only_where_the_text_layer_holds_hidden_text():
+    from pipeline.llm import LlmError
+    from pipeline.parsers.vision_table import check_text_figures
+    import pytest
+    spec = {"field": "kcal", "pattern": r"(\d+)\s?kcal", "page_ignore": {"7": [142]}}
+    check_text_figures({"rows": [{"kcal": "50"}]}, "A (50kcal) hidden fruit tea (142kcal)", spec, 7)
+    with pytest.raises(LlmError, match="142"):
+        check_text_figures({"rows": [{"kcal": "50"}]}, "A (50kcal) hidden fruit tea (142kcal)", spec, 8)

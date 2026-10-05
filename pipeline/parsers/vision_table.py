@@ -8,8 +8,9 @@ flagged, never corrected).
 Source options (config/chains.yaml):
   fields        key the model returns -> dictionary column (the nutrient cells, left to right as on the page)
   instructions  what the page looks like: which text is the section, the item name, the size line
+  pages         pages to read: numbers and "a-b" ranges (default: every page)
   dpi           render resolution (default 110)
-  text_check    {field, pattern, ignore, tags: {field, pattern, keep}}: for pages whose text layer prints its figures, every printed figure must be a row the model read and the
+  text_check    {field, pattern, ignore, page_ignore {page: [figures]}, strip, tags: {field, pattern, keep}}: for pages whose text layer prints its figures, every printed figure must be a row the model read and the
                 other way round (a dish left out or invented stops the run; the answer is not cached)
 Rows carry method "llm".
 """
@@ -42,9 +43,11 @@ def check_text_figures(answer: dict, text: str, spec: dict, page_no: int) -> Non
     """A page whose text layer prints its figures (menus: "(485kcal)"): every printed figure must be a row the model read and every figure
     the model read must be printed, counted as a multiset; an answer that fails is never cached."""
     from collections import Counter
-    ignore = {str(x) for x in spec.get("ignore", ())}
-    printed = Counter(v for v in re.findall(spec["pattern"], text, re.I) if v not in ignore)
-    read = Counter((r.get(spec["field"]) or "").strip() for r in answer["rows"])
+    ignore = {str(x) for x in spec.get("ignore", ())} | {str(x) for x in (spec.get("page_ignore") or {}).get(str(page_no), ())}
+    strip = str(spec.get("strip", ""))
+    clean = lambda v: "".join(c for c in v if c not in strip)   # "1,706" is 1706
+    printed = Counter(c for c in (clean(v) for v in re.findall(spec["pattern"], text, re.I)) if c not in ignore)
+    read = Counter(clean((r.get(spec["field"]) or "").strip()) for r in answer["rows"])
     read = Counter({k: v for k, v in read.items() if k and k not in ignore})
     if printed != read:
         raise llm.LlmError(f"page {page_no}: the text layer prints {sorted((printed - read).elements())} that the model did not read, and the model read "
@@ -105,6 +108,12 @@ def page_rows(pdf: Path, source: dict, page_no: int, pages_dir: Path | None = No
 
 
 def pages_of(pdf: Path, source: dict) -> list[int]:
+    if "pages" in source:   # numbers and "a-b" ranges: a cover or a page with no table is left out
+        out: list[int] = []
+        for item in source["pages"]:
+            a, _, b = str(item).partition("-")
+            out += range(int(a), int(b or a) + 1)
+        return out
     return list(range(1, len(page_texts(pdf)) + 1))
 
 

@@ -8,7 +8,7 @@ State on 2026-10-05: fourteen chains live and approved (Krispy Kreme, Pizza Hut,
 2. Pizza Hut: done and approved.
 3. Coffee #1: done and approved.
 3b. Starbucks: done and approved.
-4. Brewhouse, Cookhouse, Top Golf menus: the dish name is the text before the first comma; judgement and model reads.
+4. Brewhouse, Cookhouse, Top Golf: built on branch `menus`, `approved: false` for chains `45_Brewhouse`, `49_CookhousePub`, `73_TopGolf` (findings 3.14); needs the user's approval, then `run`, `eval`, commit.
 5. Final slice: a flags report across all chains, an automatic row-count check for model-read pages, a last review of the whole pipeline.
 
 ## Before approving anything

@@ -124,6 +124,14 @@ Every mismatch was settled by looking at the page. In every case so far one of f
 - **Output:** 1,557 rows (food 93, drinks 1,426, modifiers 38). Flags are the PDF's own: kJ against kcal on 33 rows, Atwater on 12, and "<0.5g" figures fail the number pattern (Pearl Scan kept them as printed too).
 - **Judgements for the user:** an allergen not named in the summary column is "No" (the guides summarise every allergen); oats printed as "gluten free OATS" set oats without gluten, plain OATS set gluten; a tick under Wheat, Rye, Barley, Spelt or Kamut on the Modifiers pages also sets gluten; `Category` is the running head's menu and the section bar ("Seasonal Menu - Loaf Cakes & Muffins"); beverage pages 69-72 print "Reserve" in their running head though they continue other sections, kept as printed; the base of bar-less figures is Per Portion.
 
+### 3.14 Menu chains: Brewhouse, Cookhouse, Top Golf (7 menu PDFs, 19 pages read by the model; built, awaiting approval)
+- **Layouts:** free multi-column menus (a dish is a bold name, a description, tags, "(589kcal)" and a price). Only kcal is printed: no allergen columns, no nutrients, prices not extracted. The Cookhouse main menu has a partly garbled text layer (wine descriptions) but its figures are readable; Top Golf prints "(839 kcal.)" and "(952 cal. / 1044 kcal.)".
+- **Method:** `vision_table` reads each page (200 dpi) with instructions for names and options; a new `text_check` compares every kcal figure printed in the text layer with the rows the model read, as a multiset: a dish left out or a figure invented stops the run and the answer is not cached (it found missed dishes on Brewhouse page 1, "98l" for 981 on Top Golf, and one hidden Fruit Tea on Top Golf page 7 that is in the text layer but not on the page: `page_ignore`). The check also compares the dietary tags V and VE with the text layer where it prints them next to the figure; the beer pairing letters (circled icons) are not read. A cached answer that fails a stricter check is asked again.
+- **Pearl Scan:** Brewhouse 126 of 126 rows (4 menus), every kcal matches. Cookhouse kids 33 of 33; main menu 170 Pearl Scan rows: every Pearl Scan figure is among our 177 rows (the text layer proves all printed figures are rows) and 40 names differ (its curated names such as "Beef & Ale Pie - With mash"), recorded as `known_gaps: 40`; Pearl Scan left out 7 printed figures (6 drinks and "Swap your bun for a fresh mixed salad"). Top Golf 118 Pearl Scan rows against our 121 (Pearl Scan left out the figures inside descriptions: house fries 197, house salad 82 and a bacon add-on 117); 12 names differ, `known_gaps: 12`.
+- **Naming rules** (instructions in `config/chains.yaml`): name = the bold text up to the first comma; add-ons ("+ smoked streaky bacon", "Add peppercorn sauce") keep their own name, never the main dish's, with `notes` "Add-on to <dish>"; several figures of one dish give "<dish> - <option>"; a sign or thousands comma is dropped from the figure (the sign goes to `notes`: "-398kcal" is a saving, one erratum); `Diet` holds V or VE only.
+- **Output:** Brewhouse 126, Cookhouse 212, Top Golf 121 rows; no flags. Cross-menu duplicates (the same dish on the Core and NGC menus with different printed tags or kcal, such as the Caesar salad 499 against 431) are flagged by the duplicate check; notes are ignored by that check.
+- **Limits:** no allergen information exists on these menus (the Brewhouse and Cookhouse pages say to ask staff); names of options follow our rules, not Pearl Scan's; diet tags are checked by the text layer only where printed next to the figure.
+
 ## 4. Sources not done: what was learned
 
 | Source | PDF | Why not done yet | What the survey found |
@@ -133,7 +141,7 @@ Every mismatch was settled by looking at the page. In every case so far one of f
 | Pizza Hut | 24 pages, 483 GT rows | done, approved (section 3.11) | `portion_tables`, `mark_table`, `merge_by_key` |
 | Coffee #1 | food 18 pp, drinks 28 pp | done, approved (section 3.12) | `product_blocks`, `drink_tables` |
 | Starbucks | food 20 pp, drinks 73 pp | done, approved (section 3.13) | `guide_rows`, `modifier_matrix` |
-| Brewhouse, Cookhouse, Top Golf | menus | judgement | dish name is the text before the first comma |
+| Brewhouse, Cookhouse, Top Golf | 7 menu PDFs | built (section 3.14), awaiting approval | `vision_table` with `text_check` |
 
 ## 5. Errors in Pearl Scan, by kind (so they are recognised next time)
 

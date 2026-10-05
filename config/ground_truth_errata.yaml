@@ -295,3 +295,11 @@
   item: Oat & Raisin Cookie
   column: kj_100
   why: The PDF (page 16) prints "1,702" with a thousands comma; Pearl Scan removed it. We keep it as printed and the row is flagged by the number check.
+- file: cookhouse_and_pub_kids_menu_default.csv
+  item: Skin-on Chips
+  column: '*'
+  why: The PDF prints "Swap your Skin-on Chips (158kcal) for Mash (110kcal) or ..."; Pearl Scan shortened the first name to "Skin-on Chips". We keep the name as printed ("Swap your Skin-on Chips"); the figure 158 was compared by eye.
+- file: cookhouse_and_pub_main_menu_priceless_v0.1.csv
+  item: Swap chips & onion rings for a fresh mixed salad
+  column: kcal
+  why: The PDF prints "(-398kcal)", a saving; we store the digits (398) and keep the sign in `notes` because the calorie columns hold no negative number. Pearl Scan stored -398.
