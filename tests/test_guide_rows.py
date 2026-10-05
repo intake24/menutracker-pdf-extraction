@@ -103,3 +103,57 @@ def test_an_unknown_modifier_label_raises():
     chars = [{"text": c, "x0": 100, "x1": 106, "top": 100 + 7 * i, "bottom": 106 + 7 * i, "upright": False} for i, c in enumerate("xirtaM"[::-1])]
     with pytest.raises(ValueError, match="not in `labels`"):
         mm._columns(chars, MOD["labels"], 63)
+
+
+def _page(src, rows_, rules=None):
+    rules = rules or [(0, 0, 800), (110, 20, 780), (200, 136, 523), (300, 20, 780), (525, 0, 800)]
+    return gr.parse_page([w("Product", 24, 100, bold=True), w("| Food | Menu", 24, 10)] + rows_, rules, {**src, "diet_columns": []}, 4)
+
+
+def _figs(top, n=9, skip=()):
+    return [w(str(i + 1), 530 + 23 * i, top) for i in range(n) if i not in skip]
+
+
+def test_a_blank_figure_cell_stays_blank_and_the_following_figures_keep_their_columns():
+    full = [w("Cake", 24, 150, bold=True), w("Sugar", 140, 150)] + _figs(150) + [w("MILK", 735, 150, bold=True)]
+    got = _page(FOOD, full + [w("Pie", 24, 250, bold=True), w("Sugar", 140, 250)] + _figs(250, skip=(6,)) + [w("MILK", 735, 250, bold=True)],
+                [(0, 0, 800), (110, 20, 780), (200, 136, 523), (300, 136, 523), (525, 0, 800)])
+    pie = next(r for r in got if r["Product_Name"] == "Pie")
+    assert "fibre_Per Portion" not in pie and (pie["protein_Per Portion"], pie["salt_Per Portion"]) == ("8", "9")
+
+
+def test_two_drinks_read_as_one_because_a_rule_is_missing_stop_the_run():
+    src = {**BEV}
+    rows_ = []
+    for k, top in enumerate((150, 160, 170, 200, 210, 220)):
+        rows_ += [w(["Tall", "Grande", "Venti"][k % 3], 480, top)] + [w(str(i + 1), 520 + 23 * i, top) for i in range(10)]
+    rows_ += [w("Latte", 24, 160, bold=True), w("Mocha", 24, 210, bold=True), w("Sugar", 100, 150), w("MILK", 735, 160, bold=True)]
+    with pytest.raises(ValueError, match="two names in one row|a size appears twice"):
+        gr.parse_page([w("Product", 24, 100, bold=True), w("| Beverages | Menu", 24, 10)] + rows_, [(0, 0, 800), (110, 20, 780), (300, 91, 471), (525, 0, 800)], src, 4)
+
+
+def test_a_may_contain_or_a_nut_source_that_the_allergen_column_leaves_out_is_flagged():
+    row = [w("Cake", 24, 150, bold=True), w("May", 140, 150), w("contain", 150, 150), w("NUTS", 165, 150)] + _figs(150) + [w("MILK", 735, 150, bold=True)]
+    got = _page(FOOD, row)
+    assert "treeNuts" in got[0]["flags"] and got[0]["milk"] == "Yes" and "milk" in got[0]["flags"]
+    nuts = [w("Cake", 24, 150, bold=True), w("ALMONDS", 140, 150, bold=True)] + _figs(150) + [w("ALMONDS", 735, 150, bold=True)]
+    assert "flags" not in _page(FOOD, nuts)[0]
+
+
+def test_a_modifier_word_across_the_name_edge_and_a_tick_level_with_no_line_stop_the_run():
+    src = {"name_x1": 134, "serving_x0": 134, "kcal_x0": 230, "marks_x0": 262, "markers": {"": "No"}, "labels": {"Milk": "milk"}, "gluten_from": []}
+    chars = [{"text": c, "x0": 300, "x1": 306, "top": 100 + 7 * (3 - i), "bottom": 106 + 7 * (3 - i), "upright": False} for i, c in enumerate("Milk")]
+    words = [{"text": "Cream", "x0": 24, "x1": 60, "top": 150, "bottom": 156, "size": 6, "fontname": "Bold", "upright": True},
+             {"text": "per", "x0": 140, "x1": 150, "top": 150, "bottom": 156, "size": 6, "fontname": "Bold", "upright": True},
+             {"text": "5", "x0": 236, "x1": 240, "top": 150, "bottom": 156, "size": 6, "fontname": "Regular", "upright": True},
+             {"text": "kcal", "x0": 242, "x1": 252, "top": 150, "bottom": 156, "size": 6, "fontname": "Regular", "upright": True}]
+    tick = {"x0": 297, "x1": 304, "top": 151, "bottom": 158}
+    assert mm.parse_page(words, chars, [tick], src, 63)[0]["milk"] == "Yes"
+    with pytest.raises(ValueError, match="level with no line"):
+        mm.parse_page(words, chars, [{**tick, "top": 300, "bottom": 307}], src, 63)
+    heading = [{"text": "DAIRY", "x0": 24, "x1": 50, "top": 130, "bottom": 136, "size": 6, "fontname": "Bold", "upright": True},
+               {"text": "ALTERNATIVES", "x0": 116, "x1": 160, "top": 130, "bottom": 136, "size": 6, "fontname": "Bold", "upright": True}]
+    assert mm.parse_page(heading + words, chars, [tick], src, 63)[0]["Category"] == "DAIRY ALTERNATIVES"   # a heading across the name edge is kept whole
+    odd = words + [{"text": "stray", "x0": 300, "x1": 320, "top": 150, "bottom": 156, "size": 6, "fontname": "Regular", "upright": True}]
+    with pytest.raises(ValueError, match="allergen columns"):
+        mm.parse_page(odd, chars, [tick], src, 63)

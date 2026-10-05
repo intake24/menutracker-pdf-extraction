@@ -9,6 +9,7 @@ Source options (config/chains.yaml):
                name the nut in `treeNutSource`
   name_x1      right edge (pt) of the name column; serving_x0 the left edge of the "served" column
   kcal_x0      left edge of the calories column; marks_x0 the left edge of the allergen columns
+  gluten_from  allergen columns whose tick also means gluten (wheat, rye, barley, spelt, kamut)
   markers      {"": "No"}: the guide lists the allergens a modifier holds, so an unticked one is absent
 A tick that is under no label, a line with no calories or no name, or text of another kind raises.
 """
@@ -74,10 +75,12 @@ def parse_page(words: list[dict], chars: list[dict], shapes: list[dict], source:
     lines = _lines(body)
     names, rows, section = [], [], ""
     for line in lines:
-        left = [w for w in line if w["x1"] <= name_x1 and w["x0"] < name_x1]
+        left = [w for w in line if w["x0"] < serving_x0]
         served = [w for w in line if serving_x0 <= w["x0"] < kcal_x0]
         kcal = [w for w in line if kcal_x0 <= w["x0"] < marks_x0]
         other = [w for w in line if w["x0"] >= marks_x0]
+        if len(left) + len(served) + len(kcal) + len(other) != len(line):
+            raise ValueError(f"page {page_no}: a word in no column: {_text(line)[:50]!r}")
         if other:
             raise ValueError(f"page {page_no}: text in the allergen columns: {_text(other)!r}")
         text = _text(kcal)
@@ -96,7 +99,7 @@ def parse_page(words: list[dict], chars: list[dict], shapes: list[dict], source:
         if left:
             names.append((_centre(line[0]), _text(left)))
         rows.append({"y": _centre(line[0]), "served": _text(served), "kcal": m.group(1)})
-    out = []
+    out, used = [], set()
     for r in rows:
         if not names:
             raise ValueError(f"page {page_no}: a line with no name on the page")
@@ -105,6 +108,7 @@ def parse_page(words: list[dict], chars: list[dict], shapes: list[dict], source:
         if r["served"]:
             row["Size"] = r["served"]
         marks = [s for s in shapes if abs((s["top"] + s["bottom"]) / 2 - r["y"]) <= 6]
+        used |= {id(s) for s in marks}
         cells: dict[str, str] = {k: source.get("markers", {}).get("", "") for _, _, k in columns}
         nuts = []
         for s in marks:
@@ -115,10 +119,15 @@ def parse_page(words: list[dict], chars: list[dict], shapes: list[dict], source:
             cells[col] = "Yes"
             if col == "treeNuts":
                 nuts.append(label)
+        if source.get("gluten_from"):   # a tick under a cereal that contains gluten is gluten
+            cells["gluten"] = "Yes" if any(cells.get(k) == "Yes" for k in source["gluten_from"]) else source.get("markers", {}).get("", "")
         row |= cells
         if nuts:
             row["treeNutSource"] = ", ".join(nuts)
         out.append(row)
+    unused = [s for s in shapes if id(s) not in used]
+    if unused:
+        raise ValueError(f"page {page_no}: {len(unused)} tick(s) level with no line, e.g. at x={unused[0]['x0']:.0f}, y={unused[0]['top']:.0f}")
     return out
 
 

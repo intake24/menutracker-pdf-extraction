@@ -54,7 +54,7 @@ def _anchors(edges: list[float]) -> list[float]:
     return [sum(g) / len(g) for g in groups]
 
 
-def parse_page(words: list[dict], rules: list[tuple[float, float, float]], source: dict, page_no: int) -> list[dict]:
+def parse_page(words: list[dict], rules: list[tuple[float, float, float]], source: dict, page_no: int, carry: dict | None = None) -> list[dict]:
     """`rules`: (y, x0, x1) of the page's horizontal rules."""
     name_x1, fig_x0, all_x0 = source["name_x1"], source["figures_x0"], source["allergens_x0"]
     sets = source["nutrients"] if isinstance(source["nutrients"], dict) else {len(source["nutrients"]): source["nutrients"]}
@@ -101,7 +101,9 @@ def parse_page(words: list[dict], rules: list[tuple[float, float, float]], sourc
         inside = [w for w in words if lo <= _centre(w) < hi and w["size"] >= 5.5]
         if not inside:
             continue
-        section, base = next(((s, b) for y, s, b in reversed(bars) if y < min(_centre(w) for w in inside)), ("", None))
+        section, base = next(((s, b) for y, s, b in reversed(bars) if y < min(_centre(w) for w in inside)), (None, None))
+        if section is None:   # no bar above on this page: the section of the page before, if it has the same running head
+            section, base = (carry or {}).get(menu, ("", None))
         figures_by_line = []
         for line in _lines(inside):
             nums = [w for w in line if NUMBER.match(w["text"]) and fig_x0 <= w["x0"] < all_x0]
@@ -151,11 +153,14 @@ def parse_page(words: list[dict], rules: list[tuple[float, float, float]], sourc
         if read.get("oats") == "Yes" and read.get("gluten") != "Yes":   # the declaration says the oats are gluten free: oats without gluten
             summary = re.sub(r"\bOats\b(?! \()", "Oats (Gluten Free)", summary)
         got = parse_allergens(summary, "", source.get("markers", {}).get("", ""))
-        diff = sorted(k for k in got if k != "treeNutSource" and (got[k] == "Yes") != (read.get(k) == "Yes"))
+        same_nuts = {x.strip() for x in got.get("treeNutSource", "").split(",") if x.strip()} == {x.strip() for x in read.get("treeNutSource", "").split(",") if x.strip()}
+        diff = sorted(k for k in got if got[k] != read.get(k, "") and not (k == "treeNutSource" and same_nuts))   # every allergen cell, May contain and the nut source (in any order) included
         if diff:
             flags = "warn: the allergen column and the bold capitals of the ingredients differ on " + ", ".join(diff)
         sizes_found = [w for l in _lines(size_words) for w in l]
         lines = sorted(figures_by_line, key=lambda nums: _centre(nums[0]))
+        if len({w["text"] for w in sizes_found}) != len(sizes_found):
+            raise ValueError(f"page {page_no}, {name}: a size appears twice in one row: two products may be read as one (a rule is missing)")
         if size_words and len(sizes_found) != len(lines):
             raise ValueError(f"page {page_no}, {name}: {len(sizes_found)} sizes for {len(lines)} figure lines")
         for k, nums in enumerate(lines):
@@ -173,6 +178,8 @@ def parse_page(words: list[dict], rules: list[tuple[float, float, float]], sourc
                 row["flags"] = flags
             row["Ingredients"] = _text(declaration)
             out.append(row)
+        if carry is not None:
+            carry[menu] = (section, base)
     return out
 
 
@@ -198,11 +205,11 @@ def expand_pages(spec: list) -> list[int]:
 
 
 def parse(pdf: Path, source: dict) -> list[dict]:
-    rows = []
+    rows, carry = [], {}
     with pdfplumber.open(pdf) as doc:
         for n in expand_pages(source["pages"]):
             page = doc.pages[n - 1]
             words = page.extract_words(extra_attrs=["fontname", "size"], x_tolerance=1.5, y_tolerance=1)
             rules = [(round(e["top"]), e["x0"], e["x1"]) for e in page.edges if e["orientation"] == "h"]
-            rows += parse_page(words, rules, source, n)
+            rows += parse_page(words, rules, source, n, carry)
     return rows

@@ -27,13 +27,15 @@ Written 2026-10-05 after the eleventh chain (Krispy Kreme). It is the record of 
 | `mark_table` | yes | dish rows with Yes/No diet cells and a circle mark under each allergen, rotated header | Pizza Hut (pages 2-6) |
 | `product_blocks` | yes | one block per product: name, ingredient declaration with bold-capital allergens, nutrition column | Coffee #1 food |
 | `drink_tables` | yes | drink tables: name and allergens once beside size rows, 9 figures per group, rotated titles | Coffee #1 beverages |
+| `guide_rows` | yes | name, declaration, figures and a summary column of allergens per row (rows between rules), size lines for drinks | Starbucks food and drinks |
+| `modifier_matrix` | yes | calories and a drawn tick under each rotated allergen label | Starbucks modifiers |
 | `vision_pairs` | none | an allergen matrix page and a nutrition page for the same products, joined row by row | Krispy Kreme |
 
 Model reads use `claude -p --model claude-sonnet-5-5`, cached under `work/llm/` by image, prompt, schema and model, so a re-run costs nothing. Check a model-read source with `pages` (rows, flags, empty cells per page) and `reread` (a second read at a higher dpi; any difference means one read is wrong).
 
 ## 3. Per chain
 
-Row counts are those of `outputs/` on 2026-10-05 (6,752 in total).
+Row counts are those of `outputs/` on 2026-10-05 (6,752 in total, before Starbucks).
 
 | Chain | PDFs and regions | Rows | Allergen cells | What to know when reading the CSV |
 |---|---|---|---|---|
@@ -48,6 +50,7 @@ Row counts are those of `outputs/` on 2026-10-05 (6,752 in total).
 | 35 Krispy Kreme | one 61-page book, image pages | 210 | `✓` = `Yes`, blank = blank; diet cells `Suitable_for_Vegetarian`, `Suitable_for_Vegan`, `Suitable_for_Halal` hold YES or NO as printed | The allergen page and the nutrition page of a group are joined by page order and section; names that differ a little are flagged (the nutrition page's name is kept). `Category` keeps the printed section, which for drinks names the milk (`HOT DRINKS – OAT MILK`). Delivery boxes, gifting dozens and syrups have allergens and diet cells but no figures (the PDF prints none). Ingredient-declaration pages are not extracted. |
 | 8 Pizza Hut | one booklet: allergen tables, nutrition tables (ingredient prose pages not extracted) | 715 (after `merge_by_key`) | filled circle = `Yes`, empty circle = `May contain` (the key: a risk of cross-contamination), blank = blank; diet cells `Suitable_for_Vegetarian`, `Suitable_for_Vegan`, `Suitable_for_Coeliac` hold Yes/No as printed; "Fish / shellfish" sets fish and crustacean | Pizza rows are one per pizza and size (`Size` is the crust and size line), per-slice figures in the `Per Slice` columns with `Total_Weight` and `Total_Slices`; other tables per portion; `Category` keeps headings as printed (nested headings joined with ` - `); "<20ppm" marks are kept in `notes`; an allergen row and a nutrition row are merged only when very likely the same product (same name, size, region, heading up to punctuation or depth, one partner each way): `source_page` then reads "17, 2" and `notes` starts a "Merged product: ..." remark; similar names that may be different products stay separate rows. |
 | 47 Coffee #1 | food guide (18 pp) and beverage guide (28 pp) | 463 | food: bold capital words of the declaration = `Yes`, capital words after "May contain" / "Made in a factory that handles" = `May contain`; drinks: the allergen column; an unnamed allergen is `No` (both guides say every allergen is listed); `OAT` in drinks and "Gluten Free OATS" in food set `oats` only | Food: `Category` is the section title as printed ("PASTIRES"), `Diet` the printed tag, `Ingredients` the declaration, `notes` a note printed under a section (porridge milk); figures per 100 g and per portion, `Serving_Size` the portion weight. Drinks: `Product_Name` is the printed name ("Latte - Whole Milk"), `Size` the printed size (Regular, Large, 12oz), `Product_Description` the line under the table title; syrups are one row per portion (15 ml, 22.5 ml); vitamin C and B12 content are per portion. |
+| 7 Starbucks | food guide (93 rows), beverage guide (1,426 rows) and its Modifiers pages (38 rows) | 1,557 | the summary column of allergens (the bold capitals of the declaration are read as a check and differences are flagged); an unnamed allergen is `No`; "gluten free OATS" sets oats only; a tick under a gluten cereal on the Modifiers pages sets gluten too | Food: `Suitable_for_Vegetarian` / `Suitable_for_Vegan` hold Y or N as printed, `Category` is the menu and section bar. Drinks: `Size` is the printed size (Tall, Grande, Venti, Single, Doppio, ...), figures are per drink size (`Per Portion`) with `caffeine`; `Ingredients` is the declaration. Modifiers: calories only, `Size` is how it is served ("Espresso Beverage per pump", "per serving"). |
 
 ## 4. Decisions and how they are encoded
 

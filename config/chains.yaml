@@ -1313,9 +1313,7 @@
       no_allergen_marks: ['-']
       allergen_words: { BUTTERMILK: Milk }
       bar_bases: { per portion: Per Portion }
-      nutrients: # a page has nine figure columns, or ten when it also has caffeine
-        9: [energykJ, energykCal, fat, saturates, carbohydrates, sugars, fibre, protein, salt]
-        10: [energykJ, energykCal, fat, saturates, carbohydrates, sugars, fibre, protein, salt, caffeine]
+      nutrients: [energykJ, energykCal, fat, saturates, carbohydrates, sugars, fibre, protein, salt, caffeine] # ten figure columns on every page; another count raises
     # Modifiers (pages 63 and 64): calories and a tick (a drawn shape) under each allergen. The legend says a tick means the allergen is present; the guide
     # summarises the allergens of its beverages, so an unticked allergen is "No". The ticks of Wheat to Kamut are not read as gluten (none is ticked here).
     - pdf: SUM25_UK_AllergenBook_CORE_BEVERAGE_v02_201.pdf
@@ -1329,6 +1327,7 @@
       kcal_x0: 230
       marks_x0: 262
       markers: { '': 'No' }
+      gluten_from: [wheat, rye, barley, spelt, kamut]
       labels:
         Wheat: wheat
         Rye: rye

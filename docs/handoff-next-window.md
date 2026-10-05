@@ -6,7 +6,8 @@ State on 2026-10-05: thirteen chains live and approved (Krispy Kreme, Pizza Hut 
 
 1. Krispy Kreme: done and approved.
 2. Pizza Hut: done and approved.
-3. Coffee #1: done and approved. Starbucks is next (food 20 pp, drinks 73 pp).
+3. Coffee #1: done and approved.
+3b. Starbucks: built on branch `starbucks`, `approved: false` in `config/chains.yaml` (findings 3.13); needs the user's approval, then `run`, `eval`, commit.
 4. Brewhouse, Cookhouse, Top Golf menus: the dish name is the text before the first comma; judgement and model reads.
 5. Final slice: a flags report across all chains, an automatic row-count check for model-read pages, a last review of the whole pipeline.
 
