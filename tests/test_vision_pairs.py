@@ -124,10 +124,11 @@ def test_a_join_can_pick_the_sections_of_its_pages(tmp_path, monkeypatch):
     monkeypatch.setattr(vp, "RUNNER", runner)
     source = {**SOURCE, "joins": [
         {"matrix": [3], "matrix_section": "oat", "nutrition": [4], "nutrition_section": "oat"},
+        {"matrix": [3], "matrix_section": "milk", "nutrition": [4], "nutrition_section": "semi"},
         {"matrix": [3], "matrix_section": "milk", "nutrition": [4], "nutrition_section": r"(?<!semi )skimmed"}]}
     pdf = Path(__file__).resolve().parent.parent / "inputs" / "nutritional-information.pdf"
     rows = vp.parse(pdf, source)
-    assert [(r["Category"], r.get("wheat")) for r in rows] == [("OAT DRINK", "Yes"), ("SKIMMED MILK", None)]
+    assert [(r["Category"], r.get("wheat")) for r in rows] == [("OAT DRINK", "Yes"), ("SEMI SKIMMED MILK", None), ("SKIMMED MILK", None)]
     with pytest.raises(LlmError, match="no nutrition rows with a section matching"):
         vp.parse(pdf, {**source, "joins": [{"matrix": [3], "nutrition": [4], "nutrition_section": "nothing like it"}]})
 
@@ -142,6 +143,59 @@ def test_a_join_can_pick_allergen_rows_by_name_when_the_kind_of_milk_is_in_the_n
         return {"is_error": False, "structured_output": {"rows": rows}, "total_cost_usd": 0.01}
     monkeypatch.setattr(vp, "RUNNER", runner)
     source = {**SOURCE, "tick_labels": {**SOURCE["tick_labels"], "Oat": "oats"},
-              "joins": [{"matrix": [3], "matrix_name": "milk", "nutrition": [4], "by_name": True}]}
+              "joins": [{"matrix": [3], "matrix_name": "milk", "nutrition": [4], "by_name": True},
+                        {"matrix": [3], "matrix_name": "oat", "nutrition": []}]}
     pdf = Path(__file__).resolve().parent.parent / "inputs" / "nutritional-information.pdf"
-    assert "oats" not in vp.parse(pdf, source)[0]
+    rows = vp.parse(pdf, source)
+    assert "oats" not in rows[0] and rows[1]["oats"] == "Yes"
+
+
+def test_by_name_stops_when_two_allergen_rows_have_the_same_name_core():
+    matrix = [_m("Pistachio Latte (with oat drink)", ticks=["Wheat"]), _m("Pistachio Latte (with milk)")]
+    with pytest.raises(LlmError, match="same name"):
+        vp.join_rows(matrix, [_n("Pistachio Latte 12oz")], SOURCE, 56, by_name=True)
+
+
+def test_a_size_is_only_ignored_at_the_end_of_a_name():
+    assert vp._core("Latte 12oz") == vp._core("Latte") and vp._core("Bites 100g") != vp._core("Bites 200g")
+
+
+def test_several_name_differences_in_one_join_look_like_a_shift_and_stop_the_run():
+    matrix = [_m("Iced Latte"), _m("Iced Vanilla Latte"), _m("Iced Caramel Latte"), _m("Iced Chai Latte")]
+    nutrition = [_n("Iced Vanilla Latte"), _n("Iced Caramel Latte"), _n("Iced Chai Latte"), _n("Iced Matcha Latte")]
+    with pytest.raises(LlmError, match="shifted"):
+        vp.join_rows(matrix, nutrition, SOURCE, 57)
+
+
+def test_a_tree_nut_source_without_the_tick_is_flagged():
+    row = vp.join_rows([{**M, "tree_nut_source": "Hazelnut"}], [N], SOURCE, 4)[0]
+    assert row["treeNutSource"] == "Hazelnut" and "treeNuts" not in row and row["flags"].startswith("warn:")
+
+
+def _runner_for(matrix, nutrition):
+    def runner(prompt, schema, add_dir):
+        return {"is_error": False, "structured_output": {"rows": matrix if "tick" in prompt else nutrition}, "total_cost_usd": 0.01}
+    return runner
+
+
+def _setup(monkeypatch, tmp_path, matrix, nutrition):
+    monkeypatch.setattr(vp, "WORK", tmp_path)
+    monkeypatch.setattr(vp.vision_table, "WORK", tmp_path)
+    monkeypatch.setattr(vp, "BUDGET", Budget())
+    monkeypatch.setattr(vp, "RUNNER", _runner_for(matrix, nutrition))
+    return Path(__file__).resolve().parent.parent / "inputs" / "nutritional-information.pdf"
+
+
+def test_an_allergen_row_without_figures_is_kept_once_however_many_joins_select_it(tmp_path, monkeypatch):
+    pdf = _setup(monkeypatch, tmp_path, [_m("Latte", "A"), _m("Americano", "A")], [_n("Latte 12oz", "X"), _n("Latte 12oz", "Y")])
+    source = {**SOURCE, "joins": [{"matrix": [3], "nutrition": [4], "nutrition_section": "X", "by_name": True},
+                                  {"matrix": [3], "nutrition": [4], "nutrition_section": "Y", "by_name": True}]}
+    names = [r["Product_Name"] for r in vp.parse(pdf, source)]
+    assert sorted(names) == ["Americano", "Latte 12oz", "Latte 12oz"]
+
+
+def test_a_row_that_no_join_selects_stops_the_run(tmp_path, monkeypatch):
+    pdf = _setup(monkeypatch, tmp_path, [_m("Latte", "A")], [_n("Latte 12oz", "X"), _n("Latte 12oz", "OTHER")])
+    source = {**SOURCE, "joins": [{"matrix": [3], "nutrition": [4], "nutrition_section": "X", "by_name": True}]}
+    with pytest.raises(LlmError, match="no join"):
+        vp.parse(pdf, source)

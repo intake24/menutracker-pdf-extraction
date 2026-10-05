@@ -91,11 +91,18 @@ Every mismatch was settled by looking at the page. In every case so far one of f
 - **Model:** 65 page reads, three at a time, about $4.5 reported; first read matched Pearl Scan on all 434 rows; 6 flagged pages re-read at 200 dpi agreed (the flags are the PDF's own inconsistencies; the only difference was an en dash).
 - **Verdict:** approved with two stated judgements: stuffed crust rows use the "original or authentic thin crust base" allergen block because the sheets print no other; row-specific warnings are encoded as `rules`.
 
+### 3.10 Krispy Kreme (1 PDF, 61 pages, no text layer; built, awaiting approval)
+- **PDF oddities:** allergen matrix pages (YES/NO diet cells, ticks in about 22 columns) and nutrition pages (per 100 g and per portion) list the same products but not always with the same names ("Sprinkles" against "Chocolate Sprinkles"); drinks are listed once per kind of milk on the allergen pages and once per size on the nutrition pages; one allergen page serves three nutrition pages (skimmed, semi skimmed, whole); delivery-box and gifting pages say "see the matrix" instead of giving figures, and the box nutrition page lists 6 of the 8 boxes; ingredient-declaration pages (about 15) are not extracted by decision.
+- **Pearl Scan:** nutrition only. 188 of 188 rows and 3,760 cells agree; one name differs (it added "Birthday" to "Personalised Original Glazed"), handled with `name_fixes`. No allergen data, so 12 golden rows were checked against page images by hand.
+- **Parser `vision_pairs`:** one model read per page (about 41 pages); rows paired by page order and section, drinks by section filters and drink name. Stops on a different row count, two allergen rows with one name core, an unknown tick header or diet word, names that differ on three rows of one join (a likely shift) and any row no join uses. Names that differ a little are flagged.
+- **Checks:** all 20 allergen pages re-read at 260 dpi: 0 differences; Opus review found 2 important and 3 minor gaps (a duplicate name core could move ticks to another drink; an allergen row without figures printed once per join; rows no join selects dropped silently), all fixed with tests.
+- **Output:** 210 rows. Flags are the PDF's own: Americano kJ/kcal figures do not agree (Pearl Scan has the same), one sugars above carbohydrates; one warning for a name difference; "Iced Americano" in the milk section has no figures. Blank allergen cells stay blank (the key says only that a tick means "contains").
+
 ## 4. Sources not done: what was learned
 
 | Source | PDF | Why not done yet | What the survey found |
 |---|---|---|---|
-| Krispy Kreme | 61 pages, no text layer | needs a join of two page types | page pairs: an allergen matrix page (dietary YES/NO and ticks in 25 columns) then a nutrition page; plus ingredient-declaration text pages and beverage pages. One CSV row per product needs the two joined by name, which the pipeline cannot do yet. |
+| Krispy Kreme | 61 pages, no text layer | built (section 3.10), awaiting approval | `vision_pairs` joins allergen and nutrition pages |
 | Domino's pizzas | 18 pages, 1,422 GT rows | done | `grouped_table` reads the pizza, sideways cheese, crust and size labels by position and size order (pages 3-13), the bases, and the sauces, cheese and toppings (pages 14-18, a shared per-100g row); page 2 (six small tables, 95 rows) uses the model for the labels only and the text layer for every figure. 1,420 rows compared, 56,799 cells, 0 mismatches; 2 rows excused (a typo the PDF prints). |
 | Pizza Hut | 24 pages, 483 GT rows | three layouts in one PDF | allergen tables with Yes/No and `●`/`○`, ingredient prose, per-slice nutrition tables |
 | Coffee #1 | food 18 pp (vertical blocks), drinks 28 pp (slanted text) | slanted text defeats the word reader | vision route likely for the drinks |

@@ -34,6 +34,7 @@ RUNNER = llm.claude_runner          # tests replace these two
 BUDGET = llm.BUDGET
 WORKERS = 3
 DIET = {"vegetarian": "Suitable_for_Vegetarian", "vegan": "Suitable_for_Vegan", "halal": "Suitable_for_Halal"}
+MAX_WARNINGS = 3                     # names that differ on this many rows of one join: the rows are probably shifted
 SAME, ALIKE = 0.85, 0.4              # name similarity: no flag at or above SAME, a flag at or above ALIKE, a stop below
 
 
@@ -136,9 +137,9 @@ def nutrition_cells(item: dict, source: dict) -> dict:
 
 
 def _core(name: str) -> str:
-    """A name for comparing: no bracketed notes, no size ("12oz", "340 ml"), only letters and digits."""
+    """A name for comparing: no bracketed notes, no size at the end ("12oz", "340 ml"), only letters and digits."""
     name = re.sub(r"\(.*?\)", " ", name)
-    name = re.sub(r"\b\d+\s*(?:oz|ml|g)\b", " ", name, flags=re.I)
+    name = re.sub(r"\s*\b\d+\s*(?:oz|ml)\s*$", "", name, flags=re.I)
     return re.sub(r"[^a-z0-9]", "", name.casefold())
 
 
@@ -155,7 +156,11 @@ def _pair_by_name(matrix: list[dict], nutrition: list[dict], page_no: int) -> tu
     """Every nutrition row (a drink in one size) with the allergen row of the same drink; allergen rows nobody used are returned too."""
     by_core = {}
     for m in matrix:
-        by_core.setdefault(_core(m.get("name") or ""), m)
+        core = _core(m.get("name") or "")
+        if core in by_core:
+            raise llm.LlmError(f"page {page_no}: two allergen rows have the same name once notes and sizes are ignored: "
+                               f"{by_core[core].get('name')!r} and {m.get('name')!r}; select one with matrix_name")
+        by_core[core] = m
     pairs, used = [], set()
     for n in nutrition:
         m = by_core.get(_core(n.get("name") or ""))
@@ -164,6 +169,15 @@ def _pair_by_name(matrix: list[dict], nutrition: list[dict], page_no: int) -> tu
         used.add(id(m))
         pairs.append((m, n))
     return pairs, [m for m in matrix if id(m) not in used]
+
+
+def _warn(row: dict, text: str) -> None:
+    row["flags"] = (row["flags"] + " | " if row.get("flags") else "") + f"warn: {text}"
+
+
+def _check_tree_nuts(row: dict) -> None:
+    if row.get("treeNutSource") and row.get("treeNuts") != "Yes":
+        _warn(row, f"a tree nut source ({row['treeNutSource']!r}) is printed without the Tree Nuts tick")
 
 
 def _joined(m: dict, n: dict, source: dict, page_no: int, check_names: bool = True) -> dict:
@@ -176,29 +190,52 @@ def _joined(m: dict, n: dict, source: dict, page_no: int, check_names: bool = Tr
     row = {"Product_Name": name, "Category": (n.get("section") or "").strip(), "source_page": page_no, "method": "llm"}
     row |= matrix_cells(m, source, page_no) | nutrition_cells(n, source)
     if score < SAME:
-        row["flags"] = f"warn: the allergen page calls this {_name(m)!r}, the nutrition page {name!r}"
+        _warn(row, f"the allergen page calls this {_name(m)!r}, the nutrition page {name!r}")
+    _check_tree_nuts(row)
     return row
 
 
-def join_rows(matrix: list[dict], nutrition: list[dict], source: dict, page_no: int, by_name: bool = False) -> list[dict]:
+def _key(row: dict) -> tuple:
+    return row.get("_page"), row.get("_i")
+
+
+def join_rows(matrix: list[dict], nutrition: list[dict], source: dict, page_no: int, by_name: bool = False,
+              ledger: dict | None = None) -> list[dict]:
     """Rows of the nutrition page(s) joined with the matrix page(s)' diet cells and ticks: in order, or (`by_name`) each
-    nutrition row with the allergen row of the same drink."""
+    nutrition row with the allergen row of the same drink. By name, allergen rows nobody used (printed, but with no figures)
+    are kept with a warning, or (with a `ledger`) handed back in ledger["unused"] so a caller can keep each once."""
     if by_name:
         pairs, unused = _pair_by_name(matrix, nutrition, page_no)
         rows = [_joined(m, n, source, n.get("_page", page_no), check_names=False) for m, n in pairs]
-        for m in unused:   # printed in the allergen table, no figures on the nutrition pages
-            rows.append(matrix_only_rows([m], source, m.get("_page", page_no))[0] | {"flags": "warn: no row for this product on the nutrition pages"})
+        if ledger is not None:
+            ledger.setdefault("paired", set()).update(_key(m) for m, _ in pairs)
+            ledger.setdefault("unused", {}).update({_key(m): m for m in unused})
+        else:
+            rows += [_leftover(m, source, page_no) for m in unused]
         return rows
     if len(matrix) != len(nutrition):
         raise llm.LlmError(f"page {page_no}: the allergen page(s) have {len(matrix)} rows, the nutrition page(s) {len(nutrition)} rows; "
                            f"check the joins in config/chains.yaml")
-    return [_joined(m, n, source, n.get("_page", page_no)) for m, n in zip(matrix, nutrition)]
+    rows = [_joined(m, n, source, n.get("_page", page_no)) for m, n in zip(matrix, nutrition)]
+    if sum("the allergen page calls" in r.get("flags", "") for r in rows) >= MAX_WARNINGS:
+        raise llm.LlmError(f"page {page_no}: the names differ on {MAX_WARNINGS} or more rows of this join; the rows are probably shifted "
+                           f"(a row missing or extra on one of the pages)")
+    return rows
+
+
+def _leftover(m: dict, source: dict, page_no: int) -> dict:
+    row = matrix_only_rows([m], source, m.get("_page", page_no))[0]
+    _warn(row, "no row for this product on the nutrition pages")
+    return row
 
 
 def matrix_only_rows(matrix: list[dict], source: dict, page_no: int) -> list[dict]:
     """Rows of a matrix page that has no nutrition page (a `joins` entry with `nutrition: []`)."""
-    return [{"Product_Name": _name(m), "Category": (m.get("section") or "").strip(), "source_page": m.get("_page", page_no),
+    rows = [{"Product_Name": _name(m), "Category": (m.get("section") or "").strip(), "source_page": m.get("_page", page_no),
              "method": "llm"} | matrix_cells(m, source, page_no) for m in matrix]
+    for row in rows:
+        _check_tree_nuts(row)
+    return rows
 
 
 def page_rows(pdf: Path, source: dict, page_no: int, pages_dir: Path | None = None) -> list[dict]:
@@ -226,11 +263,17 @@ def parse(pdf: Path, source: dict) -> list[dict]:
     pages = pages_of(pdf, source)
     with ThreadPoolExecutor(max_workers=WORKERS) as pool:   # one read per page, even when joins share a page
         read = dict(zip(pages, pool.map(lambda p: raw_rows(pdf, source, p), pages)))
-    rows = []
+    rows, consumed, ledger = [], set(), {}
     for j in source["joins"]:
         page_no = (j["nutrition"] or j["matrix"])[-1]
-        matrix = _select([r | {"_page": p} for p in j["matrix"] for r in read[p]], j.get("matrix_section"), "allergen", page_no)
+        matrix = _select([r | {"_page": p, "_i": i} for p in j["matrix"] for i, r in enumerate(read[p])], j.get("matrix_section"), "allergen", page_no)
         matrix = _select(matrix, j.get("matrix_name"), "allergen", page_no, "name")
-        nutrition = _select([r | {"_page": p} for p in j["nutrition"] for r in read[p]], j.get("nutrition_section"), "nutrition", page_no)
-        rows += join_rows(matrix, nutrition, source, page_no, j.get("by_name", False)) if nutrition else matrix_only_rows(matrix, source, page_no)
+        nutrition = _select([r | {"_page": p, "_i": i} for p in j["nutrition"] for i, r in enumerate(read[p])], j.get("nutrition_section"), "nutrition", page_no)
+        consumed |= {_key(r) for r in matrix + nutrition}
+        rows += join_rows(matrix, nutrition, source, page_no, j.get("by_name", False), ledger) if nutrition else matrix_only_rows(matrix, source, page_no)
+    rows += [_leftover(m, source, 0) for k, m in sorted(ledger.get("unused", {}).items()) if k not in ledger.get("paired", set())]
+    missed = [(p, r.get("section"), r["name"]) for p in pages for i, r in enumerate(read[p]) if (p, i) not in consumed]
+    if missed:
+        raise llm.LlmError(f"{len(missed)} rows read from the pages are used by no join, e.g. {missed[:3]}; fix the section/name patterns in `joins`")
     return rows
+
