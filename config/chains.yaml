@@ -1044,7 +1044,7 @@
       parser: portion_tables
       region: UK
       category: food
-      approved: false
+      approved: true
       pages: ['17-24']
       # Pearl Scan files per-slice figures under the portion columns and gives the whole pizza's weight as the serving size
       pearlscan:
@@ -1058,28 +1058,97 @@
         fat: [fat_Per Slice, fat_Per Portion]
         satfat: [saturates_Per Slice, saturates_Per Portion]
         salt: [salt_Per Slice, salt_Per Portion]
-      furniture: [NUTRITIONAL INFORMATION, FOOD ALLERGIES, We cook up, food will be, The below nutritional, '*Nutritionals', Our Food Team, Page]
+      furniture:
+        [
+          NUTRITIONAL INFORMATION,
+          FOOD ALLERGIES,
+          We cook up,
+          food will be,
+          The below nutritional,
+          '*Nutritionals',
+          Our Food Team,
+          Page,
+        ]
       single_word_headers: [Energy, '(kcal)'] # header lines of one word; any other single header word on a line is a heading ("Pizza")
-      header_words: [Number, of, Slices, per, Pizza, Weight, '(g)', Energy, Slice, '(kcal)', Slice(g), Protein, Carbohydra, te, Carbohydrate, Sugar, Fat, Saturate, d, Saturated, Sat, Salt, Average, weight, Portion, Portion(g), '(g)']
+      header_words:
+        [
+          Number,
+          of,
+          Slices,
+          per,
+          Pizza,
+          Weight,
+          '(g)',
+          Energy,
+          Slice,
+          '(kcal)',
+          Slice(g),
+          Protein,
+          Carbohydra,
+          te,
+          Carbohydrate,
+          Sugar,
+          Fat,
+          Saturate,
+          d,
+          Saturated,
+          Sat,
+          Salt,
+          Average,
+          weight,
+          Portion,
+          Portion(g),
+          '(g)',
+        ]
       shapes:
         9:
           title: product
           category: Pizza
-          columns: [Total_Weight, Total_Slices, energykCal_Per Slice, protein_Per Slice, carbohydrates_Per Slice, sugars_Per Slice, fat_Per Slice, saturates_Per Slice, salt_Per Slice]
+          columns:
+            [
+              Total_Weight,
+              Total_Slices,
+              energykCal_Per Slice,
+              protein_Per Slice,
+              carbohydrates_Per Slice,
+              sugars_Per Slice,
+              fat_Per Slice,
+              saturates_Per Slice,
+              salt_Per Slice,
+            ]
         8:
           title: section
           extra: { Serving_Size_Unit: g }
-          columns: [Serving_Size, energykCal_Per Portion, protein_Per Portion, carbohydrates_Per Portion, sugars_Per Portion, fat_Per Portion, saturates_Per Portion, salt_Per Portion]
+          columns:
+            [
+              Serving_Size,
+              energykCal_Per Portion,
+              protein_Per Portion,
+              carbohydrates_Per Portion,
+              sugars_Per Portion,
+              fat_Per Portion,
+              saturates_Per Portion,
+              salt_Per Portion,
+            ]
         7:
           title: section
-          columns: [energykCal_Per 100g/ml, protein_Per 100g/ml, carbohydrates_Per 100g/ml, sugars_Per 100g/ml, fat_Per 100g/ml, saturates_Per 100g/ml, salt_Per 100g/ml]
+          columns:
+            [
+              energykCal_Per 100g/ml,
+              protein_Per 100g/ml,
+              carbohydrates_Per 100g/ml,
+              sugars_Per 100g/ml,
+              fat_Per 100g/ml,
+              saturates_Per 100g/ml,
+              salt_Per 100g/ml,
+            ]
     # Allergen tables (pages 2-6, text layer): a Yes/No diet cell per row and a mark per allergen: a filled circle is "contains", an empty
     # circle is a risk of cross-contamination ("May contain"); an unmarked cell is not stated. The ingredient pages (7-16) are not extracted.
     - pdf: Pizza_Hut_Restaurants_Dietary_Information_Booklet_March_2025.pdf
       parser: mark_table
       region: UK
       category: food
-      approved: false
+      approved: true
       pages: ['2-6']
       markers: { '●': 'Yes', '○': 'May contain' }
       labels:
