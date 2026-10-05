@@ -32,27 +32,46 @@ def test_unknown_column_stops_the_run():
         finalise([{"Product_Name": "x", "energykJ_Per Serving": "100"}], load_columns())
 
 
-def test_merge_by_key_joins_rows_of_one_product_with_no_overlapping_cells():
+def _row(name, category, page, **cells):
+    return {"Product_Name": name, "Category": category, "region": "UK", "source_page": page, "method": "parser", **cells}
+
+
+def test_merge_joins_one_to_one_matches_and_leaves_a_remark_for_data_users():
     from pipeline.export import merge_by_key
-    allergens = {"Product_Name": "Fries", "Category": "Sides", "region": "UK", "source_page": 2, "method": "parser", "wheat": "Yes", "flags": "warn: a"}
-    nutrition = {"Product_Name": "Fries", "Category": "Sides", "region": "UK", "source_page": 17, "method": "parser", "energykCal_Per Portion": "384", "flags": "warn: b"}
-    other = {"Product_Name": "Cola", "Category": "Drinks", "region": "UK", "source_page": 6, "method": "parser", "milk": ""}
+    allergens = _row("Fries", "Sides", 2, wheat="Yes", flags="warn: a")
+    nutrition = _row("Fries", "Sides", 17, **{"energykCal_Per Portion": "384", "flags": "warn: b"})
+    other = _row("Cola", "Drinks", 6, milk="")
     rows = merge_by_key([allergens, other, nutrition])
     assert len(rows) == 2 and rows[0]["wheat"] == "Yes" and rows[0]["energykCal_Per Portion"] == "384"
     assert rows[0]["source_page"] == "2, 17" and rows[0]["flags"] == "warn: a | warn: b" and rows[1]["Product_Name"] == "Cola"
+    assert rows[0]["notes"].startswith("Merged product: ") and "pages 2, 17" in rows[0]["notes"] and "notes" not in rows[1]
 
 
-def test_merge_by_key_leaves_rows_apart_when_a_cell_is_in_both_or_the_key_differs():
+def test_the_remark_is_added_to_existing_notes_and_names_a_different_heading():
     from pipeline.export import merge_by_key
-    a = {"Product_Name": "Fries", "Category": "Sides", "region": "UK", "wheat": "Yes"}
-    assert len(merge_by_key([a, {**a, "wheat": "No"}])) == 2                      # same cell, two values
-    assert len(merge_by_key([a, {**a, "Category": "Kids", "milk": "Yes"}])) == 2  # another category
-    assert len(merge_by_key([a, {**a, "region": "NI", "milk": "Yes"}])) == 2      # another region
-    assert len(merge_by_key([{**a, "Size": "Large"}, {**a, "milk": "Yes"}])) == 2  # another size
+    a = _row("Tomato Pasta", "Buffet Sides", 5, wheat="Yes", notes="Barley <20ppm")
+    b = _row("Tomato Pasta", "Buffet Sides - Buffet Pasta", 23, **{"energykCal_Per Portion": "100"})
+    row = merge_by_key([a, b])[0]
+    assert row["notes"].startswith("Barley <20ppm; Merged product: ") and "'Buffet Sides'" in row["notes"] and "'Buffet Sides - Buffet Pasta'" in row["notes"]
 
 
-def test_merged_rows_name_both_source_pages():
+def test_headings_that_differ_only_in_punctuation_or_in_depth_are_the_same_heading():
     from pipeline.export import merge_by_key
-    nutrition = {"Product_Name": "Fries", "Category": "Sides", "region": "UK", "source_page": 17, "energykCal_Per Portion": "384"}
-    allergens = {"Product_Name": "Fries", "Category": "Sides", "region": "UK", "source_page": 2, "wheat": "Yes"}
-    assert merge_by_key([nutrition, allergens])[0]["source_page"] == "17, 2"
+    assert len(merge_by_key([_row("Sour Cream", "Dine In Dip Pots", 2, egg="Yes"), _row("Sour Cream", "Dine-in Dip Pots", 18, **{"energykCal_Per Portion": "9"})])) == 1
+
+
+def test_similar_but_different_things_stay_separate():
+    from pipeline.export import merge_by_key
+    a = _row("Pepperoni", "Pizza Toppings", 3, milk="May contain")
+    assert len(merge_by_key([a, _row("Pepperoni", "Pizza", 18, **{"energykCal_Per Slice": "181"})])) == 2           # a heading that only starts with the other
+    assert len(merge_by_key([a, _row("Pepperoni Feast", "Pizza Toppings", 18, **{"energykCal_Per Slice": "1"})])) == 2   # another name
+    assert len(merge_by_key([a, _row("Pepperoni", "Pizza Toppings", 18, **{"energykCal_Per Slice": "1"}, region="NI")])) == 2
+    assert len(merge_by_key([_row("Fries", "Sides", 2, wheat="Yes"), _row("Fries", "Sides", 17, Size="Large")])) == 2
+    assert len(merge_by_key([a, _row("Pepperoni", "Pizza Toppings", 18, milk="Yes")])) == 2                              # the same cell in both
+
+
+def test_a_name_printed_twice_is_not_merged_because_the_pairing_would_be_a_guess():
+    from pipeline.export import merge_by_key
+    adult = _row("Fries", "Sides", 17, **{"energykCal_Per Portion": "384"})
+    kids = _row("Fries", "Sides", 23, **{"energykCal_Per Portion": "209"})
+    assert len(merge_by_key([adult, kids, _row("Fries", "Sides", 2, wheat="Yes"), _row("Fries", "Sides", 5, wheat="Yes")])) == 4

@@ -1,7 +1,7 @@
 Product_Name,Category,Size,gluten,wheat,rye,barley,oats,spelt,kamut,celery,crustacean,egg,fish,lupin,milk,mollusc,mustard,peanut,sesame,soya,sulphite,treeNuts,treeNutSource,notes,Suitable_for_Vegetarian,Suitable_for_Vegan,Suitable_for_Coeliac,Serving_Size,Serving_Size_Unit,Total_Weight,Total_Slices,energykCal_Per Slice,protein_Per Slice,carbohydrates_Per Slice,sugars_Per Slice,fat_Per Slice,saturates_Per Slice,salt_Per Slice,energykCal_Per Portion,protein_Per Portion,carbohydrates_Per Portion,sugars_Per Portion,fat_Per Portion,saturates_Per Portion,salt_Per Portion,energykCal_Per 100g/ml,protein_Per 100g/ml,carbohydrates_Per 100g/ml,sugars_Per 100g/ml,fat_Per 100g/ml,saturates_Per 100g/ml,salt_Per 100g/ml
 "Mozzarella Sticks with a choice of dip, for dips see below",Sides,,,Yes,,,,,,,,,,,Yes,,May contain,,,May contain,,,,,Yes,No,No,,,,,,,,,,,,,,,,,,,,,,,,,
-Loaded Smashburger Cheesy Bite Bites,Sides,,,Yes,,Yes,,,,,,Yes,,,Yes,,Yes,,,Yes,,,,Barley <20ppm,No,No,No,358,g,,,,,,,,,,776,36.2,86,9.6,31,13.0,3.7,,,,,,,
-Breaded Chicken Tenders,Sides,,,Yes,,,,,,Yes,,,,,May contain,,,May contain,,,,,,,No,No,No,175,g,,,,,,,,,,354,28.4,30,0.9,13,2.5,1.5,,,,,,,
+Loaded Smashburger Cheesy Bite Bites,Sides,,,Yes,,Yes,,,,,,Yes,,,Yes,,Yes,,,Yes,,,,"Barley <20ppm; Merged product: two source rows with the same name, size and heading (pages 17, 2)",No,No,No,358,g,,,,,,,,,,776,36.2,86,9.6,31,13.0,3.7,,,,,,,
+Breaded Chicken Tenders,Sides,,,Yes,,,,,,Yes,,,,,May contain,,,May contain,,,,,,"Merged product: two source rows with the same name, size and heading (pages 17, 2)",No,No,No,175,g,,,,,,,,,,354,28.4,30,0.9,13,2.5,1.5,,,,,,,
 Original Pan,Pizza Builder - Pizza Bases,,,Yes,May contain,May contain,May contain,,,,,,,,May contain,,,,,Yes,,,,,Yes,Yes,No,,,,,,,,,,,,,,,,,,,,,,,,,
 Pepperoni Stuffed Crust,Pizza Builder - Pizza Bases,,,Yes,May contain,May contain,May contain,,,,,,,,Yes,,Yes,,,Yes,,,,,No,No,No,,,,,,,,,,,,,,,,,,,,,,,,,
 BBQ Sauce (For all Bases except Gluten Free),Pizza Base Sauces,,,Yes,,Yes,,,,,,,,,May contain,,,,,Yes,,,,,Yes,Yes,No,,,,,,,,,,,,,,,,,,,,,,,,,
@@ -20,6 +20,6 @@ Vegan Veggie,Vegan Pizzas,"Individual Pan (9"")",,,,,,,,,,,,,,,,,,,,,,,,,,,,476,
 TOTAL,Ice Cream Factory - Kids Ice Cream Factory,,,,,,,,,,,,,,,,,,,,,,,,,,,159,g,,,,,,,,,,274,5.2,40,38,10,7.0,0.37,,,,,,,
 Chocolate Sauce,Per 100g,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,297,1.4,67,56,2.6,1.6,0.03
 Lasagne,Mains,,,,,,,,,,,,,,,,,,,,,,,,,,,416,g,,,,,,,,,,552,29,43,11,29,13,2.9,,,,,,,
-Cheesy Fries,Sides,,,Yes,,,,,,,,,,,Yes,,,,,,,,,,Yes,No,No,375,g,,,,,,,,,,686,13.8,75,3.1,35,10.4,5.6,,,,,,,
+Cheesy Fries,Sides,,,Yes,,,,,,,,,,,Yes,,,,,,,,,"Merged product: two source rows with the same name, size and heading (pages 17, 2)",Yes,No,No,375,g,,,,,,,,,,686,13.8,75,3.1,35,10.4,5.6,,,,,,,
 Pepperoni,Pizza,"Individual Pan (9"")",,,,,,,,,,,,,,,,,,,,,,,,,,,,400,6,181,7.2,18,0.8,8.7,2.9,0.77,,,,,,,,,,,,,,
 Garlic Breadsticks - Large,Garlic Breadsticks,,,,,,,,,,,,,,,,,,,,,,,,,,,20.1,g,,,,,,,,,,57,1.7,7.6,0,2.1,0.4,0.17,,,,,,,
