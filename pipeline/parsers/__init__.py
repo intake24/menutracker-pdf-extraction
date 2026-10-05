@@ -1,4 +1,4 @@
-from pipeline.parsers import allergen_matrix, drink_tables, grouped_table, mark_table, numeric_table, portion_tables, product_blocks, product_matrix, vision_pairs, vision_products, vision_table, premier_inn_breakfast, whitbread_drinks_grid
+from pipeline.parsers import allergen_matrix, drink_tables, guide_rows, grouped_table, mark_table, modifier_matrix, numeric_table, portion_tables, product_blocks, product_matrix, vision_pairs, vision_products, vision_table, premier_inn_breakfast, whitbread_drinks_grid
 
 # parser name (as used in config/chains.yaml) -> parse(pdf_path, source_config) -> rows
 PARSERS = {
@@ -11,7 +11,9 @@ PARSERS = {
     "product_matrix": product_matrix.parse,
     "grouped_table": grouped_table.parse,
     "drink_tables": drink_tables.parse,
+    "guide_rows": guide_rows.parse,
     "mark_table": mark_table.parse,
+    "modifier_matrix": modifier_matrix.parse,
     "numeric_table": numeric_table.parse,
     "portion_tables": portion_tables.parse,
     "product_blocks": product_blocks.parse,
