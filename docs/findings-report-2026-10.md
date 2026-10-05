@@ -15,9 +15,9 @@ Status date 2026-10-02. This report records what was found when every extracted 
 | Odeon nutrition tables (UK, Belfast, ROI) | 3 | 1,013 | 705 + 147 + 148 rows, 0 mismatches after errata | 0 after fixes | Approved |
 | Odeon pre-packed matrices (UK, Belfast, ROI) | 3 | 286 | 97 + 82 + 79 rows, 0 mismatches after 33 errata | name glue (fixed) | Approved |
 | Papa John's | 1 (image pages) | 435 | 434 rows, 6,943 cells, 0 mismatches after 7 errata | 1 critical + 4 important (review) | Approved |
-| Krispy Kreme, Domino's pizzas, Pizza Hut, Coffee #1, Starbucks, Brewhouse, Cookhouse, Top Golf | not done | | | | Surveyed or not started, see section 4 |
+| Pizza Hut, Coffee #1, Starbucks, Brewhouse, Cookhouse, Top Golf | not done | | | | Surveyed or not started, see section 4 |
 
-Totals in `outputs/`: 10 chain CSVs, 5,364 rows. Pearl Scan agreement is exact on every compared cell once the 66 confirmed Pearl Scan mistakes are excused. Allergen data has no ground truth anywhere; it is checked by hand-verified golden rows only.
+Totals in `outputs/`: 11 chain CSVs, 5,574 rows. Pearl Scan agreement is exact on every compared cell once the 66 confirmed Pearl Scan mistakes are excused. Allergen data has no ground truth anywhere; it is checked by hand-verified golden rows only.
 
 ## 2. How the checks worked and who decides
 

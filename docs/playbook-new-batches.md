@@ -49,7 +49,7 @@ Rule of thumb: a source is *approved* when (a) it parses without raising, (b) `c
 | Corrupt text layer, image pages, one flat table | Vue | `vision_table` (`claude -p`, 150 dpi for small print) |
 | Product sheets: variant table + allergen text blocks, image pages | Papa John's | `vision_products`: model returns cells keyed by printed header + allergen text per row; `header_columns` maps headers (an unknown one stops the run); `rules` turn printed row warnings into `May contain`; `pages` lists table pages |
 | Allergen matrix page + nutrition page per product group, image pages | Krispy Kreme | `vision_pairs`: the model returns diet cells, ticked header labels and figures per page; `joins` pair the pages' rows in order (`matrix_section`/`nutrition_section`/`matrix_name` regexes, `by_name` for size rows); `tick_labels` maps printed headers (an unknown one stops the run); a row no join uses stops the run |
-| Not done yet | Pizza Hut (3 layouts in one PDF), Domino's pizzas (3 nested merged columns), Coffee #1 (vertical blocks, slanted text), Starbucks, Brewhouse/Cookhouse/Top Golf (judgement) | see the roadmap |
+| Not done yet | Pizza Hut (3 layouts in one PDF), Coffee #1 (vertical blocks, slanted text), Starbucks, Brewhouse/Cookhouse/Top Golf (judgement) | see the roadmap |
 
 ## 4. PDF defects found (all handled by failing loudly first, then an option)
 

@@ -877,7 +877,7 @@
       parser: vision_pairs
       region: UK
       category: food
-      approved: false
+      approved: true
       dpi: 200
       name_fixes: { Original Glazed Birthday: Original Glazed } # Pearl Scan added "Birthday" to the name of the page 27/28 item
       markers: { '✓': 'Yes', '': '' }
@@ -905,20 +905,97 @@
         - { matrix: [50], nutrition: [] }
         # hot drinks with oat or dairy milk, iced lattes, tea, cold drinks, pistachio: the allergen pages list each drink once
         # per kind of milk, the nutrition pages once per size, so these are matched by heading (and by drink name)
-        - { matrix: [51], matrix_section: 'oat', nutrition: [54], nutrition_section: 'OAT DRINK' }
-        - { matrix: [51], matrix_section: 'skimmed', nutrition: [54], nutrition_section: 'SEMI SKIMMED' }
-        - { matrix: [51], matrix_section: 'skimmed', nutrition: [54], nutrition_section: '(?<!semi )skimmed' }
-        - { matrix: [51], matrix_section: 'skimmed', nutrition: [54], nutrition_section: 'WHOLE' }
-        - { matrix: [51], matrix_section: '^TEA', nutrition: [55], nutrition_section: '^TEA' }
-        - { matrix: [52], matrix_section: 'oat', nutrition: [55], nutrition_section: 'ICED LATTE.*OAT' }
-        - { matrix: [52], matrix_section: 'skimmed', nutrition: [57], nutrition_section: 'SEMI SKIMMED', by_name: true }
-        - { matrix: [52], matrix_section: 'skimmed', nutrition: [57], nutrition_section: '(?<!semi )skimmed', by_name: true }
-        - { matrix: [52], matrix_section: 'skimmed', nutrition: [58], nutrition_section: 'ICED LATTE.*WHOLE', by_name: true }
-        - { matrix: [53], matrix_section: 'COLD DRINKS', nutrition: [58], nutrition_section: 'COLD DRINKS' }
-        - { matrix: [53], matrix_name: 'oat', nutrition: [55], nutrition_section: 'PISTACHIO', by_name: true }
-        - { matrix: [53], matrix_name: 'milk', nutrition: [56], nutrition_section: 'Semi', by_name: true }
-        - { matrix: [53], matrix_name: 'milk', nutrition: [56], nutrition_section: '(?<!semi-)skimmed', by_name: true }
-        - { matrix: [53], matrix_name: 'milk', nutrition: [56], nutrition_section: 'Whole', by_name: true }
+        - {
+            matrix: [51],
+            matrix_section: 'oat',
+            nutrition: [54],
+            nutrition_section: 'OAT DRINK',
+          }
+        - {
+            matrix: [51],
+            matrix_section: 'skimmed',
+            nutrition: [54],
+            nutrition_section: 'SEMI SKIMMED',
+          }
+        - {
+            matrix: [51],
+            matrix_section: 'skimmed',
+            nutrition: [54],
+            nutrition_section: '(?<!semi )skimmed',
+          }
+        - {
+            matrix: [51],
+            matrix_section: 'skimmed',
+            nutrition: [54],
+            nutrition_section: 'WHOLE',
+          }
+        - {
+            matrix: [51],
+            matrix_section: '^TEA',
+            nutrition: [55],
+            nutrition_section: '^TEA',
+          }
+        - {
+            matrix: [52],
+            matrix_section: 'oat',
+            nutrition: [55],
+            nutrition_section: 'ICED LATTE.*OAT',
+          }
+        - {
+            matrix: [52],
+            matrix_section: 'skimmed',
+            nutrition: [57],
+            nutrition_section: 'SEMI SKIMMED',
+            by_name: true,
+          }
+        - {
+            matrix: [52],
+            matrix_section: 'skimmed',
+            nutrition: [57],
+            nutrition_section: '(?<!semi )skimmed',
+            by_name: true,
+          }
+        - {
+            matrix: [52],
+            matrix_section: 'skimmed',
+            nutrition: [58],
+            nutrition_section: 'ICED LATTE.*WHOLE',
+            by_name: true,
+          }
+        - {
+            matrix: [53],
+            matrix_section: 'COLD DRINKS',
+            nutrition: [58],
+            nutrition_section: 'COLD DRINKS',
+          }
+        - {
+            matrix: [53],
+            matrix_name: 'oat',
+            nutrition: [55],
+            nutrition_section: 'PISTACHIO',
+            by_name: true,
+          }
+        - {
+            matrix: [53],
+            matrix_name: 'milk',
+            nutrition: [56],
+            nutrition_section: 'Semi',
+            by_name: true,
+          }
+        - {
+            matrix: [53],
+            matrix_name: 'milk',
+            nutrition: [56],
+            nutrition_section: '(?<!semi-)skimmed',
+            by_name: true,
+          }
+        - {
+            matrix: [53],
+            matrix_name: 'milk',
+            nutrition: [56],
+            nutrition_section: 'Whole',
+            by_name: true,
+          }
       tick_labels:
         Wheat: wheat
         Rye: rye
