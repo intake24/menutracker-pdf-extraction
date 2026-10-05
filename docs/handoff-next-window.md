@@ -1,12 +1,12 @@
 # Handoff for the next quota window
 
-State on 2026-10-05: twelve chains live and approved (Krispy Kreme and Pizza Hut added 2026-10-05, findings 3.10 and 3.11), `outputs/` holds twelve CSVs (6,289 rows), 273 tests pass, 66 Pearl Scan mistakes recorded in `config/ground_truth_errata.yaml`. Read `docs/findings-report-2026-10.md` (what was found and the lessons), `docs/chain-mapping-reference.md` (what each chain's PDFs map to) and `docs/playbook-new-batches.md` (how to onboard a chain) first.
+State on 2026-10-05: thirteen chains live and approved (Krispy Kreme, Pizza Hut and Coffee #1 added 2026-10-05, findings 3.10 to 3.12), `outputs/` holds thirteen CSVs (6,752 rows), 273 tests pass, 66 Pearl Scan mistakes recorded in `config/ground_truth_errata.yaml`. Read `docs/findings-report-2026-10.md` (what was found and the lessons), `docs/chain-mapping-reference.md` (what each chain's PDFs map to) and `docs/playbook-new-batches.md` (how to onboard a chain) first.
 
 ## Remaining sources, in the order I would do them
 
 1. Krispy Kreme: done and approved.
 2. Pizza Hut: done and approved.
-3. Coffee #1: built on branch `coffee1`, `approved: false` for chain `47_Coffee1` in `config/chains.yaml` (findings 3.12); needs the user's approval, then `run`, `eval`, commit. Then Starbucks (food 20 pp, drinks 73 pp; same two parser families probably: check `product_blocks` and `drink_tables` first).
+3. Coffee #1: done and approved. Starbucks is next (food 20 pp, drinks 73 pp).
 4. Brewhouse, Cookhouse, Top Golf menus: the dish name is the text before the first comma; judgement and model reads.
 5. Final slice: a flags report across all chains, an automatic row-count check for model-read pages, a last review of the whole pipeline.
 

@@ -33,7 +33,7 @@ Model reads use `claude -p --model claude-sonnet-5-5`, cached under `work/llm/` 
 
 ## 3. Per chain
 
-Row counts are those of `outputs/` on 2026-10-05 (5,574 in total, before Pizza Hut and Coffee #1).
+Row counts are those of `outputs/` on 2026-10-05 (6,752 in total).
 
 | Chain | PDFs and regions | Rows | Allergen cells | What to know when reading the CSV |
 |---|---|---|---|---|
