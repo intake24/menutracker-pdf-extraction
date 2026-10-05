@@ -1,18 +1,18 @@
-Product_Name,Category,Size,gluten,wheat,rye,barley,oats,spelt,kamut,celery,crustacean,egg,fish,lupin,milk,mollusc,mustard,peanut,sesame,soya,sulphite,treeNuts,treeNutSource,notes
-Fries,Sides,,,Yes,,,,,,,,,,,May contain,,,,,,,,,
-"Mozzarella Sticks with a choice of dip, for dips see below",Sides,,,Yes,,,,,,,,,,,Yes,,May contain,,,May contain,,,,
-Loaded Smashburger Cheesy Bite Bites,Sides,,,Yes,,Yes,,,,,,Yes,,,Yes,,Yes,,,Yes,,,,Barley <20ppm
-Breaded Chicken Tenders,Sides,,,Yes,,,,,,Yes,,,,,May contain,,,May contain,,,,,,
-Original Pan,Pizza Builder - Pizza Bases,,,Yes,May contain,May contain,May contain,,,,,,,,May contain,,,,,Yes,,,,
-Pepperoni Stuffed Crust,Pizza Builder - Pizza Bases,,,Yes,May contain,May contain,May contain,,,,,,,,Yes,,Yes,,,Yes,,,,
-BBQ Sauce (For all Bases except Gluten Free),Pizza Base Sauces,,,Yes,,Yes,,,,,,,,,May contain,,,,,Yes,,,,
-Beef,Pizza Toppings,,,,,Yes,,,,,,,,,May contain,,,,,Yes,,,,Barley <20ppm
-Balsamic Drizzle,Pizza drizzle finish,,,,,,,,,,,,,,May contain,,,,,,Yes,,,
-BBQ Americano,Pizza Combinations (Tomato sauce base unless stated otherwise on the menu) - Allergen Information for Pizza Combinations does not include Pizza Bases. Please see Pizza Base section and factor in the base you have chosen.,,,Yes,,Yes,,,,,,,,,Yes,,,,,Yes,,,,Wheat <20ppm; Barley <20ppm
-Breaded Chicken Burger,Pizza Combinations (Tomato sauce base unless stated otherwise on the menu) - Allergen Information for Pizza Combinations does not include Pizza Bases. Please see Pizza Base section and factor in the base you have chosen.,,,Yes,,,,,,Yes,,Yes,,,Yes,,Yes,May contain,,,,,,
-BBQ Chicken Melt (served with BBQ sauce),Melts,,,Yes,May contain,Yes,May contain,,,,,,,,Yes,,,,,Yes,,,,Barley <20ppm
-BBQ Americano,Buffet Pizza,,,Yes,May contain,Yes,May contain,,,,,,,,Yes,,,,,Yes,,,,Barley <20ppm
-Chocolate Chip Cookie Dough,Hot Cookie Dough - All Sizes (Served with Vanilla Ice Cream and Sauce),,,Yes,,,,,,,,May contain,,,Yes,,,,,Yes,,May contain,,
-Loaded Cookie Dough made with KitKat®,Hot Cookie Dough - All Sizes (Served with Vanilla Ice Cream and Sauce),,,Yes,,Yes,,,,,,May contain,,,Yes,,,,,Yes,,May contain,,
-Tea with Milk,Hot Drinks,,,,,,,,,,,,,,Yes,,,,,,,,,
-NICE Wine Sauvignon / Pale Rosé / Merlot,Alcoholic Drinks,,,,,,,,,,,,,,,,,,,,,,,Please see side of the wine can
+Product_Name,Category,Size,gluten,wheat,rye,barley,oats,spelt,kamut,celery,crustacean,egg,fish,lupin,milk,mollusc,mustard,peanut,sesame,soya,sulphite,treeNuts,treeNutSource,notes,Suitable_for_Vegetarian,Suitable_for_Vegan,Suitable_for_Coeliac
+Fries,Sides,,,Yes,,,,,,,,,,,May contain,,,,,,,,,,Yes,No,No
+"Mozzarella Sticks with a choice of dip, for dips see below",Sides,,,Yes,,,,,,,,,,,Yes,,May contain,,,May contain,,,,,Yes,No,No
+Loaded Smashburger Cheesy Bite Bites,Sides,,,Yes,,Yes,,,,,,Yes,,,Yes,,Yes,,,Yes,,,,Barley <20ppm,No,No,No
+Breaded Chicken Tenders,Sides,,,Yes,,,,,,Yes,,,,,May contain,,,May contain,,,,,,,No,No,No
+Original Pan,Pizza Builder - Pizza Bases,,,Yes,May contain,May contain,May contain,,,,,,,,May contain,,,,,Yes,,,,,Yes,Yes,No
+Pepperoni Stuffed Crust,Pizza Builder - Pizza Bases,,,Yes,May contain,May contain,May contain,,,,,,,,Yes,,Yes,,,Yes,,,,,No,No,No
+BBQ Sauce (For all Bases except Gluten Free),Pizza Base Sauces,,,Yes,,Yes,,,,,,,,,May contain,,,,,Yes,,,,,Yes,Yes,No
+Beef,Pizza Toppings,,,,,Yes,,,,,,,,,May contain,,,,,Yes,,,,Barley <20ppm,No,No,Yes
+Balsamic Drizzle,Pizza drizzle finish,,,,,,,,,,,,,,May contain,,,,,,Yes,,,,Yes,Yes,Yes
+BBQ Americano,Pizza Combinations (Tomato sauce base unless stated otherwise on the menu) - Allergen Information for Pizza Combinations does not include Pizza Bases. Please see Pizza Base section and factor in the base you have chosen.,,,Yes,,Yes,,,,,,,,,Yes,,,,,Yes,,,,Wheat <20ppm; Barley <20ppm,No,No,Yes
+Breaded Chicken Burger,Pizza Combinations (Tomato sauce base unless stated otherwise on the menu) - Allergen Information for Pizza Combinations does not include Pizza Bases. Please see Pizza Base section and factor in the base you have chosen.,,,Yes,,,,,,Yes,,Yes,,,Yes,,Yes,May contain,,,,,,,No,No,No
+BBQ Chicken Melt (served with BBQ sauce),Melts,,,Yes,May contain,Yes,May contain,,,,,,,,Yes,,,,,Yes,,,,Barley <20ppm,No,No,No
+BBQ Americano,Buffet Pizza,,,Yes,May contain,Yes,May contain,,,,,,,,Yes,,,,,Yes,,,,Barley <20ppm,No,No,No
+Chocolate Chip Cookie Dough,Hot Cookie Dough - All Sizes (Served with Vanilla Ice Cream and Sauce),,,Yes,,,,,,,,May contain,,,Yes,,,,,Yes,,May contain,,,Yes,No,No
+Loaded Cookie Dough made with KitKat®,Hot Cookie Dough - All Sizes (Served with Vanilla Ice Cream and Sauce),,,Yes,,Yes,,,,,,May contain,,,Yes,,,,,Yes,,May contain,,,Yes,No,No
+Tea with Milk,Hot Drinks,,,,,,,,,,,,,,Yes,,,,,,,,,,Yes,No,Yes
+NICE Wine Sauvignon / Pale Rosé / Merlot,Alcoholic Drinks,,,,,,,,,,,,,,,,,,,,,,,Please see side of the wine can,Yes,Yes,Yes
