@@ -5,7 +5,7 @@ State on 2026-10-05: eleven chains live and approved (Krispy Kreme added 2026-10
 ## Remaining sources, in the order I would do them
 
 1. Krispy Kreme: done and approved.
-2. Pizza Hut (`Pizza_Hut_Restaurants_Dietary_Information_Booklet_March_2025.pdf`, 24 pages, Pearl Scan has 483 nutrition rows): three layouts (allergen tables with Yes/No and filled or empty circles on pages 2-7, ingredient prose on pages 8-19, per-slice nutrition tables from page 20). Text layer exists. About 10 points.
+2. Pizza Hut: built on branch `pizza-hut`, `approved: false` in `config/chains.yaml` (findings 3.11); needs the user's approval, then `run`, `eval`, commit.
 3. Coffee #1 (food 18 pages with vertical blocks, drinks 28 pages with slanted text; Pearl Scan 92 and 371 rows) and Starbucks (food 20 pages, drinks 73 pages with wrapped names, sizes and milk types; 93 and 1,464 rows). About 8 points each plus a review.
 4. Brewhouse, Cookhouse, Top Golf menus: the dish name is the text before the first comma; judgement and model reads.
 5. Final slice: a flags report across all chains, an automatic row-count check for model-read pages, a last review of the whole pipeline.

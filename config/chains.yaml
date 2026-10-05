@@ -1059,6 +1059,7 @@
         satfat: [saturates_Per Slice, saturates_Per Portion]
         salt: [salt_Per Slice, salt_Per Portion]
       furniture: [NUTRITIONAL INFORMATION, FOOD ALLERGIES, We cook up, food will be, The below nutritional, '*Nutritionals', Our Food Team, Page]
+      single_word_headers: [Energy, '(kcal)'] # header lines of one word; any other single header word on a line is a heading ("Pizza")
       header_words: [Number, of, Slices, per, Pizza, Weight, '(g)', Energy, Slice, '(kcal)', Slice(g), Protein, Carbohydra, te, Carbohydrate, Sugar, Fat, Saturate, d, Saturated, Sat, Salt, Average, weight, Portion, Portion(g), '(g)']
       shapes:
         9:

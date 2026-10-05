@@ -4,7 +4,7 @@ The header labels are rotated text; pdfplumber returns each rotated word spelled
 label is the set of reversed words found in one run of x positions. A cell is matched to its column by x position, never by
 counting. Rows are found by the diet cell of the left-most column (every row has one); the name is the text left of the
 columns, wrapped lines joining the nearest row; centred text between rows is a section heading; a small text in an allergen
-cell that starts with "<" or a digit ("<20ppm") is kept in `notes` as "<Allergen label> <text>", and any other text printed on a row's
+cell that starts with "<" and a digit ("<20ppm"; between two columns it raises) is kept in `notes` as "<Allergen label> <text>", and any other text printed on a row's
 line in the allergen area ("Refer directly to the supplier ...") is kept in `notes` as printed. Headings in a row ("Drinks", "Soft Drinks") are one
 category joined with " - ".
 
@@ -29,7 +29,7 @@ MAX_NAME_GAP = 16   # a name line is at most this far from its row's centre
 MAX_MARK_GAP = 12   # a mark or note is at most this far from its row's centre
 ROW_TEXT_GAP = 5    # other text this close to a row's centre is printed on the row (a heading is further off)
 DIET = "Suitable_for_"
-NOTE = re.compile(r"^[<\d]")
+NOTE = re.compile(r"^<\d")
 
 
 def _centre(w: dict) -> float:
@@ -114,19 +114,30 @@ def parse_page(words: list[dict], source: dict, page_no: int) -> list[dict]:
             if gap > MAX_MARK_GAP:
                 raise ValueError(f"page {page_no}: {text!r} at y={_centre(w):.0f} has no row")
             row["cells"].append((col, text))
+        elif col is None and NOTE.match(text):
+            raise ValueError(f"page {page_no}: the note {text!r} at y={_centre(w):.0f} lies between columns")
         elif len(text) == 1 and unicodedata.category(text) == "So":   # a symbol that is not a listed mark ("&" is not one)
             raise ValueError(f"page {page_no}: unknown mark {text!r} at y={_centre(w):.0f}")
         else:
             row, gap = nearest(_centre(w))
             (row["texts"] if gap <= ROW_TEXT_GAP else heading_words).append(w)   # text on a row's line, else a heading
+    name_area = _lines([w for w in upright if _xc(w) < first["x0"] - COLUMN_SLACK])
+    heading_lines = _lines(heading_words)
+    for k, hline in enumerate(heading_lines):   # a heading line can start left of the columns: those words are the heading's, not a name
+        for nline in name_area:
+            if abs(_centre(nline[0]) - _centre(hline[0])) <= LINE_GAP:
+                heading_lines[k] = sorted(nline + hline, key=lambda w: w["x0"])
+    taken = {id(w) for line in heading_lines for w in line}
     sections = []   # (y, text): headings in a row (no table row between them) make one category
-    for line in _lines(heading_words):
+    for line in heading_lines:
         centre, text = _centre(line[0]), " ".join(w["text"] for w in line)
         if sections and not any(sections[-1][0] < r["centre"] < centre for r in rows):
             sections[-1] = (centre, f"{sections[-1][1]} - {text}")
         else:
             sections.append((centre, text))
-    for line in _lines([w for w in upright if _xc(w) < first["x0"] - COLUMN_SLACK]):
+    for line in name_area:
+        if id(line[0]) in taken:
+            continue   # part of a heading
         centre = _centre(line[0])
         row, gap = nearest(centre)
         if gap <= MAX_NAME_GAP:
@@ -173,6 +184,6 @@ def parse(pdf: Path, source: dict) -> list[dict]:
     rows = []
     with pdfplumber.open(pdf) as doc:
         for n in expand_pages(source["pages"]):
-            words = doc.pages[n - 1].extract_words(extra_attrs=["upright"])
+            words = doc.pages[n - 1].extract_words(extra_attrs=["upright"], x_tolerance=1.5, y_tolerance=1)
             rows += parse_page(words, source, n)
     return rows

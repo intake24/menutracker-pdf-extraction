@@ -9,7 +9,7 @@ from pipeline.validate import check_row, duplicate_issues
 
 def merge_by_key(rows: list[dict]) -> list[dict]:
     """One row per product where several sources describe it: rows with the same name, category, size and region whose filled
-    cells do not overlap are merged into the first (its source_page stays; flags are joined). A row that shares a cell with the
+    cells do not overlap are merged into the first (source_page becomes "first, second"; flags are joined). A row that shares a cell with the
     first, whether or not the values agree, stays a row of its own and is left to the duplicate check."""
     def cells(row: dict) -> set[str]:
         return {k for k, v in row.items() if k not in PROVENANCE and k not in ("Product_Name", "Category", "Size") and v not in (None, "")}
@@ -24,6 +24,9 @@ def merge_by_key(rows: list[dict]) -> list[dict]:
             seen.setdefault(key, []).append(row)
             continue
         target |= {k: row[k] for k in cells(row)}
+        pages = [p for p in (target.get("source_page"), row.get("source_page")) if p not in (None, "")]
+        if len(set(map(str, pages))) > 1:   # the product is on two pages (allergens on one, figures on another): name both
+            target["source_page"] = ", ".join(dict.fromkeys(map(str, pages)))
         target["flags"] = " | ".join(f for f in (target.get("flags"), row.get("flags")) if f)
     return out
 

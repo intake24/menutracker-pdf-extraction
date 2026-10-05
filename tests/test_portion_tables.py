@@ -6,7 +6,7 @@ from pipeline.parsers.portion_tables import parse_pages
 PIZZA = ["Total_Weight", "Total_Slices", "energykCal_Per Slice", "protein_Per Slice"]
 PORTION = ["Serving_Size", "energykCal_Per Portion", "protein_Per Portion"]
 SOURCE = {"header_words": ["Weight", "Slices", "Energy", "Protein", "per", "of", "Pizza", "(g)", "Slice", "(kcal)", "Portion", "Average"],
-          "furniture": ["NUTRITIONAL INFORMATION", "*Nutritionals"],
+          "furniture": ["NUTRITIONAL INFORMATION", "*Nutritionals"], "single_word_headers": ["Energy"],
           "shapes": {4: {"columns": PIZZA, "title": "product", "category": "Pizza"},
                      3: {"columns": PORTION, "title": "section", "extra": {"Serving_Size_Unit": "g"}}}}
 
@@ -71,3 +71,23 @@ def test_a_size_row_with_no_title_a_line_with_the_wrong_number_of_cells_and_unli
 def test_a_run_of_headings_is_one_category_joined_with_a_dash():
     rows = parse_pages([page(("t", "Average Portion (g) Energy Protein"), ("t", "Buffet Sides"), ("t", "Buffet Pasta"), ("r", "Tomato Pasta", "82", "100", "2.3"))], SOURCE, [1])
     assert rows[0]["Category"] == "Buffet Sides - Buffet Pasta"
+
+
+def test_a_lone_line_of_header_words_that_is_not_part_of_a_header_block_is_a_heading():
+    rows = parse_pages([page(*HEADER, ("t", "Portion"), ("t", "Margherita"), ("r", "Individual Pan", "398", "6", "169", "7.0"))], SOURCE, [1])
+    assert (rows[0]["Product_Name"], rows[0]["Category"]) == ("Margherita", "Portion")
+
+
+def test_pizza_hut_pizza_rows_are_in_the_pizza_category_and_pasta_in_buffet_sides():
+    from pathlib import Path
+
+    import yaml
+    root = Path(__file__).resolve().parent.parent
+    source = next(s for s in yaml.safe_load((root / "config" / "chains.yaml").read_text())["8_Pizzahut"]["sources"] if s["parser"] == "portion_tables")
+    from pipeline.parsers.portion_tables import parse
+    rows = parse(root / "inputs" / "Pizza_Hut_Restaurants_Dietary_Information_Booklet_March_2025.pdf", source)
+    by_page = {}
+    for r in rows:
+        by_page.setdefault(r["source_page"], []).append(r)
+    assert {r["Category"] for r in by_page[18] if r.get("Size")} == {"Pizza"}
+    assert next(r for r in rows if r["Product_Name"] == "Tomato Pasta")["Category"].startswith("Buffet Sides")

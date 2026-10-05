@@ -23,13 +23,15 @@ Written 2026-10-05 after the eleventh chain (Krispy Kreme). It is the record of 
 | `grouped_table` | yes | nested labels (pizza, cheese, crust, size) by position | Domino's pizzas |
 | `vision_table` | corrupt | one flat table per page, read by the model | Vue |
 | `vision_products` | none or tiny print | product sheets: variant table plus allergen text; the model reads labels, figures from the text layer where one exists | Papa John's, Domino's page 2 |
+| `portion_tables` | yes | nutrition tables of several widths on a page, product title over size rows | Pizza Hut (pages 17-24) |
+| `mark_table` | yes | dish rows with Yes/No diet cells and a circle mark under each allergen, rotated header | Pizza Hut (pages 2-6) |
 | `vision_pairs` | none | an allergen matrix page and a nutrition page for the same products, joined row by row | Krispy Kreme |
 
 Model reads use `claude -p --model claude-sonnet-5-5`, cached under `work/llm/` by image, prompt, schema and model, so a re-run costs nothing. Check a model-read source with `pages` (rows, flags, empty cells per page) and `reread` (a second read at a higher dpi; any difference means one read is wrong).
 
 ## 3. Per chain
 
-Row counts are those of `outputs/` on 2026-10-05 (5,574 in total).
+Row counts are those of `outputs/` on 2026-10-05 (5,574 in total, before Pizza Hut).
 
 | Chain | PDFs and regions | Rows | Allergen cells | What to know when reading the CSV |
 |---|---|---|---|---|
@@ -42,6 +44,7 @@ Row counts are those of `outputs/` on 2026-10-05 (5,574 in total).
 | 59 Odeon | nutrition tables and pre-packed matrices, each for UK, Belfast (NI) and ROI | 1,299 | pre-packed matrix: as the matrix key | Odeon prints kJ as five times kcal on many rows (flagged, the PDF's own). Belfast and ROI print the name below its figures (`name_below`). Pre-packed rows carry pack size, ingredients and storage. |
 | 26 Papa John's | one product-sheet PDF read by the model | 435 | `markers: {"": "No"}` because sheets list every ingredient allergen; printed warnings are `rules` (wheat free base: wheat and gluten `May contain`; vegan items: cross contact) | One row per pizza, cheese, crust and size; stuffed crusts use the "original or authentic thin crust" allergen block because the sheets print no other. |
 | 35 Krispy Kreme | one 61-page book, image pages | 210 | `✓` = `Yes`, blank = blank; diet cells `Suitable_for_Vegetarian`, `Suitable_for_Vegan`, `Suitable_for_Halal` hold YES or NO as printed | The allergen page and the nutrition page of a group are joined by page order and section; names that differ a little are flagged (the nutrition page's name is kept). `Category` keeps the printed section, which for drinks names the milk (`HOT DRINKS – OAT MILK`). Delivery boxes, gifting dozens and syrups have allergens and diet cells but no figures (the PDF prints none). Ingredient-declaration pages are not extracted. |
+| 8 Pizza Hut | one booklet: allergen tables, nutrition tables (ingredient prose pages not extracted) | 712 (after `merge_by_key`) | filled circle = `Yes`, empty circle = `May contain` (the key: a risk of cross-contamination), blank = blank; diet cells `Suitable_for_Vegetarian`, `Suitable_for_Vegan`, `Suitable_for_Coeliac` hold Yes/No as printed; "Fish / shellfish" sets fish and crustacean | Pizza rows are one per pizza and size (`Size` is the crust and size line), per-slice figures in the `Per Slice` columns with `Total_Weight` and `Total_Slices`; other tables per portion; `Category` keeps headings as printed (nested headings joined with ` - `); "<20ppm" marks are kept in `notes`; rows of the allergen and nutrition tables with the same name and category are one row, `source_page` then reads "17, 2". |
 
 ## 4. Decisions and how they are encoded
 

@@ -39,7 +39,7 @@ def test_merge_by_key_joins_rows_of_one_product_with_no_overlapping_cells():
     other = {"Product_Name": "Cola", "Category": "Drinks", "region": "UK", "source_page": 6, "method": "parser", "milk": ""}
     rows = merge_by_key([allergens, other, nutrition])
     assert len(rows) == 2 and rows[0]["wheat"] == "Yes" and rows[0]["energykCal_Per Portion"] == "384"
-    assert rows[0]["source_page"] == 2 and rows[0]["flags"] == "warn: a | warn: b" and rows[1]["Product_Name"] == "Cola"
+    assert rows[0]["source_page"] == "2, 17" and rows[0]["flags"] == "warn: a | warn: b" and rows[1]["Product_Name"] == "Cola"
 
 
 def test_merge_by_key_leaves_rows_apart_when_a_cell_is_in_both_or_the_key_differs():
@@ -49,3 +49,10 @@ def test_merge_by_key_leaves_rows_apart_when_a_cell_is_in_both_or_the_key_differ
     assert len(merge_by_key([a, {**a, "Category": "Kids", "milk": "Yes"}])) == 2  # another category
     assert len(merge_by_key([a, {**a, "region": "NI", "milk": "Yes"}])) == 2      # another region
     assert len(merge_by_key([{**a, "Size": "Large"}, {**a, "milk": "Yes"}])) == 2  # another size
+
+
+def test_merged_rows_name_both_source_pages():
+    from pipeline.export import merge_by_key
+    nutrition = {"Product_Name": "Fries", "Category": "Sides", "region": "UK", "source_page": 17, "energykCal_Per Portion": "384"}
+    allergens = {"Product_Name": "Fries", "Category": "Sides", "region": "UK", "source_page": 2, "wheat": "Yes"}
+    assert merge_by_key([nutrition, allergens])[0]["source_page"] == "17, 2"

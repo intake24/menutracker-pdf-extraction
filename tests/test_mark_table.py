@@ -75,3 +75,29 @@ def test_text_printed_on_a_row_in_place_of_marks_is_kept_in_notes_and_is_not_a_h
         + row(220, "Tea", ("Vegetarians", "Yes"), ("Vegans", "Yes"))
     rows = parse_page(words, SOURCE, 2)
     assert rows[0]["notes"] == "Refer directly to the supplier" and rows[1]["Category"] == "" and "notes" not in rows[1]
+
+
+def test_a_heading_line_that_starts_in_the_name_area_is_not_part_of_a_name():
+    words = header() + [w("Pizzas", 300, 170)] + [w("Notes for", 100, 187, width=60), w("these pizzas", 300, 187, width=60)] + row(200, "Margherita", ("Vegetarians", "Yes"), ("Vegans", "No"))
+    rows = parse_page(words, SOURCE, 2)
+    assert rows[0]["Product_Name"] == "Margherita" and rows[0]["Category"] == "Pizzas - Notes for these pizzas"
+
+
+def test_only_a_note_that_starts_with_less_than_is_a_note_and_a_note_between_columns_raises():
+    words = header() + row(200, "Cola", ("Vegetarians", "Yes"), ("Vegans", "No")) + [w("7UP", 300, 200), w("www.7up.co.uk", 380, 200, width=70)]
+    rows = parse_page(words, SOURCE, 2)
+    assert rows[0]["notes"] == "7UP www.7up.co.uk" and "barley" not in rows[0]
+    with pytest.raises(ValueError, match="between columns"):
+        parse_page(header() + row(200, "Cola", ("Vegetarians", "Yes")) + [w("<20ppm<20ppm", 290, 207, width=36)], SOURCE, 2)
+
+
+def test_page_4_of_the_pizza_hut_booklet_keeps_small_text_apart():
+    from pathlib import Path
+
+    import yaml
+    from pipeline.parsers import mark_table
+    root = Path(__file__).resolve().parent.parent
+    source = next(s for s in yaml.safe_load((root / "config" / "chains.yaml").read_text())["8_Pizzahut"]["sources"] if s["parser"] == "mark_table")
+    rows = {r["Product_Name"]: r for r in mark_table.parse(root / "inputs" / "Pizza_Hut_Restaurants_Dietary_Information_Booklet_March_2025.pdf", {**source, "pages": [4]}) if r["Category"].startswith(("Pizza Combinations", "Melts"))}
+    assert "BBQ Chicken Melt (served with BBQ sauce)" in rows and rows["BBQ Chicken Melt (served with BBQ sauce)"]["notes"] == "Barley <20ppm"
+    assert rows["BBQ Americano"]["notes"] == "Wheat <20ppm; Barley <20ppm" and not any("Allergen Information" in n for n in rows)

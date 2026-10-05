@@ -15,7 +15,7 @@ Status date 2026-10-02. This report records what was found when every extracted 
 | Odeon nutrition tables (UK, Belfast, ROI) | 3 | 1,013 | 705 + 147 + 148 rows, 0 mismatches after errata | 0 after fixes | Approved |
 | Odeon pre-packed matrices (UK, Belfast, ROI) | 3 | 286 | 97 + 82 + 79 rows, 0 mismatches after 33 errata | name glue (fixed) | Approved |
 | Papa John's | 1 (image pages) | 435 | 434 rows, 6,943 cells, 0 mismatches after 7 errata | 1 critical + 4 important (review) | Approved |
-| Pizza Hut, Coffee #1, Starbucks, Brewhouse, Cookhouse, Top Golf | not done | | | | Surveyed or not started, see section 4 |
+| Coffee #1, Starbucks, Brewhouse, Cookhouse, Top Golf | not done | | | | Surveyed or not started, see section 4 |
 
 Totals in `outputs/`: 11 chain CSVs, 5,574 rows. Pearl Scan agreement is exact on every compared cell once the 66 confirmed Pearl Scan mistakes are excused. Allergen data has no ground truth anywhere; it is checked by hand-verified golden rows only.
 
@@ -98,13 +98,21 @@ Every mismatch was settled by looking at the page. In every case so far one of f
 - **Checks:** all 20 allergen pages re-read at 260 dpi: 0 differences; Opus review found 2 important and 3 minor gaps (a duplicate name core could move ticks to another drink; an allergen row without figures printed once per join; rows no join selects dropped silently), all fixed with tests.
 - **Output:** 210 rows. Flags are the PDF's own: Americano kJ/kcal figures do not agree (Pearl Scan has the same), one sugars above carbohydrates; one warning for a name difference; "Iced Americano" in the milk section has no figures. Blank allergen cells stay blank (the key says only that a tick means "contains").
 
+### 3.11 Pizza Hut (1 PDF, 24 pages with a text layer; built, awaiting approval)
+- **PDF oddities:** three layouts in one booklet: allergen tables (pages 2-6) with rotated header labels, Yes/No diet cells and a filled circle (contains) or an empty circle (risk of cross-contamination); ingredient prose (pages 7-16, not extracted by decision); nutrition tables (pages 17-24) in three widths (per-slice pizza blocks with the product as a title over size rows, per-portion tables, a per-100g table). The same product is printed in the allergen and the nutrition table; "<20ppm" notes sit under some marks (some pairs side by side); soft drinks and alcohol print "Refer directly to the supplier" in the allergen area instead of marks; the key does not say what a blank means; one column is "Fish / shellfish" (mapped to fish and crustacean, a judgement); a heading "Pizza" is made only of header words.
+- **Pearl Scan:** nutrition only. 483 of 483 rows and 7,618 cells agree after 6 errata (protein 4.3 typed 43; slice counts 6 and 8 swapped on five Vegan Veggie Supreme rows). It files per-slice figures under the portion columns and the whole pizza's weight as the serving size, handled with per-source `pearlscan:` overrides.
+- **Parsers:** `portion_tables` (title and row rules per table width; headings in a row join into one category; a one-word header line is a header only if listed), `mark_table` (columns found from the rotated words, cells by x position, names by y, headings, notes), and `merge_by_key` (opt-in per chain: one row per product where the allergen and nutrition tables agree on name, category, size and region and no cell appears in both; source_page then names both pages).
+- **Checks:** every one of the 332 filled and 138 empty circles printed on pages 2-6 is used by a row (mark accounting exact on each page); 17 golden rows checked against page images (pages 2, 3, 4, 6); Opus review found 2 critical and 4 important defects, none of which raised: a one-word heading "Pizza" swallowed as a header (274 pizza rows got the category of the page before), a heading line glued into a product name, notes garbled or without their allergen label, the supplier word "7UP" turned into a sulphite note, and merged rows pointing only to the nutrition page. All fixed with tests that failed first; the diff of the parse before and after confirmed only those rows changed.
+- **Output:** 712 rows (751 before merging 39 products). Flags are the PDF's own (an Atwater mismatch on Pepperoni Feast Sharing Handcrafted and on the Ice Cream Factory rows). Headings are kept as printed, so some categories are long or odd ("Per 100g", "All fountain drinks contain a source of Phenylalanine.").
+- **Known limits:** pairing of same-key duplicates (adult and kids "Fries") is by order and works only because both tables list adult before kids; two tables of the same product with different widths (per-100g and per-portion) would merge silently.
+
 ## 4. Sources not done: what was learned
 
 | Source | PDF | Why not done yet | What the survey found |
 |---|---|---|---|
 | Krispy Kreme | 61 pages, no text layer | done, approved (section 3.10) | `vision_pairs` joins allergen and nutrition pages |
 | Domino's pizzas | 18 pages, 1,422 GT rows | done | `grouped_table` reads the pizza, sideways cheese, crust and size labels by position and size order (pages 3-13), the bases, and the sauces, cheese and toppings (pages 14-18, a shared per-100g row); page 2 (six small tables, 95 rows) uses the model for the labels only and the text layer for every figure. 1,420 rows compared, 56,799 cells, 0 mismatches; 2 rows excused (a typo the PDF prints). |
-| Pizza Hut | 24 pages, 483 GT rows | three layouts in one PDF | allergen tables with Yes/No and `●`/`○`, ingredient prose, per-slice nutrition tables |
+| Pizza Hut | 24 pages, 483 GT rows | built (section 3.11), awaiting approval | `portion_tables`, `mark_table`, `merge_by_key` |
 | Coffee #1 | food 18 pp (vertical blocks), drinks 28 pp (slanted text) | slanted text defeats the word reader | vision route likely for the drinks |
 | Starbucks | food 20 pp, drinks 73 pp | not started | wrapped names, size rows, milk type in the product line |
 | Brewhouse, Cookhouse, Top Golf | menus | judgement | dish name is the text before the first comma |

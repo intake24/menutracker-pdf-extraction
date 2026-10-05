@@ -12,7 +12,9 @@ with " - "), which persists (also onto the next page) until the next one. What a
                      the product
            category  the category before any section heading is seen (default empty)
            extra     columns added to every row of the table, e.g. {Serving_Size_Unit: g}
-  header_words  the words column headers are made of (an unknown word makes the line a title, so list them all)
+  header_words  the words column headers are made of (an unknown word makes the line a title, so list them all); a line of one such word
+                is a column header only if it is listed in `single_word_headers` ("Energy"), else a heading ("Pizza")
+  single_word_headers  header lines that are one word
   furniture     lines starting with one of these texts (page headings, notes) are ignored
   pages         pages to read: numbers and "a-b" ranges
 
@@ -36,6 +38,7 @@ def expand_pages(spec: list) -> list[int]:
 def parse_pages(pages: list[list], source: dict, numbers: list[int]) -> list[dict]:
     vocab = {w.casefold() for w in source["header_words"]}
     furniture = tuple(source.get("furniture", ()))
+    single = set(source.get("single_word_headers", ()))
     shapes = {int(k): v for k, v in source["shapes"].items()}
     rows: list[dict] = []
     section = None
@@ -48,7 +51,7 @@ def parse_pages(pages: list[list], source: dict, numbers: list[int]) -> list[dic
                 items.append(("row", text, [w.text for w in cells]))
             elif text.startswith(furniture):
                 continue
-            elif all(w.text.casefold() in vocab for w in line):
+            elif all(w.text.casefold() in vocab for w in line) and (len(line) > 1 or text in single):
                 items.append(("header", text, []))
             else:
                 items.append(("text", text, []))
