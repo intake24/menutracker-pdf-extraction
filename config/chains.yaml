@@ -1209,6 +1209,7 @@
       sizes: [Single, Double, Regular, Large, Small, Medium, Mini, 12oz, 16oz, 8oz, 20oz]
       extra_headers: [Vitamin Content]
       allergen_text: { OAT: Oats (Gluten Free) } # page 1: the oat and coconut milks contain gluten free oats; OAT is listed because of avenin
+      figure_titles: [KJ, Kcal, Fat, Sat, Carb, Sugar, Fibre, Protein, Salt]
       nutrients: [energykJ, energykCal, fat, saturates, carbohydrates, sugars, fibre, protein, salt]
       groups:
         Per 100ml: { base: Per 100g/ml }

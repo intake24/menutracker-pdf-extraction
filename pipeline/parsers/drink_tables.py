@@ -12,6 +12,8 @@ Source options (config/chains.yaml):
              split into rows of their own (the serving size then comes from the label), the others are columns of one row
   sizes      words printed in the size column ("Regular", "12oz")
   extra_headers  headers printed with the group labels that are not figure groups ("Vitamin Content")
+  figure_titles  the nine figure titles in the printed order (KJ, Kcal, ...); they are rotated, so they are read letter by letter and
+             a table whose titles differ stops the run
   allergen_text  printed allergen word -> the text given to the allergen reader ("OAT": "Oats (Gluten Free)": the guide says its oat milk is made
              with gluten free oats and lists OAT because of avenin, so gluten is not set)
   furniture  texts printed at the top of every page
@@ -78,7 +80,7 @@ def _is_title(line: list[dict], body: float) -> bool:
     return "Bold" in line[0]["fontname"] and line[0]["size"] >= TITLE_RATIO * body and not _text(line).startswith("Per ") and line[0]["text"] != "PRODUCT"
 
 
-def parse_page(words: list[dict], rules: list[float], source: dict, page_no: int) -> list[dict]:
+def parse_page(words: list[dict], rules: list[float], source: dict, page_no: int, titles_chars: list[dict] | None = None) -> list[dict]:
     furniture = tuple(source.get("furniture", ()))
     words = [w for w in words if w["size"] >= MIN_SIZE]
     lines = [line for line in _lines(words) if not _text(line).startswith(furniture)]
@@ -103,8 +105,11 @@ def parse_page(words: list[dict], rules: list[float], source: dict, page_no: int
             title_lines = lines[starts[k]:h]
         top, bottom = _centre(lines[h][0]), (_centre(lines[end][0]) if end < len(lines) else 1e9)
         header_words = {"PRODUCT", "ALLERGENS", "SIZE", *source.get("extra_headers", ()), *(x for h in source.get("extra_headers", ()) for x in h.split())}
-        body = [l for l in lines[h + 1:end] if not any(w["text"] in ("PRODUCT", "ALLERGENS", "SIZE") for w in l) and not all(w["text"] in header_words for w in l)]
-        out += _table(title_lines + [lines[h]], body, [r for r in rules if top < r < bottom], source, page_no)
+        dropped = [l for l in lines[h + 1:end] if any(w["text"] in ("PRODUCT", "ALLERGENS", "SIZE") for w in l) or all(w["text"] in header_words for w in l)]
+        if any(sum(bool(NUMBER.match(w["text"])) for w in l) >= 9 for l in dropped):
+            raise ValueError(f"page {page_no}: a line with figures also holds a header word, so it would be dropped: {_text(dropped[0])[:50]!r}")
+        body = [l for l in lines[h + 1:end] if l not in dropped]
+        out += _table(title_lines + [lines[h]], body, [r for r in rules if top < r < bottom], source, page_no, titles_chars)
     return out
 
 
@@ -112,7 +117,7 @@ SIZE_AMOUNT = re.compile(r"^(\d+(?:\.\d+)?)\s?(oz|ml|g)$")
 VITAMIN = re.compile(r"^(\d+(?:\.\d+)?)(mg|ug)$")
 
 
-def _table(above: list[list[dict]], body: list[list[dict]], rules: list[float], source: dict, page_no: int) -> list[dict]:
+def _table(above: list[list[dict]], body: list[list[dict]], rules: list[float], source: dict, page_no: int, titles_chars: list[dict] | None = None) -> list[dict]:
     nutrients, groups, sizes = source["nutrients"], source["groups"], set(source.get("sizes", ()))
     labels = above[-1]
     titles = above[:-1]
@@ -153,6 +158,10 @@ def _table(above: list[list[dict]], body: list[list[dict]], rules: list[float], 
                 name_words.append(w)
     if not rows:
         raise ValueError(f"page {page_no}, {title}: the table has no data rows")
+    if titles_chars is not None and source.get("figure_titles"):
+        read = _figure_titles(titles_chars, _centre(labels[0]), min(r["y"] for r in rows))
+        if read != list(source["figure_titles"]) * len(group_names):
+            raise ValueError(f"page {page_no}, {title}: the figure titles read {read}, the config expects {list(source['figure_titles']) * len(group_names)}")
     anchors = _anchors([w["x1"] for r in rows for w in r["figures"]])
     if len(anchors) != need:
         raise ValueError(f"page {page_no}, {title}: found {len(anchors)} figure columns, expected {need}")
@@ -164,6 +173,8 @@ def _table(above: list[list[dict]], body: list[list[dict]], rules: list[float], 
     products = []
     if len(spans) >= 2 and sum(1 for lo, hi in spans for _ in [0] if inside(lo, hi, name_words)) == len(spans):
         for lo, hi in spans:   # a rule under every product: the space between two rules is one product
+            if len(_clusters(_lines(inside(lo, hi, name_words)))) > 1:
+                raise ValueError(f"page {page_no}, {title}: more than one name between two rules ({_text(inside(lo, hi, name_words)[:3])!r} ...): a rule is missing")
             products.append({"rows": [r for r in rows if lo < r["y"] < hi], "names": inside(lo, hi, name_words), "allergens": inside(lo, hi, allergen_words)})
     elif not size_found:   # no size column: every row is a product, named by the text level with it
         for r in rows:
@@ -183,6 +194,9 @@ def _table(above: list[list[dict]], body: list[list[dict]], rules: list[float], 
     left = [w for w in name_words + allergen_words if id(w) not in claimed]
     if left:
         raise ValueError(f"page {page_no}, {title}: text that belongs to no product: {_text(sorted(left, key=lambda w: (w['top'], w['x0'])))[:60]!r}")
+    for w in extras:
+        if not any(abs(_centre(w) - r["y"]) <= LINE_GAP * 2 for r in rows):
+            raise ValueError(f"page {page_no}, {title}: the vitamin content {w['text']!r} is by no row")
     out = []
     split = [g for g in group_names if groups[g].get("split")]
     for p in products:
@@ -208,7 +222,7 @@ def _table(above: list[list[dict]], body: list[list[dict]], rules: list[float], 
                 if abs(_centre(w) - r["y"]) <= LINE_GAP * 2:
                     amount, unit = VITAMIN.match(w["text"]).groups()
                     column = {"mg": "vitaminC", "ug": "vitaminB12"}[unit]
-                    if column[-3:] not in ("B12", "n C") and ("itamin " + column[7:]).lower() not in name.lower().replace("vintamin", "vitamin"):
+                    if {"vitaminC": "vitamin c", "vitaminB12": "b12"}[column] not in name.lower():
                         raise ValueError(f"page {page_no}, {name}: the vitamin content {w['text']!r} does not match the name")
                     base[f"{column}_Per Portion"] = amount
             for gi, label in enumerate(group_names):
@@ -222,6 +236,15 @@ def _table(above: list[list[dict]], body: list[list[dict]], rules: list[float], 
             if not split:
                 out.append(base)
     return out
+
+
+def _figure_titles(chars: list[dict], y_lo: float, y_hi: float) -> list[str]:
+    """The rotated column titles (KJ, Kcal, ...) between the group labels and the first data row, read letter by letter, left to right."""
+    columns: dict[int, list[dict]] = {}
+    for c in chars:
+        if y_lo < (c["top"] + c["bottom"]) / 2 < y_hi:
+            columns.setdefault(round((c["x0"] + c["x1"]) / 2 / 6), []).append(c)
+    return ["".join(c["text"] for c in sorted(cs, key=lambda c: -c["top"])) for _, cs in sorted(columns.items())]
 
 
 def expand_pages(spec: list) -> list[int]:
@@ -239,5 +262,6 @@ def parse(pdf: Path, source: dict) -> list[dict]:
             page = doc.pages[n - 1]
             words = page.extract_words(extra_attrs=["fontname", "size"], x_tolerance=1.5, y_tolerance=1)
             rules = sorted((r["top"] + r["bottom"]) / 2 for r in page.rects if r["bottom"] - r["top"] <= 1.5 and r["x1"] - r["x0"] >= 300)
-            rows += parse_page(words, rules, source, n)
+            small = [c for c in page.chars if c["size"] < MIN_SIZE]   # the rotated figure titles are tiny letters
+            rows += parse_page(words, rules, source, n, small)
     return rows

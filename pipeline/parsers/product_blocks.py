@@ -55,7 +55,8 @@ def _lines(words: list[dict]) -> list[list[dict]]:
 
 
 def _text(words: list[dict]) -> str:
-    return " ".join(w["text"] for line in _lines(words) for w in line)
+    text = " ".join(w["text"] for line in _lines(words) for w in line)
+    return re.sub(r"\s+", " ", re.sub(r"\(cid:\d+\)", " ", text))   # a tab the PDF could not map to a character
 
 
 def _token(text: str) -> str:
@@ -72,14 +73,25 @@ def _allergen_term(token: str, words: dict[str, str], page_no: int, product: str
     raise ValueError(f"page {page_no}, {product}: the capital word {token!r} is not a known allergen word (list it under `allergen_words`)")
 
 
+def _split_glued(flat: list[dict]) -> list[dict]:
+    """"containMILK," is printed without a space: split a word where a run of capitals follows lower case."""
+    out = []
+    for w in flat:
+        parts = re.sub(r"([a-z])([A-Z]{3,})", r"\1 \2", w["text"]).split()
+        out += [{**w, "text": part} for part in parts] if len(parts) > 1 else [w]
+    return out
+
+
 def _allergens(declaration: list[dict], source: dict, page_no: int, product: str) -> dict[str, str]:
     words = BASE_WORDS | {k.lower(): v for k, v in source.get("allergen_words", {}).items()}
-    flat = [w for line in _lines(declaration) for w in line]
+    flat = _split_glued([w for line in _lines(declaration) for w in line])
     texts = [_token(w["text"]).lower() for w in flat]
     phrases = [p.lower().split() for p in source.get("may_phrases", ["May contain"])]
-    cut = min((i for i in range(len(texts)) for p in phrases
-               if texts[i:i + len(p)] and len(texts[i:i + len(p)]) == len(p) and all(t.startswith(w) for t, w in zip(texts[i:i + len(p)], p))),
-              default=len(flat))   # from here on the declaration lists what may be present
+
+    def starts(i: int, phrase: list[str]) -> bool:
+        part = texts[i:i + len(phrase)]
+        return len(part) == len(phrase) and all(t == w or (w == "contain" and t == "contains") for t, w in zip(part, phrase))
+    cut = min((i for i in range(len(texts)) for p in phrases if starts(i, p)), default=len(flat))   # from here on: what may be present
     contains, may = [], []
     for i, w in enumerate(flat):
         token = _token(w["text"])
@@ -95,6 +107,8 @@ def _allergens(declaration: list[dict], source: dict, page_no: int, product: str
         elif not capital:
             continue
         term = _allergen_term(token, words, page_no, product)
+        if term == "Oats" and any(texts[j:j + 2] == ["gluten", "free"] for j in range(max(0, i - 3), i - 1)):   # "Gluten Free OATS", "Gluten Free Jumbo OATS"
+            term = "Oats (Gluten Free)"   # the guide lists OATS as an allergen because of avenin, but these oats are gluten free
         if term:   # "" marks a capital word that is part of an allergen's name ("SEEDS" in "SESAME SEEDS")
             (contains if i < cut else may).append(term)
     return parse_allergens(", ".join(dict.fromkeys(contains)), ", ".join(dict.fromkeys(may)), source.get("markers", {}).get("", ""))
@@ -113,6 +127,8 @@ def _block(words: list[dict], source: dict, page_no: int) -> dict | None:
     for line in _lines([w for w in area if _centre(w) >= starts[0] - 2]):
         label = line[0]["text"]
         values = [w["text"] for w in line[1:] if re.match(r"^<?\d[\d,]*(\.\d+)?$", w["text"])]
+        if values and label not in labels and label not in ("Portion", "per"):
+            raise ValueError(f"page {page_no}: the nutrition label {label!r} is not in `nutrients`")
         if label in labels:
             if len(values) != 2:
                 raise ValueError(f"page {page_no}: the nutrition line {' '.join(w['text'] for w in line)!r} does not have two values")

@@ -134,8 +134,8 @@ def compare_golden(golden: list[dict], ours: list[dict]) -> list[str]:
     failures = []
     for g in golden:
         matches = by_key.get((g["Product_Name"], g["Category"], g.get("Size", "")))
-        if matches and g.get("Serving_Size"):   # a product printed per 15 ml and per 22.5 ml is two rows: the serving size tells them apart
-            matches = [o for o in matches if o.get("Serving_Size") == g["Serving_Size"]]
+        if matches and len(matches) > 1 and g.get("Serving_Size"):   # a product printed per 15 ml and per 22.5 ml is two rows: the serving size tells them apart
+            matches = [o for o in matches if same(g["Serving_Size"], o.get("Serving_Size", ""))]
             if not matches:
                 failures.append(f"missing row: {g['Product_Name']} ({g['Category']}) with serving size {g['Serving_Size']}")
                 continue

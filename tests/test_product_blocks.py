@@ -68,3 +68,35 @@ def test_a_bold_capital_word_that_is_not_an_allergen_word_stops_the_run():
         pb._allergens([w("FRUMP", 1, bold=True)], SOURCE, 3, "Thing")
     got = pb._allergens([w("Salt", 0), w("MILK", 1, bold=True), w("May", 2), w("contain", 3), w("NUTS", 4)], SOURCE, 3, "Thing")
     assert (got["milk"], got["treeNuts"], got["wheat"]) == ("Yes", "May contain", "No")
+
+
+def test_a_may_contain_sentence_glued_to_its_first_allergen_is_read(rows):
+    r = one(rows, "Teacake")
+    assert (r["milk"], r["egg"], r["treeNuts"]) == ("May contain", "May contain", "May contain")     # the PDF prints "May containMILK, EGG and NUTS"
+
+
+def test_gluten_free_oats_set_oats_but_not_gluten(rows):
+    jewel = one(rows, "GF Caramel Jewel Bar")
+    assert (jewel["oats"], jewel["gluten"]) == ("Yes", "No")
+    crumble = one(rows, "Blackberry & Apple Crumble Jack**")
+    assert (crumble["oats"], crumble["gluten"]) == ("Yes", "May contain")        # "May contain cereals containing GLUTEN"
+    assert one(rows, "Porridge Plain")["gluten"] == "Yes"                         # plain oats stay in the guide's list of cereals containing gluten
+
+
+def test_the_may_contain_phrase_needs_the_words_themselves():
+    got = pb._allergens([w("Mayonnaise", 0), w("(contains", 1), w("EGG", 2, bold=True), w("),", 3), w("MILK", 4, bold=True)], SOURCE, 3, "Thing")
+    assert (got["egg"], got["milk"]) == ("Yes", "Yes")
+
+
+def test_a_word_with_a_run_of_capitals_inside_it_is_split_not_skipped():
+    got = pb._allergens([w("May", 0), w("containMILK,", 1), w("EGG", 2), w("and", 3), w("NUTS.", 4)], SOURCE, 3, "Thing")
+    assert (got["milk"], got["egg"], got["treeNuts"]) == ("May contain", "May contain", "May contain")
+
+
+def test_an_unknown_nutrition_label_stops_the_run():
+    def nut(text, x, top):
+        return {"text": text, "x0": x, "x1": x + 12, "top": top, "bottom": top + 6, "size": 6, "fontname": "Gothic"}
+    inside = [nut("KJ", 440, 100), nut("100", 470, 100), nut("90", 510, 100), nut("Sugars", 440, 110), nut("1", 470, 110), nut("1", 510, 110),
+              nut("Salt", 440, 120), nut("0.1", 470, 120), nut("0.1", 510, 120)]
+    with pytest.raises(ValueError, match="Sugars"):
+        pb._block(inside, SOURCE, 3)

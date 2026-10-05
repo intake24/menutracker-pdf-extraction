@@ -69,3 +69,28 @@ def test_figures_with_no_table_header_an_unknown_group_label_and_a_bad_column_co
     page = [w("TITLE", 100, 20, bold=True, size=11), w("Per", 300, 50, bold=True), w("100pints", 330, 50, bold=True)] + figures
     with pytest.raises(ValueError, match="100pints"):
         dt.parse_page(page, [60, 130], SOURCE, 3)
+
+
+def test_two_names_between_two_rules_stop_the_run():
+    rows_ = []
+    for top in (100, 112, 124, 140):
+        rows_ += [w("Regular", 240, top)] + [w(str(i), 300 + 25 * i, top) for i in range(18)]
+    page = [w("TITLE", 100, 20, bold=True, size=11), w("Per", 300, 50, bold=True), w("100ml", 330, 50, bold=True),
+            w("Per", 700, 50, bold=True), w("product", 730, 50, bold=True), w("Latte", 60, 106, bold=True), w("MILK", 190, 106),
+            w("Mocha", 60, 124, bold=True), w("MILK", 190, 124), w("Tea", 60, 140, bold=True)] + rows_
+    # a rule under Latte but none between Mocha and Tea: two products would be read as one
+    with pytest.raises(ValueError, match="more than one name"):
+        dt.parse_page(page, [60, 90, 118, 150], SOURCE, 3)
+
+
+def test_a_vitamin_value_that_does_not_match_its_name_or_sits_by_no_row_raises():
+    def line(text, x, top, bold=False, size=9.5):
+        return w(text, x, top, bold=bold, size=size)
+    figures = lambda top: [line("Regular", 240, top)] + [w(str(i), 300 + 25 * i, top) for i in range(18)]
+    page = [line("TITLE", 100, 20, bold=True, size=11), line("Per", 300, 50, bold=True), line("100ml", 330, 50, bold=True), line("Per", 700, 50, bold=True),
+            line("product", 730, 50, bold=True), line("Tea", 60, 106, bold=True), line("2.21ug", 150, 106)] + figures(106)
+    with pytest.raises(ValueError, match="does not match the name"):
+        dt.parse_page(page, [60, 90, 160], SOURCE, 3)
+    page = page[:-19] + [line("2.21ug", 150, 140)] + figures(106)
+    with pytest.raises(ValueError, match="by no row"):
+        dt.parse_page(page, [60, 90, 160], SOURCE, 3)

@@ -6,7 +6,7 @@ State on 2026-10-05: eleven chains live and approved (Krispy Kreme added 2026-10
 
 1. Krispy Kreme: done and approved.
 2. Pizza Hut: built on branch `pizza-hut`, `approved: false` in `config/chains.yaml` (findings 3.11); needs the user's approval, then `run`, `eval`, commit.
-3. Coffee #1 (food 18 pages with vertical blocks, drinks 28 pages with slanted text; Pearl Scan 92 and 371 rows) and Starbucks (food 20 pages, drinks 73 pages with wrapped names, sizes and milk types; 93 and 1,464 rows). About 8 points each plus a review.
+3. Coffee #1: built on branch `coffee1`, `approved: false` for chain `47_Coffee1` in `config/chains.yaml` (findings 3.12); needs the user's approval, then `run`, `eval`, commit. Then Starbucks (food 20 pp, drinks 73 pp; same two parser families probably: check `product_blocks` and `drink_tables` first).
 4. Brewhouse, Cookhouse, Top Golf menus: the dish name is the text before the first comma; judgement and model reads.
 5. Final slice: a flags report across all chains, an automatic row-count check for model-read pages, a last review of the whole pipeline.
 

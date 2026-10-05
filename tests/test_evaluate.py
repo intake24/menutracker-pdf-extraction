@@ -162,3 +162,10 @@ def test_a_golden_row_with_a_serving_size_is_compared_with_the_row_of_that_servi
     assert compare_golden(golden, ours) == []
     assert compare_golden([{**golden[0], "kcal": "42"}], ours) == ["Syrup.kcal: expected '42', got '41'"]
     assert compare_golden([{"Product_Name": "Syrup", "Category": "S", "Serving_Size": "30"}], ours) == ["missing row: Syrup (S) with serving size 30"]
+
+
+def test_golden_serving_size_narrows_only_when_the_key_has_several_rows_and_a_wrong_size_is_reported_as_a_cell():
+    one = [{"Product_Name": "Cake", "Category": "C", "Serving_Size": "83", "kcal": "9"}]
+    assert compare_golden([{"Product_Name": "Cake", "Category": "C", "Serving_Size": "84", "kcal": "9"}], one) == ["Cake.Serving_Size: expected '84', got '83'"]
+    two = [{"Product_Name": "S", "Category": "C", "Serving_Size": "15", "kcal": "1"}, {"Product_Name": "S", "Category": "C", "Serving_Size": "22.5", "kcal": "2"}]
+    assert compare_golden([{"Product_Name": "S", "Category": "C", "Serving_Size": "15.0", "kcal": "1"}], two) == []
