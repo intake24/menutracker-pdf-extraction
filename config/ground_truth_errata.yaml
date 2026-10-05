@@ -267,3 +267,27 @@
   item: American Hot - Standard Mozzarella - Double Decadence - Medium
   column: '*'
   why: The PDF prints the crust as 'Douoble Decadence' on this pizza (a typo); Pearl Scan corrected it, so the names do not pair. The figures were not compared; the typo is kept as printed.
+- file: Pizza_Hut_Restaurants_Dietary_Information_Booklet_March_2025_v0.1.csv
+  item: ' Vegan Veggie - Individual Pan (9")'
+  column: protein
+  why: The PDF (page 21) prints 4.3 g; Pearl Scan typed 43.
+- file: Pizza_Hut_Restaurants_Dietary_Information_Booklet_March_2025_v0.1.csv
+  item: ' Vegan Veggie Supreme - Individual Pan (9")'
+  column: num_of_slices
+  why: The PDF (page 21) prints 6 slices for the individual and gluten free pizzas and 8 for the sharing ones; Pearl Scan has the counts the other way round.
+- file: Pizza_Hut_Restaurants_Dietary_Information_Booklet_March_2025_v0.1.csv
+  item: ' Vegan Veggie Supreme - Sharing Pan (13")'
+  column: num_of_slices
+  why: The PDF (page 21) prints 6 slices for the individual and gluten free pizzas and 8 for the sharing ones; Pearl Scan has the counts the other way round.
+- file: Pizza_Hut_Restaurants_Dietary_Information_Booklet_March_2025_v0.1.csv
+  item: ' Vegan Veggie Supreme - Individual Handcrafted (11") WITHOUT Garlic Sprinkle'
+  column: num_of_slices
+  why: The PDF (page 21) prints 6 slices for the individual and gluten free pizzas and 8 for the sharing ones; Pearl Scan has the counts the other way round.
+- file: Pizza_Hut_Restaurants_Dietary_Information_Booklet_March_2025_v0.1.csv
+  item: ' Vegan Veggie Supreme - Sharing Handcrafted (14") WITHOUT Garlic Sprinkle'
+  column: num_of_slices
+  why: The PDF (page 21) prints 6 slices for the individual and gluten free pizzas and 8 for the sharing ones; Pearl Scan has the counts the other way round.
+- file: Pizza_Hut_Restaurants_Dietary_Information_Booklet_March_2025_v0.1.csv
+  item: ' Vegan Veggie Supreme - Gluten Free (9" Square)'
+  column: num_of_slices
+  why: The PDF (page 21) prints 6 slices for the individual and gluten free pizzas and 8 for the sharing ones; Pearl Scan has the counts the other way round.

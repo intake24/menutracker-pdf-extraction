@@ -30,3 +30,22 @@ def test_unknown_column_stops_the_run():
     import pytest
     with pytest.raises(ValueError, match="energykJ_Per Serving"):
         finalise([{"Product_Name": "x", "energykJ_Per Serving": "100"}], load_columns())
+
+
+def test_merge_by_key_joins_rows_of_one_product_with_no_overlapping_cells():
+    from pipeline.export import merge_by_key
+    allergens = {"Product_Name": "Fries", "Category": "Sides", "region": "UK", "source_page": 2, "method": "parser", "wheat": "Yes", "flags": "warn: a"}
+    nutrition = {"Product_Name": "Fries", "Category": "Sides", "region": "UK", "source_page": 17, "method": "parser", "energykCal_Per Portion": "384", "flags": "warn: b"}
+    other = {"Product_Name": "Cola", "Category": "Drinks", "region": "UK", "source_page": 6, "method": "parser", "milk": ""}
+    rows = merge_by_key([allergens, other, nutrition])
+    assert len(rows) == 2 and rows[0]["wheat"] == "Yes" and rows[0]["energykCal_Per Portion"] == "384"
+    assert rows[0]["source_page"] == 2 and rows[0]["flags"] == "warn: a | warn: b" and rows[1]["Product_Name"] == "Cola"
+
+
+def test_merge_by_key_leaves_rows_apart_when_a_cell_is_in_both_or_the_key_differs():
+    from pipeline.export import merge_by_key
+    a = {"Product_Name": "Fries", "Category": "Sides", "region": "UK", "wheat": "Yes"}
+    assert len(merge_by_key([a, {**a, "wheat": "No"}])) == 2                      # same cell, two values
+    assert len(merge_by_key([a, {**a, "Category": "Kids", "milk": "Yes"}])) == 2  # another category
+    assert len(merge_by_key([a, {**a, "region": "NI", "milk": "Yes"}])) == 2      # another region
+    assert len(merge_by_key([{**a, "Size": "Large"}, {**a, "milk": "Yes"}])) == 2  # another size

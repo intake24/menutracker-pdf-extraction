@@ -1033,3 +1033,71 @@
         pp_fibre: fibre_Per Portion
         pp_protein: protein_Per Portion
         pp_salt: salt_Per Portion
+
+8_Pizzahut:
+  chain: Pizzahut
+  merge_by_key: true # the allergen table and the nutrition table list the same products: one row per product where the names agree
+  sources:
+    # Nutrition tables (pages 17-24, text layer): pizza blocks have the product as a title and a row per size/crust, other tables
+    # one row per product; the table is told by how many numbers a row has.
+    - pdf: Pizza_Hut_Restaurants_Dietary_Information_Booklet_March_2025.pdf
+      parser: portion_tables
+      region: UK
+      category: food
+      approved: false
+      pages: ['17-24']
+      # Pearl Scan files per-slice figures under the portion columns and gives the whole pizza's weight as the serving size
+      pearlscan:
+        servingsize: [Total_Weight, Serving_Size]
+        servingsizeunit: ~
+        num_of_slices: Total_Slices
+        kcal: [energykCal_Per Slice, energykCal_Per Portion]
+        protein: [protein_Per Slice, protein_Per Portion]
+        carb: [carbohydrates_Per Slice, carbohydrates_Per Portion]
+        sugar: [sugars_Per Slice, sugars_Per Portion]
+        fat: [fat_Per Slice, fat_Per Portion]
+        satfat: [saturates_Per Slice, saturates_Per Portion]
+        salt: [salt_Per Slice, salt_Per Portion]
+      furniture: [NUTRITIONAL INFORMATION, FOOD ALLERGIES, We cook up, food will be, The below nutritional, '*Nutritionals', Our Food Team, Page]
+      header_words: [Number, of, Slices, per, Pizza, Weight, '(g)', Energy, Slice, '(kcal)', Slice(g), Protein, Carbohydra, te, Carbohydrate, Sugar, Fat, Saturate, d, Saturated, Sat, Salt, Average, weight, Portion, Portion(g), '(g)']
+      shapes:
+        9:
+          title: product
+          category: Pizza
+          columns: [Total_Weight, Total_Slices, energykCal_Per Slice, protein_Per Slice, carbohydrates_Per Slice, sugars_Per Slice, fat_Per Slice, saturates_Per Slice, salt_Per Slice]
+        8:
+          title: section
+          extra: { Serving_Size_Unit: g }
+          columns: [Serving_Size, energykCal_Per Portion, protein_Per Portion, carbohydrates_Per Portion, sugars_Per Portion, fat_Per Portion, saturates_Per Portion, salt_Per Portion]
+        7:
+          title: section
+          columns: [energykCal_Per 100g/ml, protein_Per 100g/ml, carbohydrates_Per 100g/ml, sugars_Per 100g/ml, fat_Per 100g/ml, saturates_Per 100g/ml, salt_Per 100g/ml]
+    # Allergen tables (pages 2-6, text layer): a Yes/No diet cell per row and a mark per allergen: a filled circle is "contains", an empty
+    # circle is a risk of cross-contamination ("May contain"); an unmarked cell is not stated. The ingredient pages (7-16) are not extracted.
+    - pdf: Pizza_Hut_Restaurants_Dietary_Information_Booklet_March_2025.pdf
+      parser: mark_table
+      region: UK
+      category: food
+      approved: false
+      pages: ['2-6']
+      markers: { '●': 'Yes', '○': 'May contain' }
+      labels:
+        Vegetarians: Suitable_for_Vegetarian
+        Vegans: Suitable_for_Vegan
+        Coeliacs: Suitable_for_Coeliac
+        Wheat: wheat
+        Barley: barley
+        Rye: rye
+        Oats: oats
+        Soya: soya
+        Egg: egg
+        Milk: milk
+        Fish: [fish, crustacean] # the column "Fish / shellfish": one mark sets both
+        Mollusc: mollusc
+        Sulphites: sulphite
+        Sesame: sesame
+        Celery: celery
+        Mustard: mustard
+        Lupin: lupin
+        Peanuts: peanut
+        Nuts: treeNuts

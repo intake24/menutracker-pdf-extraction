@@ -10,7 +10,7 @@ import yaml
 from pipeline.columns import load_columns
 from pipeline.coverage import numeric_lines, shortfalls
 from pipeline.evaluate import compare_golden, compare_ground_truth, ground_truth_file, read_csv
-from pipeline.export import finalise, write_csv
+from pipeline.export import finalise, merge_by_key, write_csv
 from pipeline.llm import LlmError
 from pipeline.ingest import load_chains, manifest_row, page_texts, text_sha
 from pipeline.parsers import PARSERS, vision_pairs, vision_products, vision_table
@@ -66,6 +66,8 @@ def run(inputs: Path, chains_file: Path, outputs: Path, only: str | None = None,
                 raise
             stopped.append(message)
             continue
+        if chain.get("merge_by_key"):   # several sources describe the same products (allergen table and nutrition table)
+            rows = merge_by_key(rows)
         rows = finalise(rows, columns)
         path = outputs / f"{key}.csv"
         write_csv(rows, columns, path)
