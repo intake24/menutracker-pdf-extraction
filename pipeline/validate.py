@@ -38,7 +38,7 @@ def check_row(row: dict) -> list[str]:
 def duplicate_issues(rows: list[dict],
                      key_cols: tuple[str, ...] = ("Product_Name", "Category", "Cheese", "Crust", "Size", "Serving_Size", "Milk", "region")) -> dict[int, str]:
     def values(r: dict) -> dict:
-        return {k: v for k, v in r.items() if k not in PROVENANCE}
+        return {k: v for k, v in r.items() if k not in PROVENANCE and k != "notes"}   # a note comments on a row (an add-on's dish) and is no value
 
     seen: dict[tuple, int] = {}
     out = {}

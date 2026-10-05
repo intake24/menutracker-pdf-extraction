@@ -145,7 +145,7 @@ def page_rows(pdf: Path, source: dict, page_no: int, pages_dir: Path | None = No
     for i, band in enumerate(bands):
         dpi = (source.get("crop_dpi") or {}).get(f"{page_no}-{i + 1}", source.get("dpi", 150))   # small print: more pixels
         stem = pages_dir / (f"{pdf.stem}-{page_no}" + (f"-crop{i + 1}" if band else ""))
-        png = stem.with_suffix(".png")
+        png = Path(f"{stem}.png")
         strips = [band] if band and not isinstance(band[0], list) else (band or [None])   # a band may be several strips stitched
         images = []
         for k, strip in enumerate(strips):
@@ -155,7 +155,7 @@ def page_rows(pdf: Path, source: dict, page_no: int, pages_dir: Path | None = No
                 top, bottom = (round(v * dpi / 72) for v in strip)
                 cmd += ["-y", str(top), "-H", str(bottom - top)]
             subprocess.run(cmd + [str(pdf), str(out)], check=True)
-            images.append(out.with_suffix(".png"))
+            images.append(Path(f"{out}.png"))
         if len(images) > 1:   # e.g. the column titles of a table, then rows from further down it
             from PIL import Image
             pics = [Image.open(i) for i in images]

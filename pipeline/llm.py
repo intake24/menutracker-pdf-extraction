@@ -89,13 +89,15 @@ def call(prompt: str, schema: dict, image: Path, *, cache_dir: Path, budget: Bud
          validate: Callable[[dict], None] = lambda answer: None) -> dict:
     """The model's structured answer about `image`; the prompt must tell it to read the file at that path.
 
-    `validate` raises LlmError for an answer that can't be used; such an answer is never cached."""
+    `validate` raises LlmError for an answer that can't be used; such an answer is never cached, and a cached one that fails it is asked again."""
     cached = cache_dir / f"{_key(image, prompt, schema)}.json"
     if cached.exists():
         try:
-            return json.loads(cached.read_text())
-        except json.JSONDecodeError:
-            pass   # a write that was cut short: ask again
+            answer = json.loads(cached.read_text())
+            validate(answer)   # the checks may be stricter than when the answer was cached: a failing one is asked again
+            return answer
+        except (json.JSONDecodeError, LlmError):
+            pass   # a write that was cut short, or an answer the current checks reject: ask again
     with budget.lock:
         budget.check()
         budget.calls += 1   # counted when started, so parallel calls cannot overshoot the cap

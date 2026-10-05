@@ -64,3 +64,9 @@ def test_the_same_name_with_different_serving_sizes_is_not_a_duplicate():
     from pipeline.validate import duplicate_issues
     a = {"Product_Name": "BBQ Dip", "Category": "Dips", "Serving_Size": "100", "region": "UK", "energykCal_Per Portion": "1"}
     assert duplicate_issues([a, a | {"Serving_Size": "25", "energykCal_Per Portion": "2"}]) == {}
+
+
+def test_rows_that_differ_only_in_their_notes_are_not_conflicting_duplicates():
+    add_on = {"Product_Name": "smoked streaky bacon", "Category": "BURGERS", "energykCal_Per Portion": "104"}
+    assert duplicate_issues([add_on | {"notes": "Add-on to A"}, add_on | {"notes": "Add-on to B"}]) == {}
+    assert list(duplicate_issues([add_on, add_on | {"energykCal_Per Portion": "105"}])) == [1]

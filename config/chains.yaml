@@ -1438,3 +1438,57 @@
         Crustaceans: crustacean
         Lupin: lupin
         Sulphur: sulphite
+
+45_Brewhouse:
+  chain: Brewhouse
+  sources:
+    # One-page menus read by the model (three columns of dishes). Each dish: a bold name up to the first comma, a description, tags, "(589kcal)" and a price. Only kcal is
+    # printed (no allergen information on these pages), so there are no allergen columns. The text layer prints every kcal figure: each must be a row the model read
+    # (`text_check`). Prices are not extracted (not in the dictionary).
+    - pdf: 04.25-BK-Core-Menu-PB2.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: false
+      dpi: 200
+      text_check: &brew_check { field: kcal, pattern: '(\d+)\s?kcal', ignore: [2000], tags: { field: diet, keep: 'VE|V', pattern: '((?:\b(?:VE|V|A|I|T|L|P|S)\b[ \t]+)*)\((\d+)\s?kcal\)' } }
+      instructions: &brew_instructions >-
+        It is a pub menu page with several columns of dishes under section headings (large letter-spaced type, for example "Small plates and grazing"; section =
+        that heading as printed, in the case it is printed). A dish is a bold name, a comma, a description in regular type, optional tags (V = vegetarian, VE = vegan, and
+        circled single letters or glass icons for a beer pairing, which are not read), the calories in brackets "(589kcal)" and a price. name = the bold text of the dish up to its first comma (the whole bold text when
+        the dish has no comma), without the tags. kcal = the number in the brackets. diet = only the dietary tag V or VE printed after the description and before the brackets or the
+        price, exactly as printed; empty if none (never the beer pairing letters A, I, T, L, P, S). Lines that begin with "+" are add-ons printed under a dish: name = the text after the "+", kcal =
+        its number, notes = "Add-on to <the name of the dish it is printed under>"; "CHOOSE YOUR SAUCE" lists sauces with their own kcal: each is a row, name = the
+        sauce. EVERY figure in brackets on the page is exactly one row, wherever it is printed: also on option lines such as "+ hot habanero honey glaze" or "Make it vegan - swap the pork for ..." (name = the text of that line without the kcal, the tags and the price; notes = "Option of <the dish it belongs to>"). A dish with several kcal figures (one per glaze, sauce or flavour) gives one row per figure, each named "<dish name> - <the option as printed>" (for example "½ beercan chicken - hot habanero honey glaze", "Ice cream/sorbet - passion fruit sorbet"); the options of such a dish are not add-ons. Do not return prices, section notes, the beer legend or text without a kcal figure. Before you answer, count the brackets with "kcal" on the page and check that you return exactly that many rows.
+      fields: &brew_fields { kcal: energykCal_Per Portion, diet: Diet, notes: notes }
+      name_fixes: &brew_fixes { 'Plus ': '', 'CHOOSE YOUR SAUCE: ': '', '1/2 ': '½ ', 'vegan- swap': 'vegan - swap', 'honey glaze': 'honey' } # how Pearl Scan wrote add-ons, a list heading, a fraction and a hyphen
+    - pdf: 04.25-BK-Sunday-Menu-PB2.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: false
+      dpi: 200
+      text_check: *brew_check
+      instructions: *brew_instructions
+      fields: *brew_fields
+      name_fixes: { 'SIDE FOR TWO - ': '' } # Pearl Scan added the label of the side to its name
+    - pdf: 33496-Daytime-Menu-Apr-2025-PB2-v1.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: false
+      dpi: 200
+      text_check: *brew_check
+      instructions: *brew_instructions
+      fields: *brew_fields
+      name_fixes: *brew_fixes
+    - pdf: 33545-SS25-NGC-Menu-Apr-2025-PB2-v2.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: false
+      dpi: 200
+      text_check: *brew_check
+      instructions: *brew_instructions
+      fields: *brew_fields
+      name_fixes: { 'add ': '' } # Pearl Scan kept the word "add" of an add-on line, the add-on is the item

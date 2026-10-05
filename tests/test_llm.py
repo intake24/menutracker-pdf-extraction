@@ -165,3 +165,25 @@ def test_a_stopped_vision_chain_does_not_stop_the_other_chains(tmp_path, monkeyp
     written = run(ROOT / "inputs", cf, tmp_path / "out", stopped=stopped)
     assert [p.stem for p in written] == ["52_FiveGuys"]
     assert len(stopped) == 1 and stopped[0].startswith("58_Vue") and "usage limit" in stopped[0]
+
+
+def test_a_cached_answer_that_fails_the_current_validation_is_asked_again(tmp_path):
+    import pytest
+
+    from pipeline.llm import Budget, LlmError, call
+    img = tmp_path / "p.png"
+    img.write_bytes(b"x")
+    calls = []
+
+    def runner(prompt, schema, add_dir):
+        calls.append(1)
+        return {"is_error": False, "structured_output": {"v": len(calls)}, "total_cost_usd": 0.0}
+
+    def want_two(answer):
+        if answer["v"] != 2:
+            raise LlmError("not two")
+    assert call("q", {}, img, cache_dir=tmp_path / "c", budget=Budget(), runner=runner)["v"] == 1       # cached without a check
+    assert call("q", {}, img, cache_dir=tmp_path / "c", budget=Budget(), runner=runner, validate=want_two)["v"] == 2   # the check rejects it: asked again
+    assert len(calls) == 2
+    assert call("q", {}, img, cache_dir=tmp_path / "c", budget=Budget(), runner=runner, validate=want_two)["v"] == 2   # now cached and valid
+    assert len(calls) == 2
