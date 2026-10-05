@@ -17,7 +17,7 @@ Status date 2026-10-02. This report records what was found when every extracted 
 | Papa John's | 1 (image pages) | 435 | 434 rows, 6,943 cells, 0 mismatches after 7 errata | 1 critical + 4 important (review) | Approved |
 | Coffee #1, Starbucks, Brewhouse, Cookhouse, Top Golf | not done | | | | Surveyed or not started, see section 4 |
 
-Totals in `outputs/`: 13 chain CSVs, 6,752 rows. Pearl Scan agreement is exact on every compared cell once the 66 confirmed Pearl Scan mistakes are excused. Allergen data has no ground truth anywhere; it is checked by hand-verified golden rows only.
+Totals in `outputs/`: 14 chain CSVs, 8,309 rows. Pearl Scan agreement is exact on every compared cell once the 66 confirmed Pearl Scan mistakes are excused. Allergen data has no ground truth anywhere; it is checked by hand-verified golden rows only.
 
 ## 2. How the checks worked and who decides
 
@@ -116,7 +116,7 @@ Every mismatch was settled by looking at the page. In every case so far one of f
 - **Output:** 463 rows. Flags are the PDF's own (Banana & Chocolate Loaf Cake, Mini Egg Tiffin and the Strawberry Milkshakes print kJ that do not match kcal; "1,702" fails the number pattern).
 - **Judgements for the user:** an allergen not named is "No" in both guides (their keys say all allergens are listed); "Made in a factory that handles NUTS" is a may-contain; OAT in the drinks guide is oats without gluten while plain OATS in the food guide still set gluten (the guide's own list of cereals containing gluten includes oats); a product with several declarations (Summer Cupcakes) takes the allergens of all of them; the section "PASTIRES" is kept as printed; `Diet` holds the printed tag, "(V)", not a derived Suitable_for column.
 
-### 3.13 Starbucks (2 PDFs with a text layer: food guide 20 pages, beverage guide 73 pages; built, awaiting approval)
+### 3.13 Starbucks (2 PDFs with a text layer: food guide 20 pages, beverage guide 73 pages; approved 2026-10-05)
 - **Layout:** both guides print a row per product: the name (bold) on the left, Y/N cells for vegetarian and vegan (food only), the ingredient declaration, the figures (nine for food; ten for drinks, the last is caffeine) and a summary column of allergens on the right. The guides say allergens are in bold capitals in the declaration and summarised in the last column, so the summary column is the source of the allergen cells and the bold capitals are a second, independent reading: the two agree on all 1,519 products (a difference would be flagged). Drinks print the name and declaration once and one figure line per size (Tall, Grande, Venti, also Single, Doppio, Short, Mini). Divider pages (menu names) hold no table (food 3, 6, 11, 13, 16, 20; drinks 1-3, 9, 17, 26, 31, 36, 38, 45, 62, 66, 73). Pages 63 and 64 (Modifiers) are a calories-only matrix with a tick, drawn as a small shape, under each rotated allergen label.
 - **Oddities:** the last product of a page has no rule under it (a silent loss of one row on food page 7 until a count against Pearl Scan showed it); a section bar's "per portion" label is drawn above the rule that bounds the row; the bars of food pages 17-19 and all beverage pages have no base label (figures are per portion or per drink size; read so); some bottled drinks leave cells blank ("<0.5g" printed with a unit, fibre missing); "BUTTERMILK" is an allergen word; a dash in the allergen column means none; the registered mark is a tiny or unmapped glyph (dropped); Pearl Scan reordered the words of "Sugar Free Hazelnut Flavour Syrup".
 - **Pearl Scan:** food 93 of 93 rows and 837 cells, beverage 1,464 of 1,464 rows and 14,640 cells (one `name_fixes` entry); Pearl Scan has no allergen data.
@@ -132,7 +132,7 @@ Every mismatch was settled by looking at the page. In every case so far one of f
 | Domino's pizzas | 18 pages, 1,422 GT rows | done | `grouped_table` reads the pizza, sideways cheese, crust and size labels by position and size order (pages 3-13), the bases, and the sauces, cheese and toppings (pages 14-18, a shared per-100g row); page 2 (six small tables, 95 rows) uses the model for the labels only and the text layer for every figure. 1,420 rows compared, 56,799 cells, 0 mismatches; 2 rows excused (a typo the PDF prints). |
 | Pizza Hut | 24 pages, 483 GT rows | done, approved (section 3.11) | `portion_tables`, `mark_table`, `merge_by_key` |
 | Coffee #1 | food 18 pp, drinks 28 pp | done, approved (section 3.12) | `product_blocks`, `drink_tables` |
-| Starbucks | food 20 pp, drinks 73 pp | built (section 3.13), awaiting approval | `guide_rows`, `modifier_matrix` |
+| Starbucks | food 20 pp, drinks 73 pp | done, approved (section 3.13) | `guide_rows`, `modifier_matrix` |
 | Brewhouse, Cookhouse, Top Golf | menus | judgement | dish name is the text before the first comma |
 
 ## 5. Errors in Pearl Scan, by kind (so they are recognised next time)

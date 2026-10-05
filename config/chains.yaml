@@ -1271,7 +1271,6 @@
         Per 15ml: { base: Per Portion, serving: 15 ml, split: true }
         Per 22.5ml: { base: Per Portion, serving: 22.5 ml, split: true }
 
-
 7_Starbucks:
   chain: Starbucks
   sources:
@@ -1281,7 +1280,7 @@
       parser: guide_rows
       region: UK
       category: food
-      approved: false
+      approved: true
       pages: [4, 5, 7, 8, 9, 10, 12, 14, 15, 17, 18, 19]
       name_x1: 135
       ingredients_x0: 130
@@ -1293,34 +1292,118 @@
       allergen_words: { BUTTERMILK: Milk }
       diet_columns: [Suitable_for_Vegetarian, Suitable_for_Vegan]
       bar_bases: { per portion: Per Portion }
-      nutrients: [energykJ, energykCal, fat, saturates, carbohydrates, sugars, fibre, protein, salt]
+      nutrients:
+        [
+          energykJ,
+          energykCal,
+          fat,
+          saturates,
+          carbohydrates,
+          sugars,
+          fibre,
+          protein,
+          salt,
+        ]
     # Beverage guide (text layer): the name and the ingredient declaration are printed once, then one figure line per size (Tall, Grande, Venti), ten
     # figures (the last is caffeine) and a summary column of allergens. Pages 63 and 64 (Modifiers) are a different table and are not read here.
     - pdf: SUM25_UK_AllergenBook_CORE_BEVERAGE_v02_201.pdf
       parser: guide_rows
       region: UK
       category: drinks
-      approved: false
-      pages: [4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20, 21, 22, 23, 24, 25, 27, 28, 29, 30, 32, 33, 34, 35, 37, 39, 40, 41, 42, 43, 44, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 65, 67, 68, 69, 70, 71, 72]
+      approved: true
+      pages:
+        [
+          4,
+          5,
+          6,
+          7,
+          8,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          27,
+          28,
+          29,
+          30,
+          32,
+          33,
+          34,
+          35,
+          37,
+          39,
+          40,
+          41,
+          42,
+          43,
+          44,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58,
+          59,
+          60,
+          61,
+          65,
+          67,
+          68,
+          69,
+          70,
+          71,
+          72,
+        ]
       name_x1: 92
       ingredients_x0: 94
       figures_x0: 495
       size_x0: 470
-      name_fixes: { Hazelnut Flavour Sugar Free Syrup: Sugar Free Hazelnut Flavour Syrup } # Pearl Scan reordered the words of this name
+      name_fixes: {
+          Hazelnut Flavour Sugar Free Syrup: Sugar Free Hazelnut Flavour Syrup,
+        } # Pearl Scan reordered the words of this name
       allergens_x0: 728
       markers: { '': 'No' }
       default_base: Per Portion
       no_allergen_marks: ['-']
       allergen_words: { BUTTERMILK: Milk }
       bar_bases: { per portion: Per Portion }
-      nutrients: [energykJ, energykCal, fat, saturates, carbohydrates, sugars, fibre, protein, salt, caffeine] # ten figure columns on every page; another count raises
+      nutrients: [
+          energykJ,
+          energykCal,
+          fat,
+          saturates,
+          carbohydrates,
+          sugars,
+          fibre,
+          protein,
+          salt,
+          caffeine,
+        ] # ten figure columns on every page; another count raises
     # Modifiers (pages 63 and 64): calories and a tick (a drawn shape) under each allergen. The legend says a tick means the allergen is present; the guide
     # summarises the allergens of its beverages, so an unticked allergen is "No". The ticks of Wheat to Kamut are not read as gluten (none is ticked here).
     - pdf: SUM25_UK_AllergenBook_CORE_BEVERAGE_v02_201.pdf
       parser: modifier_matrix
       region: UK
       category: drinks
-      approved: false
+      approved: true
       pages: [63, 64]
       name_x1: 134
       serving_x0: 134
