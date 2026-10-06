@@ -114,4 +114,4 @@ Config-only chain on an existing parser: 1-3 points. New option on a parser: 3-5
 
 ## 9. Commands added at the end of the round
 
-`python -m pipeline.cli flags` (every flagged row, `outputs/_flags.csv`), `report` (one line per PDF: rows, flags, exact duplicates, golden rows, Pearl Scan present, model-read pages; `outputs/_verification.csv`), `eval` is strict by default (`--lenient` to only print a notice). See `docs/end-of-round-report-2026-10.md`.
+`python -m pipeline.cli flags` (every flagged row, `outputs/_flags.csv`), `report` (one line per PDF: rows, flags, exact duplicates, golden rows, Pearl Scan present, model-read pages; `outputs/_verification.csv`), `eval` is strict by default (`--lenient` to only print a notice). See `docs/end-of-round-report-2026-10.md`. Cost of a round on the SDK: `docs/sdk-cost-estimate-2026-10.md`.
