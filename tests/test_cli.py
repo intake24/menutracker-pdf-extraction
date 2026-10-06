@@ -198,3 +198,15 @@ def test_the_backend_option_sets_the_llm_backend_and_refuses_an_unknown_one(monk
     assert llm.BACKEND == "sdk"
     with pytest.raises(SystemExit):
         cli.apply_backend("nonsense")
+
+
+def test_review_pages_lists_pages_with_fewer_rows_than_the_text_layer_suggests(tmp_path, monkeypatch):
+    from pipeline import cli
+    out = tmp_path / "o"
+    out.mkdir()
+    (out / "9_Demo.csv").write_text("Product_Name,source_file,source_page,method,flags\n" + "".join(f"A{p}{i},a.pdf,{p},parser,\n" for p in (1, 2) for i in range(10))
+                                    + "".join(f"B{i},a.pdf,3,parser,\n" for i in range(9)))
+    chains = tmp_path / "chains.yaml"
+    chains.write_text("9_Demo:\n  chain: Demo\n  sources:\n    - {pdf: a.pdf, parser: p, approved: true}\n")
+    monkeypatch.setattr(cli, "numeric_lines", lambda pdf, k: {1: 10, 2: 10, 3: 10})
+    assert cli.review_pages(tmp_path, chains, out) == ["9_Demo a.pdf page 3: 9 rows, about 10 expected from the text layer"]

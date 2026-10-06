@@ -9,7 +9,7 @@ from pathlib import Path
 import yaml
 
 from pipeline.columns import PROVENANCE, load_columns
-from pipeline.coverage import numeric_lines, shortfalls
+from pipeline.coverage import numeric_lines, page_gaps, shortfalls
 from pipeline.evaluate import compare_golden, compare_ground_truth, ground_truth_file, read_csv
 from pipeline.export import finalise, merge_by_key, write_csv
 from pipeline import llm
@@ -167,6 +167,26 @@ def coverage(inputs: Path, chains_file: Path) -> list[str]:
     return out
 
 
+def review_pages(inputs: Path, chains_file: Path, outputs: Path) -> list[str]:
+    """For every approved source with figures in its text layer, any layout: pages with fewer rows than the text layer suggests.
+
+    Meant as a list for a person to open, not a pass or fail: an intro page or a wrapped line can add a data-looking line."""
+    out = []
+    for key, chain in load_chains(chains_file).items():
+        path = outputs / f"{key}.csv"
+        if not approved(chain) or not path.exists():
+            continue
+        rows = read_csv(path)
+        for pdf in dict.fromkeys(s["pdf"] for s in chain["sources"]):
+            lines = numeric_lines(inputs / pdf, 3)
+            if sum(lines.values()) < 5:
+                continue   # no figures in the text layer (images, or kcal in words): row counts come from the model checks instead
+            mine = [r for r in rows if r.get("source_file") == pdf]
+            for page, (have, expected) in sorted(page_gaps(mine, lines).items()):
+                out.append(f"{key} {pdf} page {page}: {have} rows, about {expected} expected from the text layer")
+    return out
+
+
 VISION = {"vision_table": vision_table, "vision_products": vision_products, "vision_pairs": vision_pairs}
 
 
@@ -318,6 +338,9 @@ def main(argv: list[str] | None = None) -> None:
         print(f"{len(rows)} flags -> outputs/_flags.csv")
     elif args.cmd == "coverage":
         gaps = coverage(ROOT / "inputs", chains_file)
+        review = review_pages(ROOT / "inputs", chains_file, ROOT / "outputs")
+        if review:
+            print("pages to look at (any layout; a list, not a failure):\n" + "\n".join(review))
         print("\n".join(gaps) or "coverage: every data-looking line has a row")
         sys.exit(1 if gaps else 0)
     elif args.cmd == "eval":

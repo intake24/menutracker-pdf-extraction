@@ -29,3 +29,25 @@ def shortfalls(rows: list[dict], lines: dict[int, int]) -> dict[int, tuple[int, 
     """page -> (rows, data-looking lines) where the page has fewer rows than lines."""
     have = Counter(r["source_page"] for r in rows)
     return {p: (have[p], n) for p, n in lines.items() if have[p] < n}
+
+
+def page_gaps(rows: list[dict], lines: dict[int, int], slack: float = 0.75) -> dict[int, tuple[int, int]]:
+    """page -> (rows, rows expected) for any text-layer layout, not only one data line per row.
+
+    A source has a typical number of data-looking lines per row (1 for a plain table, 9 for blocks with a figure column); the
+    expected rows of a page are its lines divided by that typical ratio (the median over the source's pages). A page that has
+    `slack` of a row or more fewer than expected is listed (one lost row on a page is enough). A merged row ("17, 2") counts on each of its pages."""
+    have: Counter = Counter()
+    for r in rows:
+        for page in str(r["source_page"]).split(","):
+            have[int(page)] += 1
+    ratios = sorted(n / have[p] for p, n in lines.items() if have[p])
+    if not ratios:
+        return {}
+    typical = ratios[len(ratios) // 2]
+    gaps = {}
+    for p, n in lines.items():
+        expected = n / typical
+        if expected - have[p] >= slack:
+            gaps[p] = (have[p], round(expected))
+    return gaps
