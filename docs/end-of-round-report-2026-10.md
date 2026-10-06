@@ -32,6 +32,22 @@ Each one was fixed with a test that failed first.
 
 **Model reads of small print are unreliable.** 23% of the figures on Domino's page 2 were wrong, so figures now come from the text layer wherever there is one, and the model only reads labels. For menus, every figure printed in the text layer must appear in a row the model returned (`text_check`). An answer that fails the check is not saved.
 
+## 2b. Independence from Pearl Scan
+
+**The values in `outputs/` come from the pipeline alone.** Only `eval` and `report` read `inputs/ground-truth/`, to compare and to describe. `run`, the parsers and the model calls never read it, so deleting that folder would give identical CSVs (checked in the code, and `eval` was run against an empty folder).
+
+**Pearl Scan did shape how the pipeline was built.** While building each parser we compared its output with Pearl Scan and fixed what differed. Pearl Scan's row counts caught three silent losses of a page's last row (Coffee #1, Starbucks, Domino's). The menu naming rules (add-ons keep their own name, options are "<dish> - <option>") were written partly to match its conventions. Sixteen settings in `config/chains.yaml` (`name_fixes`, `known_gaps`, `pearlscan`) exist only to line names and columns up for `eval` and do not change the CSVs. The 75 recorded Pearl Scan mistakes decided which differences we treated as Pearl Scan's fault.
+
+**What to expect from the next batch.** This round's accuracy (every shared figure agreeing, apart from 75 Pearl Scan mistakes) is an upper bound, not a promise.
+
+| Expect to hold | Expect to be weaker |
+|---|---|
+| Same chains and layouts: the same rules and parsers, so quality close to this round | A new layout: no parser yet, and a silently lost row is no longer caught by Pearl Scan's row counts |
+| Text-layer sources: deterministic, the same result on every run | Model-read pages: only the arithmetic flags and the second read back up the figures |
+| Menus: the text-layer figure count (`text_check`) | Names and the naming of add-ons and options: nothing to compare them with |
+
+The checks in section 4 replace Pearl Scan, and each is weaker than a full comparison, so plan on more review for any new layout.
+
 ## 3. How the data is mapped
 
 The full detail is in `chain-mapping-reference.md`. The main rules are:
