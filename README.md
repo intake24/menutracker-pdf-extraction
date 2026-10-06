@@ -2,7 +2,7 @@
 
 Turns the allergen and nutrition PDFs that Menu Tracker scrapes from UK food chains into CSVs, replacing the paid Pearl Scan (human) process. One CSV per chain, one row per food, drink or product.
 
-Design: [docs/pipeline-design.md](docs/pipeline-design.md). Implementation plans: [docs/superpowers/plans/](docs/superpowers/plans/).
+**New here? Read [docs/start-here.md](docs/start-here.md)** (how it works, code map, commands, rules, which document answers which question). Agents: see also [AGENTS.md](AGENTS.md). Current state and known limits: [docs/end-of-round-report-2026-10.md](docs/end-of-round-report-2026-10.md). Original design (historical): [docs/pipeline-design.md](docs/pipeline-design.md).
 
 ## Quick start
 

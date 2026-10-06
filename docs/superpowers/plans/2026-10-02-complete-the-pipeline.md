@@ -1,3 +1,5 @@
+> **Historical plan.** Kept as a record of how the work was planned; the state of the project is in `docs/start-here.md` and `docs/end-of-round-report-2026-10.md`.
+
 # Complete the Pipeline: Remaining 12 Chains, LLM Routes, Finish Implementation Plan
 
 **Status: approved by the user on 2026-10-02.** Before Slice 6 starts, a 5-page calibration run measures how much plan quota a call uses (see Task 6.10).

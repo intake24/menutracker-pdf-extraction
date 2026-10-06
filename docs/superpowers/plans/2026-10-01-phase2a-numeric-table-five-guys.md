@@ -1,3 +1,5 @@
+> **Historical plan.** Kept as a record of how the work was planned; the state of the project is in `docs/start-here.md` and `docs/end-of-round-report-2026-10.md`.
+
 # Phase 2a: Generic Numeric-Table Parser + Five Guys Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

@@ -1,5 +1,7 @@
 # Menu PDF → Nutrition & Allergen CSV: Pipeline Design
 
+> **Historical document (written 2026-10-01).** The architecture and the output rules still hold; the stage details, the backend options (section 8), the rollout (section 10) and the open questions (section 11) were overtaken by the code. For the current state read `start-here.md` and `end-of-round-report-2026-10.md`.
+
 Status: draft v3 · 2026-10-01 (design-review decisions in §12; Phase 2 survey findings in §2 and §10)
 
 ## 1. Goal
