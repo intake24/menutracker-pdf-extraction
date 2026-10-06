@@ -108,7 +108,8 @@ Run them with `uv run python -m pipeline.cli <command>` (or `.venv/bin/python -m
 
 | Command | Use |
 |---|---|
-| `manifest` | List every PDF with its parser; run again after editing `chains.yaml` |
+| `manifest` | List every PDF with its parser, and say which PDFs are `new` or `changed` since the last manifest and which are `unassigned`; run it after new PDFs arrive and after editing `chains.yaml` |
+| `scaffold --chain KEY --pdf FILE [--out FILE]` | Print a draft `chains.yaml` entry for a new or updated PDF (section 7); it edits nothing |
 | `run [--chain KEY]` | Build the CSVs of approved chains. A chain that is skipped or stopped has its old CSV moved to `outputs/_stale/` |
 | `eval [--lenient]` | Compare with Pearl Scan and golden rows. Fails when a source has nothing to compare against |
 | `coverage` | Rows against the text layer per page; lists pages to look at |
@@ -121,6 +122,18 @@ Run them with `uv run python -m pipeline.cli <command>` (or `.venv/bin/python -m
 Tests: `uv run pytest` (about two minutes; they read PDFs from `inputs/`). If `pytest` is not found, use `.venv/bin/python -m pytest`.
 
 ## 7. Common tasks
+
+**When new PDFs arrive or a chain publishes a newer issue.** Nobody and nothing edits `config/chains.yaml` automatically: a developer or agent does, and a person approves. The intake steps:
+
+1. Put the PDFs in `inputs/` (the scraper does this).
+2. Run `python -m pipeline.cli manifest`. It prints how many PDFs are `new` (not in the previous manifest), `changed` (same file name but different text or bytes, for example a replaced PDF) and `unassigned` (no source in the config), lists them, and tells you the next command. A file with a new name also shows as `new` (and, once the old file is gone, the old name is printed as `removed`).
+3. For each new or changed PDF run `python -m pipeline.cli scaffold --chain KEY --pdf FILE`. The chain key is `<id>_<Name>` from Menu Tracker's `menutracker.ipynb`; for a chain that already exists use its key from `config/chains.yaml`. The command prints a draft and edits nothing (`--out FILE` also saves it).
+   - **Updated issue of a known document** (the file name differs only in a date, month or version): the draft copies the matching source with the new file name and `approved: false`. The layout is probably unchanged. It also tells you which golden file belongs to the old file, to copy and re-check.
+   - **A new document of a known chain, or a new chain:** the draft is a skeleton with `parser: TODO`, plus comments that list the parsers that fit the layout features (no text layer, many figure lines, printed marks) with the reason. Choose by looking at the rendered pages and the parser table in section 4; the list is a hint.
+4. Paste the draft into `config/chains.yaml`, run the chain on an approved copy of the config, and follow the checks in the end-of-round report section 4. If the PDF replaced an older issue, remove the old source when the new one is approved. Copy or rename the golden file and any Pearl Scan lookups, which are named after the PDF file.
+5. A person sets `approved: true`. Then `run` and `eval`.
+
+If the layout changed, text-layer parsers usually stop with an error that says what they did not expect; that is the intended behaviour. A model-read source has fewer such guards, so run `reread --pages all` and look at the pages `coverage` lists.
 
 **Add a chain.** Follow `playbook-new-batches.md` section 2 and the end-of-round report section 4: manifest, look at rendered pages (`pdftoppm -r 80`), choose a parser, add the source with `approved: false`, run it on an approved copy of the config (see `chains_file` in `tests/test_cli.py`), read every flag, write golden rows with `golden`, ask for a fresh review, then a person approves.
 

@@ -26,8 +26,21 @@ class SourceNotApproved(Exception):
 
 
 def manifest(inputs: Path, chains_file: Path, out: Path) -> list[dict]:
+    """The page, text and parser report of every PDF, with a `status` against the previous manifest: new (not in it), changed (its
+    text or its bytes differ: a replaced PDF, or image-only pages that were re-issued) or same. PDFs that disappeared are listed on screen."""
     chains = load_chains(chains_file)
     rows = [manifest_row(p, chains) for p in sorted(inputs.glob("*.pdf"))]
+    before = {r["file"]: r for r in read_csv(out)} if out.exists() else {}
+    for r in rows:
+        old = before.get(r["file"])
+        if old is None:
+            r["status"] = "new"
+        else:   # an old manifest without file_sha is judged by its text hash alone
+            same_bytes = old.get("file_sha", r["file_sha"]) == r["file_sha"]
+            r["status"] = "same" if old["text_sha"] == r["text_sha"] and same_bytes else "changed"
+    gone = sorted(set(before) - {r["file"] for r in rows})
+    if gone:
+        print(f"removed since the last manifest: {', '.join(gone)}")
     out.parent.mkdir(parents=True, exist_ok=True)
     with out.open("w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0]))
@@ -324,6 +337,10 @@ def main(argv: list[str] | None = None) -> None:
     reread_p.add_argument("--pdf", default="", help="only sources whose file name contains this")
     sub.add_parser("flags", help="every flagged row of every chain -> outputs/_flags.csv (the PDFs' own inconsistencies and parser warnings)")
     sub.add_parser("report", help="one line per source: rows, flags, golden rows, Pearl Scan present, model-read pages -> outputs/_verification.csv (no model calls)")
+    scaffold_p = sub.add_parser("scaffold", help="draft the chains.yaml entry for a new or updated PDF (prints it; edits nothing)")
+    scaffold_p.add_argument("--chain", required=True, help="the chain key, e.g. 16_Beefeater (a new chain: <id>_<Name> from menutracker.ipynb)")
+    scaffold_p.add_argument("--pdf", required=True, help="file name in inputs/")
+    scaffold_p.add_argument("--out", help="also write the draft to this file")
     golden_p = sub.add_parser("golden", help="write golden/<pdf stem>.csv with every value column for the chosen rows, to be checked against the page by hand")
     golden_p.add_argument("--chain", required=True)
     golden_p.add_argument("--pdf-stem", required=True)
@@ -337,6 +354,13 @@ def main(argv: list[str] | None = None) -> None:
     if args.cmd == "manifest":
         rows = manifest(ROOT / "inputs", chains_file, ROOT / "work" / "manifest.csv")
         print(f"{len(rows)} PDFs -> work/manifest.csv; parsers: {dict(Counter(r['parser'] for r in rows))}")
+        counts = Counter(r["status"] for r in rows)
+        print(f"since the last manifest: {counts['new']} new, {counts['changed']} changed, {counts['same']} same; {sum(r['parser'] == 'unassigned' for r in rows)} unassigned")
+        for r in rows:
+            if r["status"] != "same" or r["parser"] == "unassigned":
+                print(f"  {r['status']:<8}{r['file']}  ({r['parser']})")
+        if counts["new"] + counts["changed"] or any(r["parser"] == "unassigned" for r in rows):
+            print("next: python -m pipeline.cli scaffold --chain KEY --pdf FILE  (drafts the config entry; see docs/start-here.md)")
     elif args.cmd == "run":
         stopped: list[str] = []
         for path, rows in run(ROOT / "inputs", chains_file, ROOT / "outputs", args.chain, stopped).items():
@@ -368,6 +392,16 @@ def main(argv: list[str] | None = None) -> None:
             print(f"{r['chain']:<16}{r['source_file'][:44]:<46}rows {r['rows']:>5}  err {r['errors']:>3}  warn {r['warnings']:>3}  dup {r['exact_duplicates']:>3}  golden {r['golden_rows']:>3}  pearl {r['pearl_scan']:<3}  model pages {r['model_read_pages']:>3}  reread {r['reread_pages']:>3} ({r['reread_differences']} diff)")
         weak = [r for r in rows if r["golden_rows"] == 0 and r["pearl_scan"] == "no"]
         print(f"{len(rows)} sources; without golden rows or Pearl Scan: {[r['source_file'] for r in weak] or 'none'}")
+    elif args.cmd == "scaffold":
+        from pipeline.scaffold import draft_entry, layout_features
+        pdf = ROOT / "inputs" / args.pdf
+        if not pdf.exists():
+            raise SystemExit(f"{pdf} does not exist: put the PDF in inputs/ first")
+        draft = draft_entry(load_chains(chains_file), args.chain, args.pdf, layout_features(pdf))
+        print(draft)
+        if args.out:
+            Path(args.out).write_text(draft)
+            print(f"(also written to {args.out}; nothing was added to config/chains.yaml)")
     elif args.cmd == "golden":
         path = write_golden_skeleton(ROOT / "outputs", ROOT / "golden", args.chain, args.pdf_stem, [p for p in args.rows.split(";") if p.strip()])
         print(f"{path.relative_to(ROOT)} written: check every cell against the page, then commit it")

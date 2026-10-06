@@ -113,6 +113,7 @@ def manifest_row(pdf: Path, chains: dict) -> dict:
         "pages": len(pages),
         "chars": sum(sizes),
         "text_sha": text_sha(pages),
+        "file_sha": hashlib.sha256(pdf.read_bytes()).hexdigest()[:16],
         "chains": " ".join(key for key, _ in users),
         "parser": " ".join(sorted({s["parser"] for _, s in users})) or "unassigned",
         "image_pages": " ".join(str(i) for i, n in enumerate(sizes, start=1) if n < IMAGE_PAGE_MAX_CHARS),

@@ -20,7 +20,7 @@ Rule of thumb: a source is *approved* when (a) it parses without raising, (b) `c
 
 ## 2. Order of work for a new chain
 
-1. `python -m pipeline.cli manifest` -> `work/manifest.csv`: pages, characters, image-only pages, assigned parser.
+1. `python -m pipeline.cli manifest` -> `work/manifest.csv`: pages, characters, image-only pages, assigned parser, and `status` (new, changed or same since the last manifest). Then `python -m pipeline.cli scaffold --chain KEY --pdf FILE` for each new or changed PDF: it prints a draft config entry (see `start-here.md`, section 7).
 2. Look at 2–3 rendered pages (`pdftoppm -r 80`) and the `pdftotext -layout` text. Decide the layout (section 3).
 3. Text layer fine -> config only if a parser covers the layout; otherwise extend a parser with an opt-in option. Text layer corrupt (digits missing, `197` printed as `19`) -> `vision_table`.
 4. Write the config (unapproved), run `run --chain KEY` against a temp config with approvals on (see `tests/test_cli.py: chains_file`), read the flags and `coverage`.
@@ -117,3 +117,5 @@ Config-only chain on an existing parser: 1-3 points. New option on a parser: 3-5
 `python -m pipeline.cli flags` (every flagged row, `outputs/_flags.csv`), `report` (one line per PDF: rows, flags, exact duplicates, golden rows, Pearl Scan present, model-read pages; `outputs/_verification.csv`), `eval` is strict by default (`--lenient` to only print a notice). See `docs/end-of-round-report-2026-10.md`. Cost of a round on the SDK: `docs/sdk-cost-estimate-2026-10.md`.
 
 `golden` writes a golden skeleton with every value column; `reread --pages all` rereads every model-read page and `report` shows the count; `coverage` also lists pages with fewer rows than the text layer suggests; `--backend sdk` switches the model backend.
+
+`manifest` now also reports `new`, `changed` and `same`; `scaffold` drafts the config entry for a new or updated PDF.

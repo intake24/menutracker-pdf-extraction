@@ -11,7 +11,8 @@ Needs Python 3.12, [uv](https://docs.astral.sh/uv/) and poppler (`pdftotext`). `
 ```bash
 uv sync
 uv run pytest                              # tests read PDFs from inputs/ (not in git)
-uv run python -m pipeline.cli manifest     # which parser each PDF in inputs/ uses -> work/manifest.csv
+uv run python -m pipeline.cli manifest     # which parser each PDF in inputs/ uses, and which are new/changed/unassigned -> work/manifest.csv
+uv run python -m pipeline.cli scaffold --chain KEY --pdf FILE   # draft the config entry for a new or updated PDF (prints, edits nothing)
 uv run python -m pipeline.cli run          # -> outputs/<id>_<Chain>.csv
 uv run python -m pipeline.cli eval         # compare outputs with Pearl Scan and golden rows; exit 1 on failure (a source with nothing to compare against fails too; --lenient to only warn)
 uv run python -m pipeline.cli coverage     # rows against the text layer, per page; lists pages to look at

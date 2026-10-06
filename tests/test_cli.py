@@ -228,3 +228,41 @@ def test_golden_skeleton_has_every_value_column_for_the_chosen_rows_and_never_ov
         write_golden_skeleton(out, gold, "9_Demo", "a", ["Tea"])
     with pytest.raises(SystemExit, match="Coffee"):
         write_golden_skeleton(out, gold, "9_Demo", "b", ["Coffee"])
+
+
+def test_manifest_marks_each_pdf_new_changed_or_same_against_the_previous_manifest(tmp_path):
+    import shutil
+
+    from pipeline.cli import manifest
+    inputs = tmp_path / "in"
+    inputs.mkdir()
+    shutil.copy(ROOT / "inputs" / "nutrition.pdf", inputs / "a.pdf")
+    shutil.copy(ROOT / "inputs" / "nutritional-information.pdf", inputs / "b.pdf")
+    chains = tmp_path / "chains.yaml"
+    chains.write_text("{}\n")
+    out = tmp_path / "work" / "manifest.csv"
+    first = manifest(inputs, chains, out)
+    assert {r["file"]: r["status"] for r in first} == {"a.pdf": "new", "b.pdf": "new"}                      # no previous manifest
+    assert {r["status"] for r in manifest(inputs, chains, out)} == {"same"}
+    shutil.copy(ROOT / "inputs" / "nutrition_pizzas.pdf", inputs / "a.pdf")                                  # replaced in place
+    shutil.copy(ROOT / "inputs" / "nutrition.pdf", inputs / "c.pdf")
+    third = {r["file"]: r["status"] for r in manifest(inputs, chains, out)}
+    assert third == {"a.pdf": "changed", "b.pdf": "same", "c.pdf": "new"}
+    (inputs / "b.pdf").unlink()
+    assert {r["file"] for r in manifest(inputs, chains, out)} == {"a.pdf", "c.pdf"}                          # a removed PDF is only reported on screen
+
+
+def test_manifest_changes_are_detected_from_the_file_bytes_for_image_only_pdfs(tmp_path, monkeypatch):
+    import shutil
+
+    from pipeline import cli
+    inputs = tmp_path / "in"
+    inputs.mkdir()
+    shutil.copy(ROOT / "inputs" / "nutrition.pdf", inputs / "a.pdf")
+    monkeypatch.setattr(cli, "page_texts", lambda pdf: [""])                  # no text layer: the text hash is the same for every file
+    chains = tmp_path / "chains.yaml"
+    chains.write_text("{}\n")
+    out = tmp_path / "m.csv"
+    cli.manifest(inputs, chains, out)
+    shutil.copy(ROOT / "inputs" / "nutritional-information.pdf", inputs / "a.pdf")
+    assert cli.manifest(inputs, chains, out)[0]["status"] == "changed"

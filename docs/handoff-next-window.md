@@ -6,6 +6,7 @@ Read in this order: `start-here.md` (how the project works and the rules), `end-
 
 ## Open items for the next batch
 
+0. Intake: run `manifest` (new, changed, unassigned) and `scaffold` for each PDF: `start-here.md` section 7.
 1. Run one page with `--backend sdk` and compare the answer with the cached headless one: the SDK path has only been tested with a fake client.
 2. For every model-read source of the new batch run `reread --pages all` and check that `report` shows the reread column equal to the model-read pages column.
 3. Write golden files with `golden` (allergens, diet cells and nutrition figures) and check every cell against the page or `pdftotext`; ask a second person to spot-check them.

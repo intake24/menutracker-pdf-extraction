@@ -64,7 +64,7 @@ Similar products stay separate. Two rows are merged only when they are very like
 
 ## 4. Running a new batch without Pearl Scan
 
-1. Put the PDFs in `inputs/` and run `python -m pipeline.cli manifest`. Look at two or three rendered pages of each PDF, choose a parser from the table in the mapping reference, and add the source to `config/chains.yaml` with `approved: false`.
+1. Put the PDFs in `inputs/` and run `python -m pipeline.cli manifest` (it lists new, changed and unassigned PDFs). Run `scaffold --chain KEY --pdf FILE` for each to get a draft entry. Look at two or three rendered pages of each PDF, choose a parser from the table in the mapping reference, and add the source to `config/chains.yaml` with `approved: false`.
 2. Run the chain on a temporary approved copy of the config (see `chains_file` in `tests/test_cli.py`). Read every flag, then run `coverage` for text-layer PDFs, or `pages` and `reread` for model-read PDFs.
 3. Read the PDF's introduction and key pages to learn what a blank allergen cell means, and set `markers` to match.
 4. Write golden rows from the rendered page: allergens, diet cells and a few nutrition figures. Check the figures against `pdftotext` or the page image, not against the parser. Include a "may contain" row, an empty row and an unusual row.
@@ -75,7 +75,8 @@ Similar products stay separate. Two rows are merged only when they are very like
 
 | Command | What it does |
 |---|---|
-| `manifest` | Lists every PDF with its pages, text and assigned parser |
+| `manifest` | Lists every PDF with its pages, text and assigned parser, and marks each `new`, `changed` or `same` since the last manifest |
+| `scaffold --chain KEY --pdf FILE` | Prints a draft `chains.yaml` entry for a new or updated PDF (copies the matching source for a newer issue; a skeleton with parser hints otherwise); edits nothing |
 | `run [--chain KEY]` | Extracts every approved chain into `outputs/` |
 | `eval [--lenient]` | Compares outputs with Pearl Scan and golden rows. Strict by default: a source with nothing to compare against fails |
 | `coverage` | Finds text-layer pages with more data lines than rows, and lists pages (any layout) with fewer rows than the text layer suggests, as a list to look at |
