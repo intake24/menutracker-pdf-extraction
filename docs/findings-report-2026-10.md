@@ -17,7 +17,7 @@ Status date 2026-10-02. This report records what was found when every extracted 
 | Papa John's | 1 (image pages) | 435 | 434 rows, 6,943 cells, 0 mismatches after 7 errata | 1 critical + 4 important (review) | Approved |
 | Coffee #1, Starbucks, Brewhouse, Cookhouse, Top Golf | not done | | | | Surveyed or not started, see section 4 |
 
-Totals in `outputs/`: 14 chain CSVs, 8,309 rows. Pearl Scan agreement is exact on every compared cell once the 66 confirmed Pearl Scan mistakes are excused. Allergen data has no ground truth anywhere; it is checked by hand-verified golden rows only.
+Totals in `outputs/`: 17 chain CSVs, 8,768 rows. Pearl Scan agreement is exact on every compared cell once the 66 confirmed Pearl Scan mistakes are excused. Allergen data has no ground truth anywhere; it is checked by hand-verified golden rows only.
 
 ## 2. How the checks worked and who decides
 
@@ -124,7 +124,7 @@ Every mismatch was settled by looking at the page. In every case so far one of f
 - **Output:** 1,557 rows (food 93, drinks 1,426, modifiers 38). Flags are the PDF's own: kJ against kcal on 33 rows, Atwater on 12, and "<0.5g" figures fail the number pattern (Pearl Scan kept them as printed too).
 - **Judgements for the user:** an allergen not named in the summary column is "No" (the guides summarise every allergen); oats printed as "gluten free OATS" set oats without gluten, plain OATS set gluten; a tick under Wheat, Rye, Barley, Spelt or Kamut on the Modifiers pages also sets gluten; `Category` is the running head's menu and the section bar ("Seasonal Menu - Loaf Cakes & Muffins"); beverage pages 69-72 print "Reserve" in their running head though they continue other sections, kept as printed; the base of bar-less figures is Per Portion.
 
-### 3.14 Menu chains: Brewhouse, Cookhouse, Top Golf (7 menu PDFs, 19 pages read by the model; built, awaiting approval)
+### 3.14 Menu chains: Brewhouse, Cookhouse, Top Golf (7 menu PDFs, 19 pages read by the model; approved 2026-10-06)
 - **Layouts:** free multi-column menus (a dish is a bold name, a description, tags, "(589kcal)" and a price). Only kcal is printed: no allergen columns, no nutrients, prices not extracted. The Cookhouse main menu has a partly garbled text layer (wine descriptions) but its figures are readable; Top Golf prints "(839 kcal.)" and "(952 cal. / 1044 kcal.)".
 - **Method:** `vision_table` reads each page (200 dpi) with instructions for names and options; a new `text_check` compares every kcal figure printed in the text layer with the rows the model read, as a multiset: a dish left out or a figure invented stops the run and the answer is not cached (it found missed dishes on Brewhouse page 1, "98l" for 981 on Top Golf, and one hidden Fruit Tea on Top Golf page 7 that is in the text layer but not on the page: `page_ignore`). The check also compares the dietary tags V and VE with the text layer where it prints them next to the figure; the beer pairing letters (circled icons) are not read. A cached answer that fails a stricter check is asked again.
 - **Pearl Scan:** Brewhouse 126 of 126 rows (4 menus), every kcal matches. Cookhouse kids 33 of 33; main menu 170 Pearl Scan rows: every Pearl Scan figure is among our 177 rows (the text layer proves all printed figures are rows) and 40 names differ (its curated names such as "Beef & Ale Pie - With mash"), recorded as `known_gaps: 40`; Pearl Scan left out 7 printed figures (6 drinks and "Swap your bun for a fresh mixed salad"). Top Golf 118 Pearl Scan rows against our 121 (Pearl Scan left out the figures inside descriptions: house fries 197, house salad 82 and a bacon add-on 117); 12 names differ, `known_gaps: 12`.
@@ -141,7 +141,7 @@ Every mismatch was settled by looking at the page. In every case so far one of f
 | Pizza Hut | 24 pages, 483 GT rows | done, approved (section 3.11) | `portion_tables`, `mark_table`, `merge_by_key` |
 | Coffee #1 | food 18 pp, drinks 28 pp | done, approved (section 3.12) | `product_blocks`, `drink_tables` |
 | Starbucks | food 20 pp, drinks 73 pp | done, approved (section 3.13) | `guide_rows`, `modifier_matrix` |
-| Brewhouse, Cookhouse, Top Golf | 7 menu PDFs | built (section 3.14), awaiting approval | `vision_table` with `text_check` |
+| Brewhouse, Cookhouse, Top Golf | 7 menu PDFs | done, approved (section 3.14) | `vision_table` with `text_check` |
 
 ## 5. Errors in Pearl Scan, by kind (so they are recognised next time)
 

@@ -1,6 +1,6 @@
 # Handoff for the next quota window
 
-State on 2026-10-05: fourteen chains live and approved (Krispy Kreme, Pizza Hut, Coffee #1 and Starbucks added 2026-10-05, findings 3.10 to 3.13), `outputs/` holds fourteen CSVs (8,309 rows), 287 tests pass, 66 Pearl Scan mistakes recorded in `config/ground_truth_errata.yaml`. Read `docs/findings-report-2026-10.md` (what was found and the lessons), `docs/chain-mapping-reference.md` (what each chain's PDFs map to) and `docs/playbook-new-batches.md` (how to onboard a chain) first.
+State on 2026-10-05: seventeen chains live and approved (Krispy Kreme, Pizza Hut, Coffee #1 and Starbucks added 2026-10-05, findings 3.10 to 3.13), `outputs/` holds seventeen CSVs (8,768 rows), 297 tests pass, 66 Pearl Scan mistakes recorded in `config/ground_truth_errata.yaml`. Read `docs/findings-report-2026-10.md` (what was found and the lessons), `docs/chain-mapping-reference.md` (what each chain's PDFs map to) and `docs/playbook-new-batches.md` (how to onboard a chain) first.
 
 ## Remaining sources, in the order I would do them
 
@@ -8,7 +8,7 @@ State on 2026-10-05: fourteen chains live and approved (Krispy Kreme, Pizza Hut,
 2. Pizza Hut: done and approved.
 3. Coffee #1: done and approved.
 3b. Starbucks: done and approved.
-4. Brewhouse, Cookhouse, Top Golf: built on branch `menus`, `approved: false` for chains `45_Brewhouse`, `49_CookhousePub`, `73_TopGolf` (findings 3.14); needs the user's approval, then `run`, `eval`, commit.
+4. Brewhouse, Cookhouse, Top Golf: done and approved (all 17 food chains are in `outputs/`).
 5. Final slice: a flags report across all chains, an automatic row-count check for model-read pages, a last review of the whole pipeline.
 
 ## Before approving anything

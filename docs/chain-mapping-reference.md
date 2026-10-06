@@ -36,7 +36,7 @@ Model reads use `claude -p --model claude-sonnet-5-5`, cached under `work/llm/` 
 
 ## 3. Per chain
 
-Row counts are those of `outputs/` on 2026-10-05 (8,309 in total).
+Row counts are those of `outputs/` on 2026-10-05 (8,768 in total).
 
 | Chain | PDFs and regions | Rows | Allergen cells | What to know when reading the CSV |
 |---|---|---|---|---|
