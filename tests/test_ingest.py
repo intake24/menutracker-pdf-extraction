@@ -55,3 +55,18 @@ def test_fine_words_refuse_to_guess_when_the_pieces_do_not_rebuild_the_word():
     # Slanted text: the character pass groups characters across lines, so a number could silently become another.
     with pytest.raises(ValueError, match="could not split"):
         page_words_fine(INPUTS / "C_1-Core-Beverage-Allergen-Nutritional-Information-March-2025-Issued-28.03.25-3.pdf")
+
+
+def test_every_pdf_in_inputs_is_assigned_to_a_source_and_every_source_has_its_pdf():
+    used = {s["pdf"] for c in load_chains().values() for s in c["sources"]}
+    present = {p.name for p in INPUTS.glob("*.pdf")}
+    assert present - used == set() and used - present == set()
+
+
+def test_identical_pdfs_may_share_golden_rows_only_when_their_text_is_identical():
+    from pathlib import Path
+    root = Path(__file__).resolve().parent.parent
+    a = root / "golden" / "table_table_allergy_nutrition_ss25_drinks_menu.csv"
+    b = root / "golden" / "brewers_fayre_allergy_nutrition_ss25_drinks_menu.csv"
+    assert a.read_bytes() == b.read_bytes()
+    assert text_sha(page_texts(INPUTS / "table_table_allergy_nutrition_ss25_drinks_menu.pdf")) == text_sha(page_texts(INPUTS / "brewers_fayre_allergy_nutrition_ss25_drinks_menu.pdf"))

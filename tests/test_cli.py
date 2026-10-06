@@ -132,3 +132,16 @@ def test_eval_says_what_it_did_not_evaluate_and_strict_fails_on_it(tmp_path, cap
 def test_coverage_finds_no_page_with_fewer_rows_than_data_looking_lines():
     from pipeline.cli import coverage
     assert coverage(ROOT / "inputs", ROOT / "config" / "chains.yaml") == []
+
+
+def test_flags_lists_every_flagged_row_with_its_chain_file_page_and_flag(tmp_path):
+    from pipeline.cli import collect_flags
+    out = tmp_path / "outputs"
+    out.mkdir()
+    (out / "9_Demo.csv").write_text("Product_Name,Size,source_file,source_page,flags\n"
+                                    "A,,a.pdf,3,error: kJ/kcal mismatch Per Portion: 65 kJ vs 14 kcal | warn: Atwater Per Portion: stated 1 kcal, estimated 2\n"
+                                    "B,L,a.pdf,4,\n")
+    (out / "_flags.csv").write_text("stale\n")          # the report itself is never read back in
+    rows = collect_flags(out)
+    assert [(r["chain"], r["product"], r["source_page"], r["level"]) for r in rows] == [("9_Demo", "A", "3", "error"), ("9_Demo", "A", "3", "warn")]
+    assert rows[0]["flag"] == "kJ/kcal mismatch Per Portion: 65 kJ vs 14 kcal" and rows[0]["source_file"] == "a.pdf"

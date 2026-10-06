@@ -88,6 +88,20 @@ def _parse_chain(chain: dict, inputs: Path, parsed: dict[tuple, list[dict]]) -> 
     return rows
 
 
+def collect_flags(outputs: Path) -> list[dict]:
+    """One row per flag of every row of every chain CSV in `outputs`, so source inconsistencies can be reviewed in one place."""
+    rows = []
+    for path in sorted(outputs.glob("*.csv")):
+        if path.name.startswith("_"):
+            continue   # reports such as _flags.csv
+        for r in read_csv(path):
+            for flag in filter(None, (f.strip() for f in r.get("flags", "").split(" | "))):
+                level, _, text = flag.partition(": ")
+                rows.append({"chain": path.stem, "source_file": r.get("source_file", ""), "source_page": r.get("source_page", ""),
+                             "product": r.get("Product_Name", ""), "size": r.get("Size", ""), "level": level, "flag": text})
+    return rows
+
+
 def coverage(inputs: Path, chains_file: Path) -> list[str]:
     """For every approved numeric_table source: pages where the text layer has more data-looking lines than rows."""
     out = []
@@ -200,6 +214,7 @@ def main(argv: list[str] | None = None) -> None:
     reread_p.add_argument("--pages", required=True, help="comma separated page numbers")
     reread_p.add_argument("--dpi", type=int, default=200)
     reread_p.add_argument("--pdf", default="", help="only sources whose file name contains this")
+    sub.add_parser("flags", help="every flagged row of every chain -> outputs/_flags.csv (the PDFs' own inconsistencies and parser warnings)")
     eval_p = sub.add_parser("eval", help="compare outputs with ground truth and golden rows; exit 1 on any failure")
     eval_p.add_argument("--strict", action="store_true", help="a source with nothing to compare against fails")
     args = parser.parse_args(argv)
@@ -228,6 +243,17 @@ def main(argv: list[str] | None = None) -> None:
         lines = reread(ROOT / "inputs", chains_file, args.chain, [int(p) for p in args.pages.split(",")], args.dpi, args.pdf)
         print("\n".join(lines) or "reread: both reads agree")
         sys.exit(1 if lines else 0)
+    elif args.cmd == "flags":
+        rows = collect_flags(ROOT / "outputs")
+        fields = ["chain", "source_file", "source_page", "product", "size", "level", "flag"]
+        with (ROOT / "outputs" / "_flags.csv").open("w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=fields)
+            w.writeheader()
+            w.writerows(rows)
+        counts = Counter((r["chain"], r["level"]) for r in rows)
+        for (chain, level), n in sorted(counts.items()):
+            print(f"{chain}: {n} {level}")
+        print(f"{len(rows)} flags -> outputs/_flags.csv")
     elif args.cmd == "coverage":
         gaps = coverage(ROOT / "inputs", chains_file)
         print("\n".join(gaps) or "coverage: every data-looking line has a row")
