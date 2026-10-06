@@ -146,7 +146,7 @@ For people and agents alike:
 6. **People hold the gates.** Setting `approved: true` and checking golden rows against pages are decisions for the user, not for the agent that wrote the code.
 7. **Never delete or overwrite local data** (`inputs/`, `outputs/`, `work/`, `golden/`, `samples/`). Move or copy instead. An earlier session deleted sample files by mistake.
 8. **Test first** for every parser or rule: watch the test fail, then make it pass; run the whole suite before committing, and run it on its own (do not chain it with `&&` before a commit).
-9. **One branch per slice of work**, merged fast-forward into `main` when the tests pass. Commit messages end with the co-author line for the agent.
+9. **One branch per slice of work**, merged fast-forward into `main` when the tests pass. Commit messages carry no `Co-Authored-By` trailer and no "generated with" line.
 10. **A fresh reviewer** (a different agent, the strongest available model) reviews every new parser and anything that touches allergens or the model route; fix Critical and Important findings with tests that fail first.
 11. **Model calls cost money or quota.** Tests never call a real model (`tests/conftest.py` blocks both backends); use the cache, and read pages from the cache with `pages` before asking again.
 12. **Document as you go.** After a new chain add a row to `chain-mapping-reference.md`, an entry to `findings-report-2026-10.md` and update the totals and the handoff. In Markdown files write one line per paragraph (no hard wrapping at a column count).
