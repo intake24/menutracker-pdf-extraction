@@ -145,3 +145,19 @@ def test_flags_lists_every_flagged_row_with_its_chain_file_page_and_flag(tmp_pat
     rows = collect_flags(out)
     assert [(r["chain"], r["product"], r["source_page"], r["level"]) for r in rows] == [("9_Demo", "A", "3", "error"), ("9_Demo", "A", "3", "warn")]
     assert rows[0]["flag"] == "kJ/kcal mismatch Per Portion: 65 kJ vs 14 kcal" and rows[0]["source_file"] == "a.pdf"
+
+
+def test_verification_report_has_a_line_per_source_with_rows_flags_golden_and_what_it_was_checked_against(tmp_path):
+    from pipeline.cli import verification_report
+    out, gold, truth = tmp_path / "o", tmp_path / "g", tmp_path / "t"
+    for d in (out, gold, truth):
+        d.mkdir()
+    (out / "9_Demo.csv").write_text("Product_Name,source_file,source_page,method,flags\nA,a.pdf,1,parser,error: x: 1\nB,a.pdf,2,llm,warn: y\nC,b.pdf,1,parser,\n")
+    (gold / "a.csv").write_text("Product_Name\nA\nB\n")
+    (truth / "x").mkdir()
+    (truth / "x" / "b.csv").write_text("item_name\nC\n")
+    chains = tmp_path / "chains.yaml"
+    chains.write_text("9_Demo:\n  chain: Demo\n  sources:\n    - {pdf: a.pdf, parser: p}\n    - {pdf: b.pdf, parser: p}\n")
+    a, b = verification_report(chains, out, truth, gold)
+    assert (a["rows"], a["errors"], a["warnings"], a["golden_rows"], a["pearl_scan"], a["model_read_pages"], a["pages_with_rows"]) == (2, 1, 1, 2, "no", 1, 2)
+    assert (b["rows"], b["golden_rows"], b["pearl_scan"], b["model_read_pages"]) == (1, 0, "yes", 0)

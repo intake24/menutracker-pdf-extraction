@@ -102,6 +102,30 @@ def collect_flags(outputs: Path) -> list[dict]:
     return rows
 
 
+def verification_report(chains_file: Path, outputs: Path, ground_truth: Path, golden: Path) -> list[dict]:
+    """One line per source: what was extracted and what it can be checked against, so a person approves from one table.
+
+    No model calls: it reads the chain CSVs, the golden files and the Pearl Scan folder (which may be empty for a new batch)."""
+    out = []
+    for key, chain in load_chains(chains_file).items():
+        path = outputs / f"{key}.csv"
+        rows = read_csv(path) if path.exists() else []
+        by_pdf: dict[str, list[dict]] = {}
+        for source in chain["sources"]:
+            by_pdf.setdefault(source["pdf"], []).append(source)   # a PDF can feed several sources (page ranges): one line for the PDF
+        for pdf, sources in by_pdf.items():
+            source = {**sources[0], "parser": "+".join(dict.fromkeys(s["parser"] for s in sources)), "approved": all(s.get("approved") for s in sources)}
+            mine = [r for r in rows if r.get("source_file") == pdf]
+            stem = Path(pdf).stem
+            gold = golden / f"{stem}.csv"
+            llm = [r for r in mine if r.get("method") == "llm"]
+            out.append({"chain": key, "source_file": pdf, "parser": source["parser"], "approved": bool(source.get("approved")), "rows": len(mine),
+                        "errors": sum("error:" in r.get("flags", "") for r in mine), "warnings": sum("warn:" in r.get("flags", "") for r in mine),
+                        "golden_rows": len(read_csv(gold)) if gold.exists() else 0, "pearl_scan": "yes" if ground_truth_file(ground_truth, stem) else "no",
+                        "model_read_pages": len({r["source_page"] for r in llm}), "pages_with_rows": len({r["source_page"] for r in mine})})
+    return out
+
+
 def coverage(inputs: Path, chains_file: Path) -> list[str]:
     """For every approved numeric_table source: pages where the text layer has more data-looking lines than rows."""
     out = []
@@ -215,6 +239,7 @@ def main(argv: list[str] | None = None) -> None:
     reread_p.add_argument("--dpi", type=int, default=200)
     reread_p.add_argument("--pdf", default="", help="only sources whose file name contains this")
     sub.add_parser("flags", help="every flagged row of every chain -> outputs/_flags.csv (the PDFs' own inconsistencies and parser warnings)")
+    sub.add_parser("report", help="one line per source: rows, flags, golden rows, Pearl Scan present, model-read pages -> outputs/_verification.csv (no model calls)")
     eval_p = sub.add_parser("eval", help="compare outputs with ground truth and golden rows; exit 1 on any failure")
     eval_p.add_argument("--strict", action="store_true", help="a source with nothing to compare against fails")
     args = parser.parse_args(argv)
@@ -243,6 +268,16 @@ def main(argv: list[str] | None = None) -> None:
         lines = reread(ROOT / "inputs", chains_file, args.chain, [int(p) for p in args.pages.split(",")], args.dpi, args.pdf)
         print("\n".join(lines) or "reread: both reads agree")
         sys.exit(1 if lines else 0)
+    elif args.cmd == "report":
+        rows = verification_report(chains_file, ROOT / "outputs", ROOT / "inputs" / "ground-truth", ROOT / "golden")
+        with (ROOT / "outputs" / "_verification.csv").open("w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=list(rows[0]))
+            w.writeheader()
+            w.writerows(rows)
+        for r in rows:
+            print(f"{r['chain']:<16}{r['source_file'][:44]:<46}rows {r['rows']:>5}  err {r['errors']:>3}  warn {r['warnings']:>3}  golden {r['golden_rows']:>3}  pearl {r['pearl_scan']:<3}  model pages {r['model_read_pages']}")
+        weak = [r for r in rows if r["golden_rows"] == 0 and r["pearl_scan"] == "no"]
+        print(f"{len(rows)} sources; without golden rows or Pearl Scan: {[r['source_file'] for r in weak] or 'none'}")
     elif args.cmd == "flags":
         rows = collect_flags(ROOT / "outputs")
         fields = ["chain", "source_file", "source_page", "product", "size", "level", "flag"]
