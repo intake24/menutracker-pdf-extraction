@@ -1,60 +1,104 @@
-# End-of-round report: October 2026 round (17 food chains)
+# End-of-round report: October 2026 (17 food chains)
 
-Written 2026-10-06. Companion documents: `docs/findings-report-2026-10.md` (per source: what was odd, what Pearl Scan got wrong, what the pipeline got wrong), `docs/chain-mapping-reference.md` (what each chain's PDFs map to in the CSV and the decisions behind it), `docs/playbook-new-batches.md` (how to onboard a chain), `docs/handoff-next-window.md`.
+Written 2026-10-06. Related documents: `findings-report-2026-10.md` (what we found in each source), `chain-mapping-reference.md` (how each chain's PDFs map to the CSV), `playbook-new-batches.md` (how to add a chain), `sdk-cost-estimate-2026-10.md` (cost of a round on the Anthropic SDK) and `handoff-next-window.md`.
 
 ## 1. Result
 
-All 17 food chains are extracted, approved by the user and in `outputs/`: 17 CSVs, 8,768 rows, from 35 PDFs. 304 tests pass and `python -m pipeline.cli eval` passes with every source evaluated (strict is now the default).
+All 17 food chains are extracted, approved and saved in `outputs/`: 17 CSV files, 8,768 rows, from 35 PDFs. The 304 tests pass, and `eval` passes with every source checked.
 
-Every nutrition figure that Pearl Scan also holds agrees with it except 75 recorded Pearl Scan mistakes (`config/ground_truth_errata.yaml`) and a few allowed name differences (`known_gaps`: Cookhouse main menu 40 names, Top Golf 12 names; every Pearl Scan figure is among our rows).
+Where Pearl Scan also has a nutrition figure, ours matches it, apart from 75 Pearl Scan mistakes (listed in `config/ground_truth_errata.yaml`) and a few name differences we accepted (40 on the Cookhouse main menu, 12 on Top Golf). Every Pearl Scan figure on those two menus is still among our rows.
 
-Allergen data has no Pearl Scan equivalent for most chains; it is checked by golden rows (hand-read from page images), by mark accounting (every printed mark is used by a row), by a second independent reading where the PDF prints allergens twice (Starbucks summary column against bold capitals), and by second reads of model-read pages at a higher resolution.
+Pearl Scan has no allergen data for most chains, so allergens are checked in four other ways:
 
-## 2. What the round found (summary; details in the findings report)
+- **Golden rows:** sample rows read by hand from the page images.
+- **Mark accounting:** every mark printed on a page must be used by a row.
+- **Two readings of one statement:** Starbucks prints allergens twice, in a summary column and in bold capitals, and the two must agree.
+- **Second reads:** pages read by the model are read again at a higher resolution, and any difference is looked at.
 
-Pearl Scan made recurring mistakes: dropped or reworded names, invented serving sizes, changed printed values (`<0,005` to `<0.005`, `1,702` to `1702`, `1/2` to a date), swapped counts, curated names for options and add-ons, and left out figures printed inside descriptions. It is a useful cross-check for nutrition, not the authority.
+## 2. What the round found
 
-The pipeline made its own mistakes, found by comparison and by fresh Opus reviews of every slice that touched allergens or the model route: silent loss of the last row of a page (three times, on three layouts), a one-word heading swallowed as a header, allergens landing on the wrong product when a rule is missing, "gluten free oats" setting gluten, a "May containMILK" printed without a space read as No, wrong categories carried across pages, duplicate checks that hid or invented conflicts, and a golden comparison that skipped sibling rows. Each was fixed with a test that failed first.
+**Pearl Scan is a cross-check, not the authority.** It dropped or reworded names, invented serving sizes, changed printed values (`<0,005` became `<0.005`, `1,702` became `1702`, `1/2` became a date), swapped counts, renamed add-ons, and left out figures printed inside descriptions.
 
-A model read of tiny print is unreliable (23% of Domino's page 2 figures were wrong), so figures come from the text layer wherever one exists and the model reads only labels. Where a text layer prints figures (menus), every printed figure must be a row the model returned (`text_check`), and an answer that fails is never cached.
+**The pipeline made mistakes too.** Comparison with Pearl Scan and fresh Opus reviews found, among others:
+
+- the last row of a page silently lost (three times, on three layouts);
+- a one-word heading mistaken for a column header;
+- allergens attached to the wrong product when a rule line was missing;
+- "gluten free oats" marked as containing gluten;
+- "May containMILK", printed without a space, read as "No" for milk;
+- categories carried onto the wrong page.
+
+Each one was fixed with a test that failed first.
+
+**Model reads of small print are unreliable.** 23% of the figures on Domino's page 2 were wrong, so figures now come from the text layer wherever there is one, and the model only reads labels. For menus, every figure printed in the text layer must appear in a row the model returned (`text_check`). An answer that fails the check is not saved.
 
 ## 3. How the data is mapped
 
-See `docs/chain-mapping-reference.md`. In short: one row per product (per size or variant where the PDF prints one), values as printed, allergen cells Yes, May contain, No (only where the PDF declares every allergen is listed) or blank, diet cells as printed (`Suitable_for_*`, `Diet`), `Category` is the heading path as printed, `notes` holds printed notes and remarks (for example "Merged product: ..." or "Add-on to ..."), and every row names its `source_file`, `source_page`, `method` and `flags`.
+The full detail is in `chain-mapping-reference.md`. The main rules are:
 
-Similar products stay separate rows. Two rows are merged only when very likely the same product (same name, size, region, heading up to punctuation or depth, no cell in both, one partner each way), and the merged row says so in `notes`.
+- One row per product, or per size or variant where the PDF prints one.
+- Values are kept exactly as printed.
+- An allergen cell is Yes, May contain, No (only where the PDF says every allergen is listed) or blank.
+- Diet cells are kept as printed.
+- `Category` is the heading path as printed.
+- `notes` holds printed notes and remarks such as "Add-on to ..." or "Merged product: ...".
+- Every row records its source file, page, method and any flags.
 
-## 4. How to run a new batch without Pearl Scan
+Similar products stay separate. Two rows are merged only when they are very likely the same product: same name, size, region and heading, no cell filled in both, and exactly one partner each way. A merged row says so in `notes`.
 
-1. Put the PDFs in `inputs/`, run `python -m pipeline.cli manifest`, look at two or three rendered pages per PDF and choose the parser from the table in the mapping reference; add a source to `config/chains.yaml` with `approved: false`.
-2. Run the chain through a temporary approved copy of the config (see `tests/test_cli.py: chains_file`) and read every flag, then `coverage` (text layers) or `pages` and `reread` (model reads).
-3. Read the introduction and key pages of the PDF for what a blank cell means and set `markers` accordingly.
-4. Write golden rows from the rendered page: allergens and diet cells AND a few nutrition rows (compare figures with `pdftotext` or the page image, not with the parser). Cover a may-contain row, an empty row, a merged or unusual row.
-5. Ask a fresh Opus reviewer to review any new parser and anything that touches allergens or the model route; fix Critical and Important findings with tests that fail first.
-6. `python -m pipeline.cli report` shows one line per PDF (rows, errors, warnings, exact duplicates, golden rows, Pearl Scan present, model-read pages) and `python -m pipeline.cli flags` lists every flagged row in `outputs/_flags.csv`; a person approves in `config/chains.yaml`; `run`, then `eval` (strict by default: a source with nothing to compare against fails).
+## 4. Running a new batch without Pearl Scan
+
+1. Put the PDFs in `inputs/` and run `python -m pipeline.cli manifest`. Look at two or three rendered pages of each PDF, choose a parser from the table in the mapping reference, and add the source to `config/chains.yaml` with `approved: false`.
+2. Run the chain on a temporary approved copy of the config (see `chains_file` in `tests/test_cli.py`). Read every flag, then run `coverage` for text-layer PDFs, or `pages` and `reread` for model-read PDFs.
+3. Read the PDF's introduction and key pages to learn what a blank allergen cell means, and set `markers` to match.
+4. Write golden rows from the rendered page: allergens, diet cells and a few nutrition figures. Check the figures against `pdftotext` or the page image, not against the parser. Include a "may contain" row, an empty row and an unusual row.
+5. Have a fresh Opus reviewer review any new parser and anything that touches allergens or the model. Fix Critical and Important findings with tests that fail first.
+6. Run `report` (one line per PDF) and `flags` (every flagged row). A person approves the source in `config/chains.yaml`. Then run `run` and `eval`.
 
 ## 5. Commands
 
-`manifest`, `run [--chain KEY]`, `eval [--lenient]`, `coverage`, `pages --chain KEY`, `reread --chain KEY --pages N,M --dpi D`, `flags`, `report`. A chain that is skipped (unapproved) or stopped (rate limit, cap, a failed check) has its old CSV moved to `outputs/_stale/` so that no report or evaluation reads it as current.
+| Command | What it does |
+|---|---|
+| `manifest` | Lists every PDF with its pages, text and assigned parser |
+| `run [--chain KEY]` | Extracts every approved chain into `outputs/` |
+| `eval [--lenient]` | Compares outputs with Pearl Scan and golden rows. Strict by default: a source with nothing to compare against fails |
+| `coverage` | Finds text-layer pages with more data lines than rows |
+| `pages --chain KEY` | Per page of a model-read chain: rows, errors, empty cells |
+| `reread --chain KEY --pages N,M --dpi D` | Reads pages again at another resolution and lists differences |
+| `flags` | Writes every flagged row to `outputs/_flags.csv` |
+| `report` | Writes one line per PDF to `outputs/_verification.csv` (rows, flags, exact duplicates, golden rows, Pearl Scan present, model-read pages) |
 
-## 6. Final whole-pipeline review (fresh Opus, 2026-10-06): findings and rulings
+If a chain is skipped (not approved) or stopped (rate limit, cost cap or a failed check), its old CSV is moved to `outputs/_stale/`, so no report or evaluation mistakes it for current output.
 
-Fixed with tests: the shared parse cache could give two image-only PDFs one result (the key now includes the file's bytes); a skipped or stopped chain left its old CSV as current (moved to `_stale`); `vision_pairs` broke on a PDF name with a dot; `eval` could pass with nothing checked (strict is the default, `--lenient` opts out).
+## 6. Final review (fresh Opus, 2026-10-06)
 
-Rulings (not changed, with the cost if wrong):
+### Fixed, with tests
 
-- **Dietary tag check (V/VE) on menus is partial.** It only runs where the text layer prints a tag for every use of a figure (57 of 126 Brewhouse rows); the text layer sometimes prints a tag on another line, so a stricter rule would reject correct rows. Cost if wrong: a model-invented V on an untagged dish passes (3 rows are not confirmed by the text layer: Korean Hot and two poached egg add-ons); check them by eye when approving.
-- **Model-read figures of Krispy Kreme, Papa John's and Vue have no second check without Pearl Scan** beyond the arithmetic flags and the second read at a higher resolution; their golden files hold allergens only (Vue has none). Cost if wrong: a consistent misread that adds up passes. Mitigation for the next batch: run `reread` on every page of such a source and add figure rows to its golden file.
-- **Evaluation compares from the reference side only** (Pearl Scan or golden rows): an extra or invented row in our output does not fail. Mitigations: `coverage`, `report` row counts per page, `text_check` on menus.
-- **`recall >= 0.99` passes with up to 1% of Pearl Scan rows unmatched** when `known_gaps` is 0; every configured source was inspected when approved.
-- **The model call loads the user-level Claude settings** (`--setting-sources user`), so answers can in principle depend on installed plugins; the cache key does not include that. Risk is low (a Read-only tool, structured output) but `notes` text is the most exposed field.
-- **The cache key contains the absolute page-image path and the rendered image bytes**: moving the repository or upgrading poppler makes every model call run again (cost, not correctness).
-- **Exact duplicate rows are counted in `report` (`exact_duplicates`), not flagged**: most are legitimate repeats (adult and kids Fries); a rise in a model-read source is a sign of a double read.
-- **`ignore` in `text_check` removes a figure from both sides** (2000 kcal on Brewhouse, 1800 and 2000 on Cookhouse): a real dish at that figure could be dropped unnoticed.
-- **Only the first source's `name_fixes` and `pearlscan` options apply when one PDF feeds several sources** (latent; no current source is affected).
-- **The dollar cap can be overshot by up to the number of parallel calls** (at most about $1.50).
-- **`same()` in evaluation ignores formatting** (`0.10` against `0.1`); the formatting rule is protected by the parsers and their tests, not by `eval`.
+- Two image-only PDFs could share one parse result. The cache key now includes the file's contents.
+- A skipped or stopped chain left its old CSV looking current. It is now moved aside.
+- `vision_pairs` failed on a PDF name containing a dot.
+- `eval` could pass with nothing checked. It is now strict by default.
+
+### Known limits (not changed)
+
+| Limit | Risk if it goes wrong | What to do |
+|---|---|---|
+| The V/VE tag check on menus runs only where the text layer prints a tag next to every use of a figure (57 of 126 Brewhouse rows) | A tag the model invented on an untagged dish passes | Check by eye the three rows the text layer does not confirm: Korean Hot and two poached egg add-ons |
+| Krispy Kreme, Papa John's and Vue figures have no second check without Pearl Scan beyond the arithmetic flags and the higher-resolution reread; their golden files hold allergens only (Vue has none) | A consistent misread that still adds up would pass | Reread every page of such a source and add figure rows to its golden file |
+| `eval` compares from the reference side only | An extra or invented row in our output does not fail | Use `coverage`, row counts from `report`, and `text_check` on menus |
+| Recall of 99% passes even when up to 1% of Pearl Scan rows are unmatched and `known_gaps` is 0 | A few rows missing on a large file | Each source was inspected when approved |
+| The model call loads the user's Claude settings (`--setting-sources user`) | Answers could depend on installed plugins, and the cache key does not include them. Risk is low; `notes` text is the most exposed | Move to the SDK, which has no such settings |
+| The cache key includes the image path and the rendered image bytes | Moving the repository or upgrading poppler repeats every model call (a cost, not a correctness problem) | None needed |
+| Exact duplicate rows are counted in `report`, not flagged | Most are real repeats, such as adult and kids Fries; a rise in a model-read source suggests a double read | Watch the count |
+| `text_check` ignores figures such as 2000 kcal on both sides (Brewhouse 2000; Cookhouse 1800 and 2000) | A real dish at that figure could be dropped unnoticed | Check those figures by eye |
+| When one PDF feeds several sources, only the first source's `name_fixes` and `pearlscan` options apply | None today | Keep in mind when adding sources |
+| The cost cap can be overshot by the parallel calls in flight | At most about $1.50 | None needed |
+| `eval` treats `0.10` and `0.1` as equal | Formatting changes would pass `eval` | The parsers and their tests protect the "as printed" rule |
 
 ## 7. What remains
 
-Nothing is blocked. For the next batch: expect no Pearl Scan, so spend the saved effort on step 4 of section 4 (golden rows with figures), `reread` of every model-read page, and a second person's spot check of the golden rows (the golden files are generated from pipeline output and then checked against page images by one reader).
+Nothing is blocked. For the next batch, expect no Pearl Scan data and spend the effort on three things:
+
+- golden rows that include nutrition figures;
+- a reread of every model-read page;
+- a second person spot-checking the golden rows. They are generated from pipeline output and then checked against page images by one reader.
