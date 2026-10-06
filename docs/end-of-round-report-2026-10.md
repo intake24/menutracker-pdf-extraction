@@ -1,6 +1,6 @@
 # End-of-round report: October 2026 (17 food chains)
 
-Written 2026-10-06. Related documents: `findings-report-2026-10.md` (what we found in each source), `chain-mapping-reference.md` (how each chain's PDFs map to the CSV), `playbook-new-batches.md` (how to add a chain), `sdk-cost-estimate-2026-10.md` (cost of a round on the Anthropic SDK) and `handoff-next-window.md`.
+Written 2026-10-06. This is the short, current report: read it first. For the evidence behind it, source by source, see `findings-report-2026-10.md`. Related documents: `findings-report-2026-10.md` (what we found in each source), `chain-mapping-reference.md` (how each chain's PDFs map to the CSV), `playbook-new-batches.md` (how to add a chain), `sdk-cost-estimate-2026-10.md` (cost of a round on the Anthropic SDK) and `handoff-next-window.md`.
 
 ## 1. Result
 

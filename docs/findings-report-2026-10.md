@@ -1,6 +1,8 @@
 # Findings report: PDFs, Pearl Scan, and the pipeline (first round, October 2026)
 
-Status date 2026-10-02. This report records what was found when every extracted source was checked three ways: against the PDF page, against Pearl Scan's CSV, and against the pipeline's own output. It lists the errors found in each source, who was wrong (the PDF, Pearl Scan, the model, or the pipeline), a verdict for each source, and what to do differently in later batches. Companion documents: `playbook-new-batches.md` (how to onboard a chain), `pipeline-design.md` (the spec), `ground_truth_errata.yaml` in `config/` (every Pearl Scan mistake with its reason).
+Updated 2026-10-06 for all 17 food chains. This is the evidence record: for every source it says what was odd in the PDF, what Pearl Scan got wrong, what the pipeline got wrong, and the verdict. Every source was checked three ways: against the PDF page, against Pearl Scan's CSV, and against the pipeline's own output.
+
+**How to read it:** for the current state, the known limits and how to run a new batch, read `end-of-round-report-2026-10.md` first. Come here to look up a source (section 3), a kind of Pearl Scan mistake (section 5) or a pipeline defect (section 6). Other documents: `playbook-new-batches.md` (how to onboard a chain), `chain-mapping-reference.md` (what each CSV contains), `pipeline-design.md` (the original design, historical) and `config/ground_truth_errata.yaml` (every Pearl Scan mistake with its reason).
 
 ## 1. Summary
 
@@ -15,9 +17,13 @@ Status date 2026-10-02. This report records what was found when every extracted 
 | Odeon nutrition tables (UK, Belfast, ROI) | 3 | 1,013 | 705 + 147 + 148 rows, 0 mismatches after errata | 0 after fixes | Approved |
 | Odeon pre-packed matrices (UK, Belfast, ROI) | 3 | 286 | 97 + 82 + 79 rows, 0 mismatches after 33 errata | name glue (fixed) | Approved |
 | Papa John's | 1 (image pages) | 435 | 434 rows, 6,943 cells, 0 mismatches after 7 errata | 1 critical + 4 important (review) | Approved |
-| Coffee #1, Starbucks, Brewhouse, Cookhouse, Top Golf | not done | | | | Surveyed or not started, see section 4 |
+| Krispy Kreme | 1 (image pages) | 210 | 188 rows, 3,760 cells, 0 mismatches; 12 golden rows | 2 important + 3 minor (review) | Approved (section 3.10) |
+| Pizza Hut | 1 | 715 | 483 rows, 7,618 cells, 0 mismatches after 6 errata; 24 golden rows | 2 critical + 4 important (review) | Approved (section 3.11) |
+| Coffee #1 | 2 | 463 | 92 + 371 rows, 10,001 cells, 0 mismatches after 1 erratum; 46 golden rows | 1 critical + 3 important (review) | Approved (section 3.12) |
+| Starbucks | 2 | 1,557 | 93 + 1,464 rows, 15,477 cells, 0 mismatches; 12 golden rows | guards added after review | Approved (section 3.13) |
+| Brewhouse, Cookhouse, Top Golf | 7 menus (model-read) | 126, 212, 121 | kcal only; every figure of the text layer is a row | text check added | Approved (section 3.14) |
 
-Totals in `outputs/`: 17 chain CSVs, 8,768 rows. Pearl Scan agreement is exact on every compared cell once the 66 confirmed Pearl Scan mistakes are excused. Allergen data has no ground truth anywhere; it is checked by hand-verified golden rows only.
+Totals in `outputs/`: 17 chain CSVs, 8,768 rows. Pearl Scan agreement is exact on every compared cell once the 75 recorded Pearl Scan mistakes are excused (apart from name differences accepted as `known_gaps` on two menus). Allergen data has no Pearl Scan ground truth; it is checked by hand-verified golden rows, mark accounting and second reads.
 
 ## 2. How the checks worked and who decides
 
@@ -30,7 +36,7 @@ Every mismatch was settled by looking at the page. In every case so far one of f
 | Cause | Count found | Example |
 |---|---|---|
 | PDF prints something odd; we keep it and flag it | many (hundreds of flagged rows) | kJ printed as 5 x kcal on Odeon drinks; `1,75` with a decimal comma; `2.7g` with a stray unit |
-| Pearl Scan mistake or convention (errata or `eval` rule) | 66 errata entries plus 6 evaluator rules | `Diet Pepsi` filed under the wrong item; `1/2` turned into the date `01-Feb` |
+| Pearl Scan mistake or convention (errata or `eval` rule) | 75 errata entries plus 6 evaluator rules | `Diet Pepsi` filed under the wrong item; `1/2` turned into the date `01-Feb` |
 | Model misread (vision) | 2 cells in about 3,600 (Vue, 110 dpi) | `1.4` read as `0.4`; fixed at 150 dpi |
 | Pipeline defect | about 40 found by reviews and checks | marks landing in the wrong column; a wheat-free row marked gluten "No" |
 
@@ -61,10 +67,10 @@ Every mismatch was settled by looking at the page. In every case so far one of f
 - **Pipeline faults (review, 8 findings, none visible to Pearl Scan):** variant rows (`Semi-Skimmed Milk`, `Soya Milk`) shared each other's allergens; a mark merged across `Churros Medium / Large` landed on one row only; headings with `&` or a star note were missed or turned into products (2 fake rows); sub-section labels crossed heading boundaries; evaluator rules could mask real mismatches.
 - **Verdict:** approved. The review found five bugs that no ground-truth comparison could have caught, because Pearl Scan has no allergen data. Every mark in the PDF (260 contains, 175 may contain, plus the key legends) is accounted for.
 
-### 3.5 Domino's sides and dips (1 of 2 PDFs)
+### 3.5 Domino's sides and dips (the sides PDF; the pizzas PDF is in section 4)
 - **PDF oddities:** three blocks of ten values (per 100g, per product as sold, per portion) with a word cell and a serves cell in the middle of the row; names with amounts (`BBQ Dip 25g`); a running head above the table; 3 rows flagged by the PDF's arithmetic.
 - **Pearl Scan:** 82 rows and 2,788 cells agree; it moves the amount into the serving size (we do the same through `name_amount`).
-- **Verdict:** approved. The pizzas PDF is not done (3 nested merged columns, 1,422 rows).
+- **Verdict:** approved. The pizzas PDF (3 nested merged columns, 1,422 rows) was done later; see sections 4 and 7b.
 
 ### 3.6 Vue (3 PDFs read from images)
 - **PDF oddities:** the embedded font drops digits (`197` printed as `19`), so the text layer cannot be used; the first digit of some cells is missing in the text but present in the image. The PDF prints `0g`, `2.7g`, `1133g`, `14g` and `6.8g` with a stray `g`. The ice-cream table prints the portion `1 Scoop Tub` on a second line.
@@ -132,16 +138,18 @@ Every mismatch was settled by looking at the page. In every case so far one of f
 - **Output:** Brewhouse 126, Cookhouse 212, Top Golf 121 rows; no flags. Cross-menu duplicates (the same dish on the Core and NGC menus with different printed tags or kcal, such as the Caesar salad 499 against 431) are flagged by the duplicate check; notes are ignored by that check.
 - **Limits:** no allergen information exists on these menus (the Brewhouse and Cookhouse pages say to ask staff); names of options follow our rules, not Pearl Scan's; diet tags are checked by the text layer only where printed next to the figure.
 
-## 4. Sources not done: what was learned
+## 4. Layouts surveyed before they were built (all now done)
 
-| Source | PDF | Why not done yet | What the survey found |
-|---|---|---|---|
-| Krispy Kreme | 61 pages, no text layer | done, approved (section 3.10) | `vision_pairs` joins allergen and nutrition pages |
-| Domino's pizzas | 18 pages, 1,422 GT rows | done | `grouped_table` reads the pizza, sideways cheese, crust and size labels by position and size order (pages 3-13), the bases, and the sauces, cheese and toppings (pages 14-18, a shared per-100g row); page 2 (six small tables, 95 rows) uses the model for the labels only and the text layer for every figure. 1,420 rows compared, 56,799 cells, 0 mismatches; 2 rows excused (a typo the PDF prints). |
-| Pizza Hut | 24 pages, 483 GT rows | done, approved (section 3.11) | `portion_tables`, `mark_table`, `merge_by_key` |
-| Coffee #1 | food 18 pp, drinks 28 pp | done, approved (section 3.12) | `product_blocks`, `drink_tables` |
-| Starbucks | food 20 pp, drinks 73 pp | done, approved (section 3.13) | `guide_rows`, `modifier_matrix` |
-| Brewhouse, Cookhouse, Top Golf | 7 menu PDFs | done, approved (section 3.14) | `vision_table` with `text_check` |
+Every source in the first survey is now extracted and approved. The survey notes are kept here only where they explain a design choice:
+
+| Source | Survey finding | What was built |
+|---|---|---|
+| Krispy Kreme | An allergen matrix page followed by a nutrition page, no text layer | `vision_pairs` (section 3.10) |
+| Domino's pizzas | 18 pages, 1,422 Pearl Scan rows, three nested merged columns | `grouped_table` reads the pizza, sideways cheese, crust and size labels by position and size order (pages 3-13), the bases, and the sauces, cheese and toppings (pages 14-18, a shared per-100g row); page 2 (six small tables, 95 rows) uses the model for the labels only and the text layer for every figure (section 7b). 1,420 rows compared, 56,799 cells, 0 mismatches; 2 rows excused (a typo the PDF prints) |
+| Pizza Hut | Three layouts in one booklet | `portion_tables`, `mark_table`, `merge_by_key` (section 3.11) |
+| Coffee #1 | Vertical blocks and slanted text | `product_blocks`, `drink_tables` (section 3.12) |
+| Starbucks | Wrapped names, size rows, milk type in the product line | `guide_rows`, `modifier_matrix` (section 3.13) |
+| Brewhouse, Cookhouse, Top Golf | Menus: the dish name is the text before the first comma | `vision_table` with `text_check` (section 3.14) |
 
 ## 5. Errors in Pearl Scan, by kind (so they are recognised next time)
 
@@ -156,7 +164,7 @@ Every mismatch was settled by looking at the page. In every case so far one of f
 | Dropped characters | accents (`BACARDI`), `™` | evaluator ignores both |
 | Conventions, not errors | per-100g row written as a 100 g serving; amount moved from name into serving size; name = group - sub-group - size | `eval` rules; we keep what the PDF prints |
 
-Rule applied throughout: Pearl Scan is a useful second reader, not the authority. Pearl Scan was wrong in a large share of the discrepancies (66 confirmed entries). We never changed our value to match Pearl Scan without reading the page.
+Rule applied throughout: Pearl Scan is a useful second reader, not the authority. Pearl Scan was wrong in a large share of the discrepancies (75 recorded entries). We never changed our value to match Pearl Scan without reading the page.
 
 ## 6. Errors by the pipeline (found by review and by comparison) and their fixes
 
@@ -170,6 +178,8 @@ Rule applied throughout: Pearl Scan is a useful second reader, not the authority
 | Papa John's | 1 critical, 4 important | wheat-free allergens "No"; mixed count columns; silent qualifier drop |
 | Direct checks (no review) | about 12 | pizza lookup soft hyphen; mixed-encoding CSV; group labels in names; count of marks |
 
+Later slices (each reviewed by a fresh Opus reader; details in sections 3.10 to 3.14): Krispy Kreme 2 important + 3 minor; Pizza Hut 2 critical + 4 important (a one-word heading read as a header, a heading glued into names); Coffee #1 1 critical + 3 important ("May containMILK" read as No, gluten for gluten free oats); Starbucks guards for a missing rule, a 9-column fallback and a flag that ignored May contain; the final whole-pipeline review (a shared parse cache, stale CSVs, strict `eval`; see the end-of-round report, section 6).
+
 A review by a fresh reader found a real defect in every slice where we asked for one. The most serious ones, the Cineworld and Papa John's allergen errors, could never have shown up in a comparison with Pearl Scan, which has no allergen data.
 
 ## 7. Lessons and mitigations for the next batches
@@ -178,14 +188,14 @@ A review by a fresh reader found a real defect in every slice where we asked for
 2. **Fail loudly first, then add an option.** Every parser raised on unknown markers, labels, headers and cells; each raise was a real layout feature we had not met (overlaid rows, name under figures, `#N/A`, notes in the figure area). Never loosen a raise to a default.
 3. **Count rows independently.** `python -m pipeline.cli coverage` (text-layer sources) and `pages` (model-read sources) need no ground truth. Run them before approval; investigate any page short of rows.
 4. **Account for every mark and every token.** Count the glyphs in the PDF and the ones consumed (Cineworld: 260 + 175); a difference is a lost mark.
-5. **Re-read doubtful vision pages.** `reread --dpi 200` costs about 0.3% of a window per page. Use 150 dpi from the start for small print. Run `pages` first to choose pages with error flags or empty cells.
+5. **Re-read doubtful vision pages.** `reread --pages all --dpi 200` costs about 0.3% of a plan window per page (about $0.035 on the SDK). Use 150 dpi from the start for small print. Run `pages` first to choose pages with error flags or empty cells.
 6. **Do not edit instructions text after a vision run.** It is part of the cache key; changing it re-spends the whole run (about $4). Put notes in comments. Use the discovery pattern: first pass with lenient scratch wrappers to collect every unknown header and allergen phrase, then add the mappings; the cache makes the second pass free.
 7. **One review per slice that touches allergens or the model route.** It found real defects each time.
 8. **Never loosen the evaluator without a test that a real mismatch still fails.** Each rule added this round (accents, trademarks, start-of-name match, per-100g, list-valued counts) came with such a test, and a review looked for masking.
 9. **Region PDFs are not copies.** Belfast and ROI differed from UK in layout and column positions; run each against `coverage` and a golden check.
 10. **Record every confirmed Pearl Scan mistake with its reason** (`ground_truth_errata.yaml`), so the same error is not rediscovered and so a future reader can see why a value differs.
 11. **Guard against my own workflow errors:** a failing test once slipped into a commit because a pipe hid its exit code, and one `rm -rf outputs` removed your sample files (restored from version history). Rules now: tests are run on their own, never behind a pipe in a chain; data folders are never deleted.
-12. **Quota planning:** a config-only chain costs 1-3 points of a window, a new parser option 3-5, a new parser 6-10, plus a review of 3-4. A 65-page vision read is about 15-25 points. Plan about two windows for the remaining list.
+12. **Effort planning:** a config-only chain costs 1-3 points of a 5-hour plan window, a new parser option 3-5, a new parser 6-10, plus a review of 3-4; a 65-page model read is about 15-25 points. The cost of a model round on the SDK is in `sdk-cost-estimate-2026-10.md`. The step-by-step procedure for a batch without Pearl Scan is in section 4 of the end-of-round report; these lessons are the reasons behind it.
 
 ## 7b. A model read of tiny print is not reliable: use the text layer for figures
 
@@ -195,6 +205,6 @@ On Domino's page 2 (a text PDF, 4-5 pt print) one model read of the whole page r
 
 - Allergen cells are "Yes", "May contain", "No" (only where the PDF declares absence) or blank (not stated).
 - Values are exactly as printed, including decimal commas, stray units and the PDF's own arithmetic errors; the `flags` column records them. About 16% of Odeon rows carry error flags (203 of 1,299), almost all from the PDF itself.
-- Model-read sources (Vue, Papa John's) depend on a model reading small print; two misreads in 3,600 cells at the wrong resolution show the risk. There is no automatic row-count check on those pages yet; use `pages` and `reread`.
+- Model-read sources (Vue, Papa John's, Krispy Kreme, Domino's page 2, the menus) depend on a model reading the page; two misreads in 3,600 cells at the wrong resolution show the risk. Menus have an automatic figure count against the text layer (`text_check`); pages with no text layer rely on `pages`, `reread --pages all` and the arithmetic flags. The full list of known limits is in section 6 of the end-of-round report.
 - Ingredients text is as printed; bold allergens inside it are not parsed into allergen columns.
 - Serving sizes of Odeon pre-packed products are as printed; Pearl Scan's invented ones are not reproduced.
