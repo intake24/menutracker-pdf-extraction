@@ -1449,9 +1449,20 @@
       parser: vision_table
       region: UK
       category: food
-      approved: false
+      approved: true
       dpi: 200
-      text_check: &brew_check { field: kcal, pattern: '(\d+)\s?kcal', ignore: [2000], tags: { field: diet, keep: 'VE|V', pattern: '((?:\b(?:VE|V|A|I|T|L|P|S)\b[ \t]+)*)\((\d+)\s?kcal\)' } }
+      text_check:
+        &brew_check {
+          field: kcal,
+          pattern: '(\d+)\s?kcal',
+          ignore: [2000],
+          tags:
+            {
+              field: diet,
+              keep: 'VE|V',
+              pattern: '((?:\b(?:VE|V|A|I|T|L|P|S)\b[ \t]+)*)\((\d+)\s?kcal\)',
+            },
+        }
       instructions: &brew_instructions >-
         It is a pub menu page with several columns of dishes under section headings (large letter-spaced type, for example "Small plates and grazing"; section =
         that heading as printed, in the case it is printed). A dish is a bold name, a comma, a description in regular type, optional tags (V = vegetarian, VE = vegan, and
@@ -1460,13 +1471,20 @@
         price, exactly as printed; empty if none (never the beer pairing letters A, I, T, L, P, S). Lines that begin with "+" are add-ons printed under a dish: name = the text after the "+", kcal =
         its number, notes = "Add-on to <the name of the dish it is printed under>"; "CHOOSE YOUR SAUCE" lists sauces with their own kcal: each is a row, name = the
         sauce. EVERY figure in brackets on the page is exactly one row, wherever it is printed: also on option lines such as "+ hot habanero honey glaze" or "Make it vegan - swap the pork for ..." (name = the text of that line without the kcal, the tags and the price; notes = "Option of <the dish it belongs to>"). A dish with several kcal figures (one per glaze, sauce or flavour) gives one row per figure, each named "<dish name> - <the option as printed>" (for example "½ beercan chicken - hot habanero honey glaze", "Ice cream/sorbet - passion fruit sorbet"); the options of such a dish are not add-ons. Do not return prices, section notes, the beer legend or text without a kcal figure. Before you answer, count the brackets with "kcal" on the page and check that you return exactly that many rows.
-      fields: &brew_fields { kcal: energykCal_Per Portion, diet: Diet, notes: notes }
-      name_fixes: &brew_fixes { 'Plus ': '', 'CHOOSE YOUR SAUCE: ': '', '1/2 ': '½ ', 'vegan- swap': 'vegan - swap', 'honey glaze': 'honey' } # how Pearl Scan wrote add-ons, a list heading, a fraction and a hyphen
+      fields:
+        &brew_fields { kcal: energykCal_Per Portion, diet: Diet, notes: notes }
+      name_fixes: &brew_fixes {
+          'Plus ': '',
+          'CHOOSE YOUR SAUCE: ': '',
+          '1/2 ': '½ ',
+          'vegan- swap': 'vegan - swap',
+          'honey glaze': 'honey',
+        } # how Pearl Scan wrote add-ons, a list heading, a fraction and a hyphen
     - pdf: 04.25-BK-Sunday-Menu-PB2.pdf
       parser: vision_table
       region: UK
       category: food
-      approved: false
+      approved: true
       dpi: 200
       text_check: *brew_check
       instructions: *brew_instructions
@@ -1476,7 +1494,7 @@
       parser: vision_table
       region: UK
       category: food
-      approved: false
+      approved: true
       dpi: 200
       text_check: *brew_check
       instructions: *brew_instructions
@@ -1486,7 +1504,7 @@
       parser: vision_table
       region: UK
       category: food
-      approved: false
+      approved: true
       dpi: 200
       text_check: *brew_check
       instructions: *brew_instructions
@@ -1503,9 +1521,14 @@
       parser: vision_table
       region: UK
       category: food
-      approved: false
+      approved: true
       dpi: 200
-      text_check: &ck_check { field: kcal, pattern: '(\d[\d,]*)\s?kcal(?!\s*per serve)', strip: ',', ignore: [1800, 2000] } # the footer: adults need around 1800 or 2000 kcal
+      text_check: &ck_check {
+          field: kcal,
+          pattern: '(\d[\d,]*)\s?kcal(?!\s*per serve)',
+          strip: ',',
+          ignore: [1800, 2000],
+        } # the footer: adults need around 1800 or 2000 kcal
       instructions: &ck_instructions >-
         It is a pub menu page with section headings (for example "Scrummy STARTERS" or "Starters & SHARERS"; section = the heading as printed, with its mixed capitals;
         a heading can have a sub-heading such as "ADD A DESSERT": then section = "<heading> - <sub-heading>"). A dish is a bold name, a description and the calories in
@@ -1526,7 +1549,7 @@
       parser: vision_table
       region: UK
       category: food
-      approved: false
+      approved: true
       dpi: 200
       pages: [2, 3, 4, 5, 6, 7, 8]
       text_check: *ck_check
@@ -1543,11 +1566,16 @@
       parser: vision_table
       region: UK
       category: food
-      approved: false
+      approved: true
       dpi: 200
       pages: [1, 2, 3, 4, 5, 6, 7, 9, 10]
       known_gaps: 12 # the names differ from Pearl Scan's ("8 BULL'S-EYE BBQ SAUCE" for "BULL'S-EYE BBQ SAUCE - 8", "OASIS SUMMER FRUITS"); every Pearl Scan figure is among our rows and the text layer proves each printed figure is a row
-      text_check: &tg_check { field: kcal, pattern: '(\d[\d,]*)\s?k?cal\b', strip: ',', page_ignore: { '7': [142] } } # page 7's text layer holds a Fruit Tea that is not on the page (hidden text) # "(952 cal. / 1044 kcal.)": both figures are printed
+      text_check: &tg_check {
+          field: kcal,
+          pattern: '(\d[\d,]*)\s?k?cal\b',
+          strip: ',',
+          page_ignore: { '7': [142] },
+        } # page 7's text layer holds a Fruit Tea that is not on the page (hidden text) # "(952 cal. / 1044 kcal.)": both figures are printed
       instructions: &tg_instructions >-
         It is a menu page with sections (a heading such as "BURGERS" or "SHAKES"; section = the heading as printed; "LIMITED TIME ONLY" is not a section). A dish is a name in
         capitals (it may wrap over two lines: join them), a price, the calories in brackets ("(839 kcal.)") and a description. name = the name as printed (keep its capitals),
@@ -1563,7 +1591,7 @@
       parser: vision_table
       region: UK
       category: food
-      approved: false
+      approved: true
       dpi: 200
       pages: [8]
       text_check: *tg_check
