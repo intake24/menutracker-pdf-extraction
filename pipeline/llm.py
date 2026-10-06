@@ -1,4 +1,9 @@
-"""Backend for pages the text layer can't be trusted on: one page image through headless Claude Code (`claude -p`).
+"""Backend for pages the text layer can't be trusted on: one page image through headless Claude Code (`claude -p`) or the Anthropic SDK.
+
+Two backends give the same answers in the same shape and share one cache (the key does not name the backend, only the model):
+  claude-code  headless `claude -p`, billed to the plan login (the default)
+  sdk          the Anthropic Messages API, billed per token to ANTHROPIC_API_KEY; the page image is sent with the request
+Choose with the environment variable PIPELINE_LLM_BACKEND or `python -m pipeline.cli --backend sdk <command>`.
 
 `call` asks one question about one image, checks the answer against a JSON schema, and caches it under
 work/llm/ keyed on the image, the prompt, the schema and the model, so a re-run over unchanged pages makes no call.
@@ -17,6 +22,12 @@ from pathlib import Path
 from typing import Callable
 
 MODEL = "claude-sonnet-5-5"   # pinned by full id, never an alias: part of the cache key
+BACKENDS = ("claude-code", "sdk")
+BACKEND = os.environ.get("PIPELINE_LLM_BACKEND", "claude-code")
+RATES = {"claude-sonnet-5-5": (2.0, 10.0)}   # USD per million input and output tokens (Anthropic pricing page, 2026-10-06)
+SDK_MAX_TOKENS = 16000                       # a full Papa John's page answer is about 9,000 tokens
+SDK_MAX_IMAGE_BYTES = 5_000_000              # the API's limit per image
+SDK_TIMEOUT_S = 300
 PROMPT_VERSION = 1
 TIMEOUT_S = 300
 PER_CALL_USD = 0.5
@@ -77,6 +88,54 @@ def claude_runner(prompt: str, schema: dict, add_dir: Path) -> dict:
     return claude_result(r.stdout, r.stderr, r.returncode)
 
 
+def sdk_runner(prompt: str, schema: dict, add_dir: Path, image: Path | None = None, client=None) -> dict:
+    """One Messages API request: the page image, the instructions, and a forced tool whose input schema is the answer's JSON schema.
+
+    Returns what `claude -p --output-format json` returns (structured_output, total_cost_usd, is_error) so `call` treats both alike."""
+    import base64
+
+    import anthropic
+    if image is None:
+        raise LlmError("the sdk backend needs the page image")
+    if image.stat().st_size > SDK_MAX_IMAGE_BYTES:
+        raise LlmError(f"{image.name}: the image is larger than {SDK_MAX_IMAGE_BYTES} bytes (lower the dpi)")
+    if client is None:
+        if not os.environ.get("ANTHROPIC_API_KEY"):
+            raise LlmError("the sdk backend needs ANTHROPIC_API_KEY in the environment")
+        client = anthropic.Anthropic(timeout=SDK_TIMEOUT_S)
+    content = [{"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": base64.b64encode(image.read_bytes()).decode()}},
+               {"type": "text", "text": "The page image is attached to this message; use it where the instructions name an image file.\n\n" + prompt}]
+    try:
+        reply = client.messages.create(model=MODEL, max_tokens=SDK_MAX_TOKENS, messages=[{"role": "user", "content": content}],
+                                       tools=[{"name": "record_rows", "description": "Record the answer.", "input_schema": schema}],
+                                       tool_choice={"type": "tool", "name": "record_rows"})
+    except anthropic.RateLimitError as e:
+        raise RateLimited(f"{image.name}: {e}") from None
+    except anthropic.APIError as e:
+        raise LlmError(f"{image.name}: {type(e).__name__}: {str(e)[:200]}") from None
+    if reply.stop_reason == "max_tokens":
+        raise LlmError(f"{image.name}: the answer was cut off at {SDK_MAX_TOKENS} tokens")
+    answer = next((b.input for b in reply.content if b.type == "tool_use"), None)
+    rate_in, rate_out = RATES[MODEL]
+    cost = (reply.usage.input_tokens * rate_in + reply.usage.output_tokens * rate_out) / 1e6
+    return {"is_error": False, "structured_output": answer, "total_cost_usd": cost}
+
+
+sdk_runner.wants_image = True
+
+
+def runner(prompt: str, schema: dict, add_dir: Path, image: Path | None = None) -> dict:
+    """The backend chosen by `BACKEND`, looked up at call time so `--backend` and the environment variable both work."""
+    if BACKEND == "claude-code":
+        return claude_runner(prompt, schema, add_dir)
+    if BACKEND == "sdk":
+        return sdk_runner(prompt, schema, add_dir, image=image)
+    raise LlmError(f"unknown backend {BACKEND!r}: use one of {BACKENDS}")
+
+
+runner.wants_image = True
+
+
 def _key(image: Path, prompt: str, schema: dict) -> str:
     h = hashlib.sha256(image.read_bytes())
     for part in (prompt, json.dumps(schema, sort_keys=True), MODEL, str(PROMPT_VERSION)):
@@ -85,7 +144,7 @@ def _key(image: Path, prompt: str, schema: dict) -> str:
 
 
 def call(prompt: str, schema: dict, image: Path, *, cache_dir: Path, budget: Budget,
-         runner: Callable[[str, dict, Path], dict] = claude_runner,
+         runner: Callable[..., dict] = None,
          validate: Callable[[dict], None] = lambda answer: None) -> dict:
     """The model's structured answer about `image`; the prompt must tell it to read the file at that path.
 
@@ -101,7 +160,8 @@ def call(prompt: str, schema: dict, image: Path, *, cache_dir: Path, budget: Bud
     with budget.lock:
         budget.check()
         budget.calls += 1   # counted when started, so parallel calls cannot overshoot the cap
-    result = runner(prompt, schema, image.parent)
+    runner = runner or globals()["runner"]
+    result = runner(prompt, schema, image.parent, image=image) if getattr(runner, "wants_image", False) else runner(prompt, schema, image.parent)
     with budget.lock:
         budget.usd += result.get("total_cost_usd") or 0.0
     if result.get("is_error"):

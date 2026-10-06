@@ -23,7 +23,7 @@ from pipeline.ingest import page_texts
 
 WORK = Path(__file__).resolve().parent.parent.parent / "work"
 PORTION = re.compile(r"^(\d+(?:\.\d+)?)\s*(g|ml)$")
-RUNNER = llm.claude_runner          # tests replace these two
+RUNNER = llm.runner          # tests replace these two
 BUDGET = llm.BUDGET
 
 

@@ -12,6 +12,7 @@ from pipeline.columns import PROVENANCE, load_columns
 from pipeline.coverage import numeric_lines, shortfalls
 from pipeline.evaluate import compare_golden, compare_ground_truth, ground_truth_file, read_csv
 from pipeline.export import finalise, merge_by_key, write_csv
+from pipeline import llm
 from pipeline.llm import LlmError
 from pipeline.ingest import load_chains, manifest_row, page_texts, text_sha
 from pipeline.parsers import PARSERS, vision_pairs, vision_products, vision_table
@@ -76,6 +77,15 @@ def run(inputs: Path, chains_file: Path, outputs: Path, only: str | None = None,
         write_csv(rows, columns, path)
         written[path] = rows
     return written
+
+
+def apply_backend(name: str | None) -> None:
+    """`--backend` wins over the PIPELINE_LLM_BACKEND environment variable (already read into llm.BACKEND)."""
+    if name is None:
+        name = llm.BACKEND
+    if name not in llm.BACKENDS:
+        raise SystemExit(f"unknown backend {name!r}: use one of {llm.BACKENDS}")
+    llm.BACKEND = name
 
 
 def _retire(path: Path) -> None:
@@ -239,6 +249,9 @@ def evaluate(chains_file: Path, outputs: Path, ground_truth: Path, golden: Path,
 
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog="pipeline")
+    parser.add_argument("--backend", choices=llm.BACKENDS, default=None,
+                        help="how pages are read by the model: claude-code (headless `claude -p`, the plan login; default) or sdk (Anthropic API, ANTHROPIC_API_KEY); "
+                             "or set PIPELINE_LLM_BACKEND")
     sub = parser.add_subparsers(dest="cmd", required=True)
     sub.add_parser("manifest", help="page/text/parser report for every PDF -> work/manifest.csv")
     run_p = sub.add_parser("run", help="extract every approved chain -> outputs/<key>.csv")
@@ -256,6 +269,7 @@ def main(argv: list[str] | None = None) -> None:
     eval_p = sub.add_parser("eval", help="compare outputs with ground truth and golden rows; exit 1 on any failure")
     eval_p.add_argument("--lenient", action="store_true", help="a source with nothing to compare against only prints a notice (default: it fails, so a new batch cannot pass unchecked)")
     args = parser.parse_args(argv)
+    apply_backend(args.backend)
     chains_file = ROOT / "config" / "chains.yaml"
 
     if args.cmd == "manifest":

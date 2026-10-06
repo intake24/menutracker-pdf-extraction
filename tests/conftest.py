@@ -3,11 +3,14 @@ import pytest
 
 @pytest.fixture(autouse=True)
 def no_model_calls(monkeypatch):
-    """Tests are offline: anything that would reach the real `claude` fails instead of spending quota."""
-    from pipeline.parsers import vision_table
+    """Tests are offline: anything that would reach a real backend (`claude -p` or the Anthropic API) fails instead of spending money or quota."""
+    from pipeline import llm
+    from pipeline.parsers import vision_pairs, vision_products, vision_table
 
-    def refuse(*_):
-        raise AssertionError("a test tried to call the real model; patch vision_table.RUNNER")
-    monkeypatch.setattr(vision_table, "RUNNER", refuse)
-    from pipeline.parsers import vision_products
-    monkeypatch.setattr(vision_products, "RUNNER", refuse)
+    def refuse(*_, **__):
+        raise AssertionError("a test tried to call the real model; patch the parser's RUNNER")
+    for module in (vision_table, vision_products, vision_pairs):
+        monkeypatch.setattr(module, "RUNNER", refuse)
+    monkeypatch.setattr(llm, "claude_runner", refuse)
+    import anthropic
+    monkeypatch.setattr(anthropic, "Anthropic", refuse)     # sdk_runner builds its client from this; tests pass a fake client instead

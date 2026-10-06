@@ -30,7 +30,7 @@ from pipeline import llm
 from pipeline.parsers import vision_table
 
 WORK = vision_table.WORK
-RUNNER = llm.claude_runner          # tests replace these two
+RUNNER = llm.runner          # tests replace these two
 BUDGET = llm.BUDGET
 WORKERS = 3
 DIET = {"vegetarian": "Suitable_for_Vegetarian", "vegan": "Suitable_for_Vegan", "halal": "Suitable_for_Halal"}

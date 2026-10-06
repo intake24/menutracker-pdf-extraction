@@ -185,3 +185,16 @@ def test_a_chain_that_is_skipped_or_stopped_does_not_leave_its_old_csv_as_curren
     cf = chains_file(tmp_path, approved=False)
     run(ROOT / "inputs", cf, out, None)                                      # every chain unapproved: all skipped
     assert not (out / "46_Cineworld.csv").exists() and (out / "_stale" / "46_Cineworld.csv").read_text() == "old\n"
+
+
+def test_the_backend_option_sets_the_llm_backend_and_refuses_an_unknown_one(monkeypatch):
+    import pytest
+
+    from pipeline import cli, llm
+    monkeypatch.setattr(llm, "BACKEND", "claude-code")
+    cli.apply_backend("sdk")
+    assert llm.BACKEND == "sdk"
+    cli.apply_backend(None)                       # not given: the environment variable's value (already in llm.BACKEND) stays
+    assert llm.BACKEND == "sdk"
+    with pytest.raises(SystemExit):
+        cli.apply_backend("nonsense")

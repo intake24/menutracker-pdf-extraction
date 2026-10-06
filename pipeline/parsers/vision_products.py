@@ -34,7 +34,7 @@ from pipeline.allergens import parse_allergens
 from pipeline.parsers import vision_table
 
 WORK = vision_table.WORK
-RUNNER = llm.claude_runner          # tests replace these two
+RUNNER = llm.runner          # tests replace these two
 BUDGET = llm.BUDGET                 # one budget for the whole run, shared with vision_table
 
 SCHEMA = {"type": "object", "required": ["rows"], "properties": {"rows": {"type": "array", "items": {

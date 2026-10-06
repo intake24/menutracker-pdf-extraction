@@ -187,3 +187,99 @@ def test_a_cached_answer_that_fails_the_current_validation_is_asked_again(tmp_pa
     assert len(calls) == 2
     assert call("q", {}, img, cache_dir=tmp_path / "c", budget=Budget(), runner=runner, validate=want_two)["v"] == 2   # now cached and valid
     assert len(calls) == 2
+
+
+# ---- backends: headless Claude Code or the Anthropic SDK, chosen by PIPELINE_LLM_BACKEND or --backend
+
+class FakeMessages:
+    def __init__(self, reply=None, error=None):
+        self.reply, self.error, self.sent = reply, error, None
+
+    def create(self, **kwargs):
+        self.sent = kwargs
+        if self.error:
+            raise self.error
+        return self.reply
+
+
+class FakeClient:
+    def __init__(self, **kw):
+        self.messages = FakeMessages(**kw)
+
+
+def _reply(**over):
+    from types import SimpleNamespace as NS
+    base = dict(stop_reason="tool_use", content=[NS(type="tool_use", name="record_rows", input={"rows": [{"name": "A"}]})],
+                usage=NS(input_tokens=4000, output_tokens=1500))
+    return NS(**(base | over))
+
+
+def test_the_sdk_runner_sends_the_image_and_a_forced_tool_and_returns_the_headless_result_shape(tmp_path):
+    import base64
+
+    from pipeline import llm
+    img = tmp_path / "p.png"
+    img.write_bytes(b"\x89PNGdata")
+    client = FakeClient(reply=_reply())
+    result = llm.sdk_runner("Read the image x.png. Return rows.", {"type": "object"}, tmp_path, image=img, client=client)
+    sent = client.messages.sent
+    assert result["structured_output"] == {"rows": [{"name": "A"}]} and result["is_error"] is False
+    assert abs(result["total_cost_usd"] - (4000 * 2 + 1500 * 10) / 1e6) < 1e-9                    # Sonnet 5.5: $2 in, $10 out per million tokens
+    assert sent["model"] == llm.MODEL and sent["tool_choice"] == {"type": "tool", "name": "record_rows"} and sent["tools"][0]["input_schema"] == {"type": "object"}
+    blocks = sent["messages"][0]["content"]
+    assert blocks[0]["type"] == "image" and blocks[0]["source"]["data"] == base64.b64encode(b"\x89PNGdata").decode()
+    assert "Return rows." in blocks[1]["text"]
+
+
+def test_the_sdk_runner_turns_a_cut_off_answer_a_rate_limit_and_a_missing_key_into_llm_errors(tmp_path, monkeypatch):
+    from types import SimpleNamespace as NS
+
+    import anthropic
+    import pytest
+
+    from pipeline import llm
+    img = tmp_path / "p.png"
+    img.write_bytes(b"x")
+    with pytest.raises(llm.LlmError, match="cut off"):
+        llm.sdk_runner("q", {}, tmp_path, image=img, client=FakeClient(reply=_reply(stop_reason="max_tokens")))
+    resp = NS(status_code=429, headers={}, request=NS(method="POST", url="https://api.anthropic.com"))
+    with pytest.raises(llm.RateLimited):
+        llm.sdk_runner("q", {}, tmp_path, image=img, client=FakeClient(error=anthropic.RateLimitError("slow down", response=resp, body=None)))
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    with pytest.raises(llm.LlmError, match="ANTHROPIC_API_KEY"):
+        llm.sdk_runner("q", {}, tmp_path, image=img)
+    big = tmp_path / "big.png"
+    big.write_bytes(b"x" * (llm.SDK_MAX_IMAGE_BYTES + 1))
+    with pytest.raises(llm.LlmError, match="larger than"):
+        llm.sdk_runner("q", {}, tmp_path, image=big, client=FakeClient(reply=_reply()))
+
+
+def test_the_backend_is_chosen_at_call_time_and_an_unknown_name_is_refused(tmp_path, monkeypatch):
+    import pytest
+
+    from pipeline import llm
+    seen = []
+    monkeypatch.setattr(llm, "claude_runner", lambda prompt, schema, add_dir: seen.append("claude-code") or {})
+    monkeypatch.setattr(llm, "sdk_runner", lambda prompt, schema, add_dir, image=None, client=None: seen.append("sdk") or {})
+    for name in ("claude-code", "sdk"):
+        monkeypatch.setattr(llm, "BACKEND", name)
+        llm.runner("q", {}, tmp_path, image=tmp_path / "p.png")
+    assert seen == ["claude-code", "sdk"]
+    monkeypatch.setattr(llm, "BACKEND", "other")
+    with pytest.raises(llm.LlmError, match="backend"):
+        llm.runner("q", {}, tmp_path, image=tmp_path / "p.png")
+
+
+def test_call_hands_the_image_to_a_runner_that_wants_it_and_not_to_the_others(tmp_path):
+    from pipeline.llm import Budget, call
+    img = tmp_path / "p.png"
+    img.write_bytes(b"x")
+    got = {}
+
+    def wants(prompt, schema, add_dir, image=None):
+        got["image"] = image
+        return {"is_error": False, "structured_output": {"v": 1}, "total_cost_usd": 0.0}
+    wants.wants_image = True
+    call("q", {}, img, cache_dir=tmp_path / "c1", budget=Budget(), runner=wants)
+    assert got["image"] == img
+    call("q", {}, img, cache_dir=tmp_path / "c2", budget=Budget(), runner=lambda prompt, schema, add_dir: {"is_error": False, "structured_output": {"v": 1}, "total_cost_usd": 0.0})
