@@ -1,5 +1,6 @@
 import argparse
 import csv
+import hashlib
 import json
 import sys
 from collections import Counter
@@ -7,7 +8,7 @@ from pathlib import Path
 
 import yaml
 
-from pipeline.columns import load_columns
+from pipeline.columns import PROVENANCE, load_columns
 from pipeline.coverage import numeric_lines, shortfalls
 from pipeline.evaluate import compare_golden, compare_ground_truth, ground_truth_file, read_csv
 from pipeline.export import finalise, merge_by_key, write_csv
@@ -56,6 +57,7 @@ def run(inputs: Path, chains_file: Path, outputs: Path, only: str | None = None,
             if only:
                 raise SourceNotApproved(f"{key}: has a source that is not approved in {chains_file.name}")
             print(f"skipped {key}: not approved in {chains_file.name}", file=sys.stderr)
+            _retire(outputs / f"{key}.csv")
             continue
         try:
             rows = _parse_chain(chain, inputs, parsed)
@@ -65,6 +67,7 @@ def run(inputs: Path, chains_file: Path, outputs: Path, only: str | None = None,
             if stopped is None:
                 raise
             stopped.append(message)
+            _retire(outputs / f"{key}.csv")
             continue
         if chain.get("merge_by_key"):   # several sources describe the same products (allergen table and nutrition table)
             rows = merge_by_key(rows)
@@ -75,12 +78,21 @@ def run(inputs: Path, chains_file: Path, outputs: Path, only: str | None = None,
     return written
 
 
+def _retire(path: Path) -> None:
+    """A chain that was skipped or stopped must not leave its CSV of an earlier run looking current: it moves to outputs/_stale/."""
+    if path.exists():
+        (path.parent / "_stale").mkdir(exist_ok=True)
+        path.replace(path.parent / "_stale" / path.name)
+        print(f"moved the old {path.name} to {path.parent.name}/_stale/", file=sys.stderr)
+
+
 def _parse_chain(chain: dict, inputs: Path, parsed: dict[tuple, list[dict]]) -> list[dict]:
     rows: list[dict] = []
     for source in chain["sources"]:
         pdf = inputs / source["pdf"]
         options = {k: v for k, v in source.items() if k not in ("pdf", "region", "category", "approved", "disclaimer")}
-        cache_key = (text_sha(page_texts(pdf)), json.dumps(options, sort_keys=True))   # every parse-affecting option
+        # every parse-affecting option, and the bytes of the file: image-only PDFs have no text, so equal text would not mean equal pages
+        cache_key = (text_sha(page_texts(pdf)), hashlib.sha256(pdf.read_bytes()).hexdigest(), json.dumps(options, sort_keys=True))
         if cache_key not in parsed:
             parsed[cache_key] = PARSERS[source["parser"]](pdf, source)
         rows += [{"method": "parser"} | r | {"region": source["region"], "source_file": pdf.name}
@@ -122,7 +134,8 @@ def verification_report(chains_file: Path, outputs: Path, ground_truth: Path, go
             out.append({"chain": key, "source_file": pdf, "parser": source["parser"], "approved": bool(source.get("approved")), "rows": len(mine),
                         "errors": sum("error:" in r.get("flags", "") for r in mine), "warnings": sum("warn:" in r.get("flags", "") for r in mine),
                         "golden_rows": len(read_csv(gold)) if gold.exists() else 0, "pearl_scan": "yes" if ground_truth_file(ground_truth, stem) else "no",
-                        "model_read_pages": len({r["source_page"] for r in llm}), "pages_with_rows": len({r["source_page"] for r in mine})})
+                        "model_read_pages": len({r["source_page"] for r in llm}), "pages_with_rows": len({r["source_page"] for r in mine}),
+                        "exact_duplicates": len(mine) - len({tuple(sorted((k, v) for k, v in r.items() if k not in PROVENANCE)) for r in mine})})
     return out
 
 
@@ -241,7 +254,7 @@ def main(argv: list[str] | None = None) -> None:
     sub.add_parser("flags", help="every flagged row of every chain -> outputs/_flags.csv (the PDFs' own inconsistencies and parser warnings)")
     sub.add_parser("report", help="one line per source: rows, flags, golden rows, Pearl Scan present, model-read pages -> outputs/_verification.csv (no model calls)")
     eval_p = sub.add_parser("eval", help="compare outputs with ground truth and golden rows; exit 1 on any failure")
-    eval_p.add_argument("--strict", action="store_true", help="a source with nothing to compare against fails")
+    eval_p.add_argument("--lenient", action="store_true", help="a source with nothing to compare against only prints a notice (default: it fails, so a new batch cannot pass unchecked)")
     args = parser.parse_args(argv)
     chains_file = ROOT / "config" / "chains.yaml"
 
@@ -275,7 +288,7 @@ def main(argv: list[str] | None = None) -> None:
             w.writeheader()
             w.writerows(rows)
         for r in rows:
-            print(f"{r['chain']:<16}{r['source_file'][:44]:<46}rows {r['rows']:>5}  err {r['errors']:>3}  warn {r['warnings']:>3}  golden {r['golden_rows']:>3}  pearl {r['pearl_scan']:<3}  model pages {r['model_read_pages']}")
+            print(f"{r['chain']:<16}{r['source_file'][:44]:<46}rows {r['rows']:>5}  err {r['errors']:>3}  warn {r['warnings']:>3}  dup {r['exact_duplicates']:>3}  golden {r['golden_rows']:>3}  pearl {r['pearl_scan']:<3}  model pages {r['model_read_pages']}")
         weak = [r for r in rows if r["golden_rows"] == 0 and r["pearl_scan"] == "no"]
         print(f"{len(rows)} sources; without golden rows or Pearl Scan: {[r['source_file'] for r in weak] or 'none'}")
     elif args.cmd == "flags":
@@ -295,7 +308,7 @@ def main(argv: list[str] | None = None) -> None:
         sys.exit(1 if gaps else 0)
     elif args.cmd == "eval":
         failures = evaluate(chains_file, ROOT / "outputs", ROOT / "inputs" / "ground-truth",
-                            ROOT / "golden", ROOT / "config", strict=args.strict)
+                            ROOT / "golden", ROOT / "config", strict=not args.lenient)
         print("\n".join(failures) or "eval: all checks passed")
         sys.exit(1 if failures else 0)
 

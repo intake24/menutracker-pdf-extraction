@@ -199,3 +199,13 @@ def test_a_row_that_no_join_selects_stops_the_run(tmp_path, monkeypatch):
     source = {**SOURCE, "joins": [{"matrix": [3], "nutrition": [4], "nutrition_section": "X", "by_name": True}]}
     with pytest.raises(LlmError, match="no join"):
         vp.parse(pdf, source)
+
+
+def test_a_pdf_name_with_dots_still_gives_its_page_image(tmp_path, monkeypatch):
+    monkeypatch.setattr(vp.vision_table, "WORK", tmp_path)
+    monkeypatch.setattr(vp, "WORK", tmp_path)
+    monkeypatch.setattr(vp, "BUDGET", Budget())
+    monkeypatch.setattr(vp, "RUNNER", lambda prompt, schema, add_dir: {"is_error": False, "structured_output": {"rows": [M]}, "total_cost_usd": 0.0})
+    pdf = Path(__file__).resolve().parent.parent / "inputs" / "04.25-BK-Core-Menu-PB2.pdf"
+    assert vp.raw_rows(pdf, {"joins": [{"matrix": [1], "nutrition": []}], "instructions": "x"}, 1)[0]["name"] == "Original Glazed"
+    assert (tmp_path / "pages" / "04.25-BK-Core-Menu-PB2-1.png").exists()

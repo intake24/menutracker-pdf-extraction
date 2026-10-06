@@ -111,3 +111,7 @@ Config-only chain on an existing parser: 1-3 points. New option on a parser: 3-5
 3. A `--dry-run` cost estimate and CLI-set caps for the model route; concurrency of 3.
 4. Mark accounting as a permanent `check` command for matrix sources, not a scratch script.
 5. Flags report across all chains (counts by kind) for the final review.
+
+## 9. Commands added at the end of the round
+
+`python -m pipeline.cli flags` (every flagged row, `outputs/_flags.csv`), `report` (one line per PDF: rows, flags, exact duplicates, golden rows, Pearl Scan present, model-read pages; `outputs/_verification.csv`), `eval` is strict by default (`--lenient` to only print a notice). See `docs/end-of-round-report-2026-10.md`.

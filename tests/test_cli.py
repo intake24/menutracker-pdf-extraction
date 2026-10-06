@@ -152,12 +152,36 @@ def test_verification_report_has_a_line_per_source_with_rows_flags_golden_and_wh
     out, gold, truth = tmp_path / "o", tmp_path / "g", tmp_path / "t"
     for d in (out, gold, truth):
         d.mkdir()
-    (out / "9_Demo.csv").write_text("Product_Name,source_file,source_page,method,flags\nA,a.pdf,1,parser,error: x: 1\nB,a.pdf,2,llm,warn: y\nC,b.pdf,1,parser,\n")
+    (out / "9_Demo.csv").write_text("Product_Name,source_file,source_page,method,flags\nA,a.pdf,1,parser,error: x: 1\nB,a.pdf,2,llm,warn: y\nB,a.pdf,3,llm,warn: y\nC,b.pdf,1,parser,\n")
     (gold / "a.csv").write_text("Product_Name\nA\nB\n")
     (truth / "x").mkdir()
     (truth / "x" / "b.csv").write_text("item_name\nC\n")
     chains = tmp_path / "chains.yaml"
     chains.write_text("9_Demo:\n  chain: Demo\n  sources:\n    - {pdf: a.pdf, parser: p}\n    - {pdf: b.pdf, parser: p}\n")
     a, b = verification_report(chains, out, truth, gold)
-    assert (a["rows"], a["errors"], a["warnings"], a["golden_rows"], a["pearl_scan"], a["model_read_pages"], a["pages_with_rows"]) == (2, 1, 1, 2, "no", 1, 2)
+    assert (a["rows"], a["errors"], a["warnings"], a["golden_rows"], a["pearl_scan"], a["model_read_pages"], a["pages_with_rows"], a["exact_duplicates"]) == (3, 1, 2, 2, "no", 2, 3, 1)
     assert (b["rows"], b["golden_rows"], b["pearl_scan"], b["model_read_pages"]) == (1, 0, "yes", 0)
+
+
+def test_two_image_only_pdfs_with_the_same_options_are_not_parsed_once(tmp_path, monkeypatch):
+    import shutil
+
+    from pipeline import cli
+    a, b = tmp_path / "a.pdf", tmp_path / "b.pdf"
+    shutil.copy(ROOT / "inputs" / "nutrition.pdf", a)
+    shutil.copy(ROOT / "inputs" / "nutritional-information.pdf", b)       # different bytes
+    calls = []
+    monkeypatch.setitem(cli.PARSERS, "fake", lambda pdf, source: calls.append(pdf.name) or [{"Product_Name": pdf.name}])
+    monkeypatch.setattr(cli, "page_texts", lambda pdf: [""])                # image-only: both have the same (empty) text
+    chain = {"sources": [{"pdf": "a.pdf", "parser": "fake", "region": "UK"}, {"pdf": "b.pdf", "parser": "fake", "region": "ROI"}]}
+    rows = cli._parse_chain(chain, tmp_path, {})
+    assert calls == ["a.pdf", "b.pdf"] and [r["Product_Name"] for r in rows] == ["a.pdf", "b.pdf"]
+
+
+def test_a_chain_that_is_skipped_or_stopped_does_not_leave_its_old_csv_as_current(tmp_path):
+    out = tmp_path / "out"
+    out.mkdir()
+    (out / "46_Cineworld.csv").write_text("old\n")
+    cf = chains_file(tmp_path, approved=False)
+    run(ROOT / "inputs", cf, out, None)                                      # every chain unapproved: all skipped
+    assert not (out / "46_Cineworld.csv").exists() and (out / "_stale" / "46_Cineworld.csv").read_text() == "old\n"

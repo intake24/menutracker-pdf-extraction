@@ -70,3 +70,4 @@ def test_rows_that_differ_only_in_their_notes_are_not_conflicting_duplicates():
     add_on = {"Product_Name": "smoked streaky bacon", "Category": "BURGERS", "energykCal_Per Portion": "104"}
     assert duplicate_issues([add_on | {"notes": "Add-on to A"}, add_on | {"notes": "Add-on to B"}]) == {}
     assert list(duplicate_issues([add_on, add_on | {"energykCal_Per Portion": "105"}])) == [1]
+

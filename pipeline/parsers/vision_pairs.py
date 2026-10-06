@@ -79,7 +79,7 @@ def raw_rows(pdf: Path, source: dict, page_no: int, pages_dir: Path | None = Non
     stem = pages_dir / f"{pdf.stem}-{page_no}"
     subprocess.run(["pdftoppm", "-r", str(source.get("dpi", 200)), "-f", str(page_no), "-l", str(page_no),
                     "-png", "-singlefile", str(pdf), str(stem)], check=True)
-    png = stem.with_suffix(".png")
+    png = Path(f"{stem}.png")   # not with_suffix: a name like 04.25-menu has a dot
     if kind == "matrix":
         schema = matrix_schema()
         ask = ("Return EVERY product row of the allergen table, in order. section = the grey heading above the rows. name = "
