@@ -1,8 +1,8 @@
-Product_Name,Category,gluten,wheat,rye,barley,oats,spelt,kamut,celery,crustacean,egg,fish,lupin,milk,mollusc,mustard,peanut,sesame,soya,sulphite,treeNuts
-(SPRITZ) APEROL SPRITZ,SPRING SUMMER 2025 - COCKTAILS,No,No,No,No,No,,,No,No,No,No,No,No,No,No,No,No,No,Yes,No
-(CLASSIC) MOJITO,SPRING SUMMER 2025 - COCKTAILS,No,No,No,No,No,,,No,No,No,No,No,No,No,No,No,No,No,No,No
-TEQUILA ROSE,SHOTS,No,No,No,No,No,,,No,No,No,No,No,Yes,No,No,No,No,No,No,No
-CARLING,DRAUGHT BEERS & CIDERS,Yes,Yes,No,Yes,No,,,No,No,No,No,No,No,No,No,No,No,No,No,No
-ALPRO SOYA DRINK,HOT DRINKS - COFFEE / TEA,No,No,No,No,No,,,No,No,No,No,No,No,No,No,No,No,Yes,No,No
-"JAM SHED, CHARDONNAY",WINES - WHITE,No,No,No,No,No,,,No,No,Yes,Yes,No,Yes,No,No,No,No,No,Yes,No
-HENDRICK'S,SPIRITS - GIN,No,No,No,No,No,,,No,No,No,No,No,No,No,No,No,No,No,No,No
+Product_Name,Category,gluten,wheat,rye,barley,oats,spelt,kamut,celery,crustacean,egg,fish,lupin,milk,mollusc,mustard,peanut,sesame,soya,sulphite,treeNuts,Serving_Size,Serving_Size_Unit,carbohydrates_Per Portion,energykCal_Per Portion,energykJ_Per Portion,fat_Per Portion,protein_Per Portion,salt_Per Portion,saturates_Per Portion,sugars_Per Portion
+(SPRITZ) APEROL SPRITZ,SPRING SUMMER 2025 - COCKTAILS,No,No,No,No,No,,,No,No,No,No,No,No,No,No,No,No,No,Yes,No,,,,,,,,,,
+(CLASSIC) MOJITO,SPRING SUMMER 2025 - COCKTAILS,No,No,No,No,No,,,No,No,No,No,No,No,No,No,No,No,No,No,No,,,,,,,,,,
+TEQUILA ROSE,SHOTS,No,No,No,No,No,,,No,No,No,No,No,Yes,No,No,No,No,No,No,No,,,,,,,,,,
+CARLING,DRAUGHT BEERS & CIDERS,Yes,Yes,No,Yes,No,,,No,No,No,No,No,No,No,No,No,No,No,No,No,,,,,,,,,,
+ALPRO SOYA DRINK,HOT DRINKS - COFFEE / TEA,No,No,No,No,No,,,No,No,No,No,No,No,No,No,No,No,Yes,No,No,,,,,,,,,,
+"JAM SHED, CHARDONNAY",WINES - WHITE,No,No,No,No,No,,,No,No,Yes,Yes,No,Yes,No,No,No,No,No,Yes,No,,,,,,,,,,
+HENDRICK'S,SPIRITS - GIN,No,No,No,No,No,,,No,No,No,No,No,No,No,No,No,No,No,No,No,,,,,,,,,,

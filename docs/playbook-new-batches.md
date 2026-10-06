@@ -112,6 +112,8 @@ Config-only chain on an existing parser: 1-3 points. New option on a parser: 3-5
 4. Mark accounting as a permanent `check` command for matrix sources, not a scratch script.
 5. Flags report across all chains (counts by kind) for the final review.
 
-## 9. Commands added at the end of the round
+## 9. Commands added at the end of the round (see also section 6b of the end-of-round report)
 
 `python -m pipeline.cli flags` (every flagged row, `outputs/_flags.csv`), `report` (one line per PDF: rows, flags, exact duplicates, golden rows, Pearl Scan present, model-read pages; `outputs/_verification.csv`), `eval` is strict by default (`--lenient` to only print a notice). See `docs/end-of-round-report-2026-10.md`. Cost of a round on the SDK: `docs/sdk-cost-estimate-2026-10.md`.
+
+`golden` writes a golden skeleton with every value column; `reread --pages all` rereads every model-read page and `report` shows the count; `coverage` also lists pages with fewer rows than the text layer suggests; `--backend sdk` switches the model backend.

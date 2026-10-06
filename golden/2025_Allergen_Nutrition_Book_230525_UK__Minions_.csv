@@ -1,13 +1,13 @@
-Product_Name,Category,Size,gluten,wheat,rye,barley,oats,spelt,kamut,celery,crustacean,egg,fish,lupin,milk,mollusc,mustard,peanut,sesame,soya,sulphite,treeNuts,treeNutSource,Suitable_for_Vegetarian,Suitable_for_Vegan,Suitable_for_Halal
-Original Glazed,DOUGHNUTS – RINGS & BITES,,,Yes,,,,,,,,,,,,,,,,,,,,YES,NO,YES
-Personalised OG,DOUGHNUTS – RINGS & BITES,,,Yes,,,,,,,,,,,,,,,,Yes,,,,YES,NO,YES
-Mini Original Glazed,DOUGHNUTS – RINGS & BITES,,,Yes,,,,,,,,,,,,,,,,,,,,YES,NO,YES
-Biscoff,DOUGHNUTS – SHELLS,,,Yes,,,,,,,,,,,Yes,,,,,Yes,,,,YES,NO,YES
-Nutty Chocolatta,DOUGHNUTS – SHELLS,,,Yes,,,,,,,,,,,Yes,,,,,Yes,,Yes,Hazelnut,YES,NO,YES
-Pistachio Overload,DOUGHNUTS – SHELLS,,,Yes,,,,,,,,,,,Yes,,,,,Yes,,Yes,Pistachio,YES,NO,YES
-Strawberry Shake,MILKSHAKES,,,Yes,,,,,,,,,,,Yes,,,,,,,,,YES,NO,YES
-Chocolate Shake,MILKSHAKES,,,,,,,,,,,,,,Yes,,,,,Yes,,,,YES,NO,YES
-Strawberry Shake with Mini OG,MILKSHAKES,,,Yes,,,,,,,,,,,Yes,,,,,,,,,YES,NO,YES
-Bello! Banana Shake,MILKSHAKES,,,,,,,,,,,,,,Yes,,,,,,,,,YES,NO,YES
-Cloudy Lemonade 12oz,COLD DRINKS,,,,,,,,,,,,,,,,,,,,,,,YES,NO,YES
-Pistachio Latte 12oz,PISTACHIO – OAT DRINK,,,,,,Yes,,,,,,,,,,,,,,,,,YES,NO,YES
+Product_Name,Category,Size,gluten,wheat,rye,barley,oats,spelt,kamut,celery,crustacean,egg,fish,lupin,milk,mollusc,mustard,peanut,sesame,soya,sulphite,treeNuts,treeNutSource,Suitable_for_Vegetarian,Suitable_for_Vegan,Suitable_for_Halal,Serving_Size,Serving_Size_Unit,carbohydrates_Per 100g/ml,energykCal_Per 100g/ml,energykJ_Per 100g/ml,fat_Per 100g/ml,fibre_Per 100g/ml,protein_Per 100g/ml,salt_Per 100g/ml,saturates_Per 100g/ml,sugars_Per 100g/ml,carbohydrates_Per Portion,energykCal_Per Portion,energykJ_Per Portion,fat_Per Portion,fibre_Per Portion,protein_Per Portion,salt_Per Portion,saturates_Per Portion,sugars_Per Portion
+Original Glazed,DOUGHNUTS – RINGS & BITES,,,Yes,,,,,,,,,,,,,,,,,,,,YES,NO,YES,51,g,53,384,1606,15,2.3,6.0,0.47,7.5,24,27,195,815,7.9,1.2,3.0,0.24,3.8,12
+Personalised OG,DOUGHNUTS – RINGS & BITES,,,Yes,,,,,,,,,,,,,,,,Yes,,,,YES,NO,YES,52,g,54,384,1613,16,2.3,5.9,0.46,7.5,25,28,204,855,8.4,1.2,3.1,0.25,4.0,13
+Mini Original Glazed,DOUGHNUTS – RINGS & BITES,,,Yes,,,,,,,,,,,,,,,,,,,,YES,NO,YES,26,g,53,384,1611,16,2.3,6.0,0.47,7.5,24,14,100,419,4.1,0.6,1.6,0.12,2.0,6.3
+Biscoff,DOUGHNUTS – SHELLS,,,Yes,,,,,,,,,,,Yes,,,,,Yes,,,,YES,NO,YES,94,g,50,417,1744,22,2.6,6.0,0.50,9.0,18,47,392,1639,21,2.4,5.6,0.47,8.5,17
+Nutty Chocolatta,DOUGHNUTS – SHELLS,,,Yes,,,,,,,,,,,Yes,,,,,Yes,,Yes,Hazelnut,YES,NO,YES,87,g,48,425,1776,23,2.7,7.0,0.44,11,19,42,370,1545,20,2.3,6.1,0.38,9.7,17
+Pistachio Overload,DOUGHNUTS – SHELLS,,,Yes,,,,,,,,,,,Yes,,,,,Yes,,Yes,Pistachio,YES,NO,YES,84,g,47,434,1815,24,2.1,6.8,0.44,11,20,40,363,1515,20,1.7,5.7,0.37,9.0,17
+Strawberry Shake,MILKSHAKES,,,Yes,,,,,,,,,,,Yes,,,,,,,,,YES,NO,YES,338,ml,23,138,591,4.1,0.08,3.0,0.00,2.5,22,78,468,1996,14,0.29,10,0.02,8.4,74
+Chocolate Shake,MILKSHAKES,,,,,,,,,,,,,,Yes,,,,,Yes,,,,YES,NO,YES,338,ml,22,141,603,4.6,0.11,3.3,0.02,2.8,21,74,477,2039,15,0.38,11,0.06,9.5,71
+Strawberry Shake with Mini OG,MILKSHAKES,,,Yes,,,,,,,,,,,Yes,,,,,,,,,YES,NO,YES,,,25,154,657,4.8,0.23,3.2,0.04,2.8,22,90,558,2375,17,0.83,12,0.13,10.2,80
+Bello! Banana Shake,MILKSHAKES,,,,,,,,,,,,,,Yes,,,,,,,,,YES,NO,YES,336,ml,21,134,572,4.2,0.13,3.1,0.01,2.6,20,71,449,1921,14,0.44,10,0.04,8.6,67
+Cloudy Lemonade 12oz,COLD DRINKS,,,,,,,,,,,,,,,,,,,,,,,YES,NO,YES,320,ml,3.5,16,66,0.00,0.00,0.00,0.00,0.00,3.5,11,50,210,0.00,0.00,0.00,0.01,0.00,11
+Pistachio Latte 12oz,PISTACHIO – OAT DRINK,,,,,,Yes,,,,,,,,,,,,,,,,,YES,NO,YES,330,ml,11,69,292,2.3,0.68,1.0,0.20,0.23,7.7,36,229,962,7.6,2.2,3.3,0.65,0.75,25

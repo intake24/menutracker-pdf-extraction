@@ -1,9 +1,9 @@
-Product_Name,Category,Size,gluten,wheat,rye,barley,oats,spelt,kamut,celery,crustacean,egg,fish,lupin,milk,mollusc,mustard,peanut,sesame,soya,sulphite,treeNuts,treeNutSource
-Sweet Popcorn,LOOSE POPCORN,Large,,,,,,,,,,,,,,,,,,,,,
-Robinsons Apple & Blackcurrent,SOFT CARBONATED DRINKS,Large,,,,,,,,,,,,,,,,,,,Yes,,
-Caramel Fudge Pieces,BASKIN ROBBINS SCOOPED ICE CREAM - Candy Toppings,,,,,,,,,,,,,,Yes,,,,,May contain,Yes,,
-Toffee Crunch Blondie,BASKIN ROBBINS SCOOPED ICE CREAM - Baked Goods (does not include ice cream),,Yes,Yes,,,,,,,,Yes,,,Yes,,,May contain,,Yes,,Yes,"Almond (Yes), Hazelnut (May contain), Walnut (May contain), Cashew (May contain), Peacan (May contain), Brazil (May contain), Pistachio (May contain), Macadamia (May contain)"
-Milks,LAVAZZA HOT DRINKS,Semi-Skimmed Milk,,,,,,,,,,,,,Yes,,,,,,,,
-Milks,LAVAZZA HOT DRINKS,Soya Milk,,,,,,,,,,,,,,,,,,Yes,,,
-Churros - Large,HOT FOOD - Food,,Yes,Yes,,,,,,,,May contain,,,May contain,,May contain,May contain,,May contain,,May contain,Hazelnut (May contain)
-Southern Fried Goujons - Large,HOT FOOD - Food,,Yes,Yes,,,,,,Yes,,,,,,,,,,,,,
+Product_Name,Category,Size,gluten,wheat,rye,barley,oats,spelt,kamut,celery,crustacean,egg,fish,lupin,milk,mollusc,mustard,peanut,sesame,soya,sulphite,treeNuts,treeNutSource,Serving_Size,Serving_Size_Unit,energykCal_Per 100g/ml,energykCal_Per Portion
+Sweet Popcorn,LOOSE POPCORN,Large,,,,,,,,,,,,,,,,,,,,,,208,g,,958.9
+Robinsons Apple & Blackcurrent,SOFT CARBONATED DRINKS,Large,,,,,,,,,,,,,,,,,,,Yes,,,910,ml,,20.02
+Caramel Fudge Pieces,BASKIN ROBBINS SCOOPED ICE CREAM - Candy Toppings,,,,,,,,,,,,,,Yes,,,,,May contain,Yes,,,,,396,
+Toffee Crunch Blondie,BASKIN ROBBINS SCOOPED ICE CREAM - Baked Goods (does not include ice cream),,Yes,Yes,,,,,,,,Yes,,,Yes,,,May contain,,Yes,,Yes,"Almond (Yes), Hazelnut (May contain), Walnut (May contain), Cashew (May contain), Peacan (May contain), Brazil (May contain), Pistachio (May contain), Macadamia (May contain)",,,440,
+Milks,LAVAZZA HOT DRINKS,Semi-Skimmed Milk,,,,,,,,,,,,,Yes,,,,,,,,,12,ml,,5.64
+Milks,LAVAZZA HOT DRINKS,Soya Milk,,,,,,,,,,,,,,,,,,Yes,,,,12,ml,,4.88
+Churros - Large,HOT FOOD - Food,,Yes,Yes,,,,,,,,May contain,,,May contain,,May contain,May contain,,May contain,,May contain,Hazelnut (May contain),270,g,,1072
+Southern Fried Goujons - Large,HOT FOOD - Food,,Yes,Yes,,,,,,Yes,,,,,,,,,,,,,,225,g,,473

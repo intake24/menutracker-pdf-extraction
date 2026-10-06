@@ -112,3 +112,21 @@ def test_text_check_can_ignore_a_figure_on_one_page_only_where_the_text_layer_ho
     check_text_figures({"rows": [{"kcal": "50"}]}, "A (50kcal) hidden fruit tea (142kcal)", spec, 7)
     with pytest.raises(LlmError, match="142"):
         check_text_figures({"rows": [{"kcal": "50"}]}, "A (50kcal) hidden fruit tea (142kcal)", spec, 8)
+
+
+def test_reread_all_pages_logs_each_page_and_report_counts_them(tmp_path, monkeypatch):
+    import csv
+
+    from pipeline.cli import ROOT, reread, verification_report
+    from pipeline.llm import Budget
+    from pipeline.parsers import vision_table as vt
+    monkeypatch.setattr(vt, "WORK", tmp_path)
+    monkeypatch.setattr(vt, "BUDGET", Budget())
+    monkeypatch.setattr(vt, "RUNNER", lambda prompt, schema, add_dir: {"is_error": False, "structured_output": {"rows": [{"name": "A", "kj": "11" if "pages_reread" in prompt else "10"}]}, "total_cost_usd": 0.0})
+    log = tmp_path / "reread_log.csv"
+    lines = reread(ROOT / "inputs", ROOT / "config" / "chains.yaml", "58_Vue", None, 200, "ice-cream", log=log)
+    rows = list(csv.DictReader(log.open()))
+    assert [(r["chain"], r["page"], r["dpi"], r["differences"]) for r in rows] == [("58_Vue", str(p), "200", "1") for p in (1, 2, 3)] and len(lines) == 3
+    rep = verification_report(ROOT / "config" / "chains.yaml", ROOT / "outputs", ROOT / "inputs" / "ground-truth", ROOT / "golden", reread_log=log)
+    vue = next(r for r in rep if r["source_file"].startswith("m19968"))
+    assert (vue["reread_pages"], vue["reread_differences"]) == (3, 3)

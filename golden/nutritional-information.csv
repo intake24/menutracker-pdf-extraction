@@ -1,5 +1,5 @@
-Product_Name,Category,Size,gluten,wheat,rye,barley,oats,spelt,kamut,celery,crustacean,egg,fish,lupin,milk,mollusc,mustard,peanut,sesame,soya,sulphite,treeNuts,treeNutSource
-DOUBLE PEPPERONI,PIZZAS,Original Base - Medium,Yes,Yes,No,No,No,No,No,No,No,No,No,No,Yes,No,No,No,No,No,No,No,
-DOUBLE PEPPERONI,PIZZAS,Wheat Free Stone Baked *- Medium,May contain,May contain,No,No,No,No,No,No,No,No,No,No,Yes,No,No,No,No,No,No,No,
-LA VIE™ VEGAN HAWAIIAN,VEGAN PIZZAS,Stuffed Crust - Large,Yes,Yes,No,No,Yes,No,No,No,No,May contain,No,No,May contain,No,No,No,No,Yes,No,No,
-LA VIE™ VEGAN HAWAIIAN,VEGAN PIZZAS,Original Base - Large,Yes,Yes,No,No,No,No,No,No,No,May contain,No,No,May contain,No,No,No,No,Yes,No,No,
+Product_Name,Category,Size,gluten,wheat,rye,barley,oats,spelt,kamut,celery,crustacean,egg,fish,lupin,milk,mollusc,mustard,peanut,sesame,soya,sulphite,treeNuts,treeNutSource,Serving_Size,Serving_Size_Unit,carbohydrates_Per 100g/ml,energykCal_Per 100g/ml,energykJ_Per 100g/ml,fat_Per 100g/ml,fibre_Per 100g/ml,protein_Per 100g/ml,salt_Per 100g/ml,saturates_Per 100g/ml,sugars_Per 100g/ml,sodium_Per 100g/ml,energykCal_Per Portion,energykCal_Per Product As Sold
+DOUBLE PEPPERONI,PIZZAS,Original Base - Medium,Yes,Yes,No,No,No,No,No,No,No,No,No,No,Yes,No,No,No,No,No,No,No,,94,g,33.2,299,1255,12.7,2.3,11.9,1.55,6.33,5.1,0.62,280,2243
+DOUBLE PEPPERONI,PIZZAS,Wheat Free Stone Baked *- Medium,May contain,May contain,No,No,No,No,No,No,No,No,No,No,Yes,No,No,No,No,No,No,No,,68,g,25.8,291,1216,15.3,4.9,10.1,1.67,7.51,3.2,0.666,198,1580
+LA VIE™ VEGAN HAWAIIAN,VEGAN PIZZAS,Stuffed Crust - Large,Yes,Yes,No,No,Yes,No,No,No,No,May contain,No,No,May contain,No,No,No,No,Yes,No,No,,100,g,38,251,1058,7.2,2.6,7.4,1.07,4.3,5.2,0.43,252,2518
+LA VIE™ VEGAN HAWAIIAN,VEGAN PIZZAS,Original Base - Large,Yes,Yes,No,No,No,No,No,No,No,May contain,No,No,May contain,No,No,No,No,Yes,No,No,,89,g,42.8,283,1192,8.1,3,8.4,1.2,4.8,5.8,0.48,252,2519

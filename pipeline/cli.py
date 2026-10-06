@@ -124,11 +124,12 @@ def collect_flags(outputs: Path) -> list[dict]:
     return rows
 
 
-def verification_report(chains_file: Path, outputs: Path, ground_truth: Path, golden: Path) -> list[dict]:
+def verification_report(chains_file: Path, outputs: Path, ground_truth: Path, golden: Path, reread_log: Path | None = None) -> list[dict]:
     """One line per source: what was extracted and what it can be checked against, so a person approves from one table.
 
     No model calls: it reads the chain CSVs, the golden files and the Pearl Scan folder (which may be empty for a new batch)."""
     out = []
+    logged = read_csv(reread_log) if reread_log is not None and reread_log.exists() else []
     for key, chain in load_chains(chains_file).items():
         path = outputs / f"{key}.csv"
         rows = read_csv(path) if path.exists() else []
@@ -145,6 +146,8 @@ def verification_report(chains_file: Path, outputs: Path, ground_truth: Path, go
                         "errors": sum("error:" in r.get("flags", "") for r in mine), "warnings": sum("warn:" in r.get("flags", "") for r in mine),
                         "golden_rows": len(read_csv(gold)) if gold.exists() else 0, "pearl_scan": "yes" if ground_truth_file(ground_truth, stem) else "no",
                         "model_read_pages": len({r["source_page"] for r in llm}), "pages_with_rows": len({r["source_page"] for r in mine}),
+                        "reread_pages": len({r["page"] for r in logged if r["chain"] == key and r["source_file"] == pdf}),
+                        "reread_differences": sum(int(r["differences"]) for r in logged if r["chain"] == key and r["source_file"] == pdf),
                         "exact_duplicates": len(mine) - len({tuple(sorted((k, v) for k, v in r.items() if k not in PROVENANCE)) for r in mine})})
     return out
 
@@ -165,6 +168,30 @@ def coverage(inputs: Path, chains_file: Path) -> list[str]:
             print(f"{key} {pdf.stem}: {len(rows)} rows, {sum(lines.values())} data-looking lines, {len(gaps)} pages short")
             out += [f"{key} {pdf.stem} page {p}: {r} rows for {n} data-looking lines" for p, (r, n) in sorted(gaps.items())]
     return out
+
+
+def write_golden_skeleton(outputs: Path, golden: Path, key: str, stem: str, picks: list[str]) -> Path:
+    """golden/<stem>.csv with every value column of the chain CSV (allergens, diet, nutrients, notes; not the provenance, the
+    ingredient text or the flags) for the chosen rows ("Name" or "Name|Size"). The cells are copied from the pipeline's output:
+    a person must check each one against the page (figures against `pdftotext` or the image) before the file counts as golden."""
+    path = golden / f"{stem}.csv"
+    if path.exists():
+        raise FileExistsError(f"{path} exists: edit it by hand, or delete it first")
+    rows = read_csv(outputs / f"{key}.csv")
+    skip = set(PROVENANCE) | {"Ingredients", "Product_Description"}
+    columns = [c for c in rows[0] if c not in skip]
+    chosen = []
+    for pick in picks:
+        name, _, size = pick.partition("|")
+        found = [r for r in rows if r["Product_Name"] == name.strip() and (not size or r.get("Size", "") == size.strip())]
+        if not found:
+            raise SystemExit(f"no row {pick!r} in {key}")
+        chosen.append(found[0])
+    with path.open("w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=columns, lineterminator="\n")
+        w.writeheader()
+        w.writerows({c: r.get(c, "") for c in columns} for r in chosen)
+    return path
 
 
 def review_pages(inputs: Path, chains_file: Path, outputs: Path) -> list[str]:
@@ -198,13 +225,16 @@ def vision_sources(chains_file: Path, key: str) -> list[tuple[dict, object]]:
     return out
 
 
-def reread(inputs: Path, chains_file: Path, key: str, pages: list[int], dpi: int, only_pdf: str = "") -> list[str]:
+def reread(inputs: Path, chains_file: Path, key: str, pages: list[int] | None, dpi: int, only_pdf: str = "", log: Path | None = None) -> list[str]:
     """Read pages again at another resolution (one model call per page) and list every cell that differs from the
-    cached first read. A difference means one of the two reads is wrong: look at the page."""
+    cached first read. A difference means one of the two reads is wrong: look at the page.
+
+    `pages` None means every page the model reads for the chain. Each page read is appended to `log` (chain, pdf, page, dpi, rows,
+    differences) so that `report` can show what was reread."""
     lines = []
     for source, module in vision_sources(chains_file, key):
         pdf = inputs / source["pdf"]
-        for page in pages:
+        for page in (module.pages_of(pdf, source) if pages is None else pages):
             if only_pdf not in source["pdf"] or page not in module.pages_of(pdf, source):
                 continue
             first = module.page_rows(pdf, source, page)
@@ -212,6 +242,14 @@ def reread(inputs: Path, chains_file: Path, key: str, pages: list[int], dpi: int
             diffs = diff_rows(first, second)
             lines += [f"{key} {pdf.stem} page {page}: {d}" for d in diffs]
             print(f"{key} {pdf.stem} page {page}: {len(first)} rows, {len(diffs)} differences at {dpi} dpi")
+            if log is not None:
+                new = not log.exists()
+                log.parent.mkdir(parents=True, exist_ok=True)
+                with log.open("a", newline="") as f:
+                    w = csv.DictWriter(f, fieldnames=["chain", "source_file", "page", "dpi", "rows", "differences"])
+                    if new:
+                        w.writeheader()
+                    w.writerow({"chain": key, "source_file": source["pdf"], "page": page, "dpi": dpi, "rows": len(first), "differences": len(diffs)})
     return lines
 
 
@@ -281,11 +319,15 @@ def main(argv: list[str] | None = None) -> None:
     pages_p.add_argument("--chain", required=True)
     reread_p = sub.add_parser("reread", help="re-read pages of a model-read chain at another dpi and list differing cells (1 call per page)")
     reread_p.add_argument("--chain", required=True)
-    reread_p.add_argument("--pages", required=True, help="comma separated page numbers")
+    reread_p.add_argument("--pages", required=True, help='comma separated page numbers, or "all" for every page the model reads')
     reread_p.add_argument("--dpi", type=int, default=200)
     reread_p.add_argument("--pdf", default="", help="only sources whose file name contains this")
     sub.add_parser("flags", help="every flagged row of every chain -> outputs/_flags.csv (the PDFs' own inconsistencies and parser warnings)")
     sub.add_parser("report", help="one line per source: rows, flags, golden rows, Pearl Scan present, model-read pages -> outputs/_verification.csv (no model calls)")
+    golden_p = sub.add_parser("golden", help="write golden/<pdf stem>.csv with every value column for the chosen rows, to be checked against the page by hand")
+    golden_p.add_argument("--chain", required=True)
+    golden_p.add_argument("--pdf-stem", required=True)
+    golden_p.add_argument("--rows", required=True, help='rows separated by ";", each "Name" or "Name|Size"')
     eval_p = sub.add_parser("eval", help="compare outputs with ground truth and golden rows; exit 1 on any failure")
     eval_p.add_argument("--lenient", action="store_true", help="a source with nothing to compare against only prints a notice (default: it fails, so a new batch cannot pass unchecked)")
     args = parser.parse_args(argv)
@@ -312,19 +354,23 @@ def main(argv: list[str] | None = None) -> None:
                 for page, s in sorted(summary([r for r in rows if r["source_file"] == file]).items()):
                     print(f"{file} page {page}: {s['rows']} rows, {s['flagged']} with errors, {s['empty_cells']} empty cells")
     elif args.cmd == "reread":
-        lines = reread(ROOT / "inputs", chains_file, args.chain, [int(p) for p in args.pages.split(",")], args.dpi, args.pdf)
+        lines = reread(ROOT / "inputs", chains_file, args.chain, None if args.pages == "all" else [int(p) for p in args.pages.split(",")], args.dpi, args.pdf,
+                       ROOT / "work" / "reread_log.csv")
         print("\n".join(lines) or "reread: both reads agree")
         sys.exit(1 if lines else 0)
     elif args.cmd == "report":
-        rows = verification_report(chains_file, ROOT / "outputs", ROOT / "inputs" / "ground-truth", ROOT / "golden")
+        rows = verification_report(chains_file, ROOT / "outputs", ROOT / "inputs" / "ground-truth", ROOT / "golden", ROOT / "work" / "reread_log.csv")
         with (ROOT / "outputs" / "_verification.csv").open("w", newline="") as f:
             w = csv.DictWriter(f, fieldnames=list(rows[0]))
             w.writeheader()
             w.writerows(rows)
         for r in rows:
-            print(f"{r['chain']:<16}{r['source_file'][:44]:<46}rows {r['rows']:>5}  err {r['errors']:>3}  warn {r['warnings']:>3}  dup {r['exact_duplicates']:>3}  golden {r['golden_rows']:>3}  pearl {r['pearl_scan']:<3}  model pages {r['model_read_pages']}")
+            print(f"{r['chain']:<16}{r['source_file'][:44]:<46}rows {r['rows']:>5}  err {r['errors']:>3}  warn {r['warnings']:>3}  dup {r['exact_duplicates']:>3}  golden {r['golden_rows']:>3}  pearl {r['pearl_scan']:<3}  model pages {r['model_read_pages']:>3}  reread {r['reread_pages']:>3} ({r['reread_differences']} diff)")
         weak = [r for r in rows if r["golden_rows"] == 0 and r["pearl_scan"] == "no"]
         print(f"{len(rows)} sources; without golden rows or Pearl Scan: {[r['source_file'] for r in weak] or 'none'}")
+    elif args.cmd == "golden":
+        path = write_golden_skeleton(ROOT / "outputs", ROOT / "golden", args.chain, args.pdf_stem, [p for p in args.rows.split(";") if p.strip()])
+        print(f"{path.relative_to(ROOT)} written: check every cell against the page, then commit it")
     elif args.cmd == "flags":
         rows = collect_flags(ROOT / "outputs")
         fields = ["chain", "source_file", "source_page", "product", "size", "level", "flag"]

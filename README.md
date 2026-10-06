@@ -13,8 +13,14 @@ uv sync
 uv run pytest                              # tests read PDFs from inputs/ (not in git)
 uv run python -m pipeline.cli manifest     # which parser each PDF in inputs/ uses -> work/manifest.csv
 uv run python -m pipeline.cli run          # -> outputs/<id>_<Chain>.csv
-uv run python -m pipeline.cli eval         # compare outputs with Pearl Scan and golden rows; exit 1 on failure
+uv run python -m pipeline.cli eval         # compare outputs with Pearl Scan and golden rows; exit 1 on failure (a source with nothing to compare against fails too; --lenient to only warn)
+uv run python -m pipeline.cli coverage     # rows against the text layer, per page; lists pages to look at
+uv run python -m pipeline.cli flags        # every flagged row -> outputs/_flags.csv
+uv run python -m pipeline.cli report       # one line per PDF: rows, flags, golden rows, Pearl Scan, model-read and reread pages -> outputs/_verification.csv
+uv run python -m pipeline.cli golden --chain KEY --pdf-stem STEM --rows "Name|Size;Name"   # skeleton of a golden file with every value column
 ```
+
+Pages the text layer cannot give are read by a model, through headless Claude Code (default, uses the plan login) or the Anthropic SDK (`--backend sdk` or `PIPELINE_LLM_BACKEND=sdk`, needs `ANTHROPIC_API_KEY` and `uv sync --extra sdk`). Both share one cache. `uv run python -m pipeline.cli --backend sdk run` is the same command with the other backend; cost of a round: `docs/sdk-cost-estimate-2026-10.md`.
 
 `run` only builds chains whose sources are all `approved: true` in `config/chains.yaml`; any other chain is skipped with a notice on stderr, or refused with an error if you name it with `--chain`. `eval` skips unapproved chains too.
 
@@ -38,7 +44,7 @@ uv run python -m pipeline.cli eval         # compare outputs with Pearl Scan and
 
 ## How output is checked
 
-`eval` runs two checks.
+`eval` runs two checks, and `coverage`, `reread` (a second read of model-read pages) and `report` support them.
 
 **Nutrition vs Pearl Scan.** Each PDF's output is compared with its newest Pearl Scan CSV in `inputs/ground-truth/`. At least 99% of its rows must match and every matched cell must agree, except confirmed Pearl Scan errors listed in the errata file. Pearl Scan has no allergen data, so allergens use the second check.
 
@@ -60,6 +66,5 @@ Findings from the first round (errors per source, Pearl Scan mistakes, lessons):
 
 ## Status
 
-Live and approved (`config/chains.yaml`, output in `outputs/`): Beefeater, Brewers Fayre, Table Table (Whitbread), Five Guys, Pizza Express (UK, NI), Cineworld, Domino's (sides, dips, pizzas), Vue, Odeon (nutrition tables and pre-packed matrices for UK, NI, ROI), Papa John's, Krispy Kreme, Pizza Hut, Coffee #1, Starbucks, Brewhouse, Cookhouse, Top Golf. Seventeen chain CSVs, 8,768 rows. A record of what each chain's PDFs map to is in `docs/chain-mapping-reference.md`. Every compared figure agrees with Pearl Scan except the 66 mistakes recorded in `config/ground_truth_errata.yaml`.
+Live and approved (`config/chains.yaml`, output in `outputs/`): Beefeater, Brewers Fayre, Table Table (Whitbread), Five Guys, Pizza Express (UK, NI), Cineworld, Domino's (sides, dips, pizzas), Vue, Odeon (nutrition tables and pre-packed matrices for UK, NI, ROI), Papa John's, Krispy Kreme, Pizza Hut, Coffee #1, Starbucks, Brewhouse, Cookhouse, Top Golf. Seventeen chain CSVs, 8,768 rows. A record of what each chain's PDFs map to is in `docs/chain-mapping-reference.md`. Every compared figure agrees with Pearl Scan except the 75 mistakes recorded in `config/ground_truth_errata.yaml`. The end-of-round report is `docs/end-of-round-report-2026-10.md`.
 
-Not done: Krispy Kreme (needs a step that joins its allergen matrix pages to its nutrition pages), Pizza Hut, Coffee #1, Starbucks, Brewhouse, Cookhouse, Top Golf. The order and the cost estimates are in `docs/findings-report-2026-10.md` and `docs/playbook-new-batches.md`.

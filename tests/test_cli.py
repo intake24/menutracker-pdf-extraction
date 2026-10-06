@@ -210,3 +210,21 @@ def test_review_pages_lists_pages_with_fewer_rows_than_the_text_layer_suggests(t
     chains.write_text("9_Demo:\n  chain: Demo\n  sources:\n    - {pdf: a.pdf, parser: p, approved: true}\n")
     monkeypatch.setattr(cli, "numeric_lines", lambda pdf, k: {1: 10, 2: 10, 3: 10})
     assert cli.review_pages(tmp_path, chains, out) == ["9_Demo a.pdf page 3: 9 rows, about 10 expected from the text layer"]
+
+
+def test_golden_skeleton_has_every_value_column_for_the_chosen_rows_and_never_overwrites(tmp_path):
+    import pytest
+
+    from pipeline.cli import write_golden_skeleton
+    out, gold = tmp_path / "o", tmp_path / "g"
+    out.mkdir()
+    gold.mkdir()
+    (out / "9_Demo.csv").write_text("Product_Name,Category,Size,milk,energykCal_Per Portion,Ingredients,region,source_file,source_page,method,flags\n"
+                                    "Latte,Hot,Tall,Yes,190,long text,UK,a.pdf,3,parser,\nLatte,Hot,Grande,Yes,240,long text,UK,a.pdf,3,parser,\nTea,Hot,,No,2,x,UK,a.pdf,3,parser,\n")
+    path = write_golden_skeleton(out, gold, "9_Demo", "a", ["Latte|Tall", "Tea"])
+    rows = path.read_text().splitlines()
+    assert rows[0] == "Product_Name,Category,Size,milk,energykCal_Per Portion" and rows[1:] == ["Latte,Hot,Tall,Yes,190", "Tea,Hot,,No,2"]
+    with pytest.raises(FileExistsError):
+        write_golden_skeleton(out, gold, "9_Demo", "a", ["Tea"])
+    with pytest.raises(SystemExit, match="Coffee"):
+        write_golden_skeleton(out, gold, "9_Demo", "b", ["Coffee"])

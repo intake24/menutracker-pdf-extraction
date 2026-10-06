@@ -78,11 +78,13 @@ Similar products stay separate. Two rows are merged only when they are very like
 | `manifest` | Lists every PDF with its pages, text and assigned parser |
 | `run [--chain KEY]` | Extracts every approved chain into `outputs/` |
 | `eval [--lenient]` | Compares outputs with Pearl Scan and golden rows. Strict by default: a source with nothing to compare against fails |
-| `coverage` | Finds text-layer pages with more data lines than rows |
+| `coverage` | Finds text-layer pages with more data lines than rows, and lists pages (any layout) with fewer rows than the text layer suggests, as a list to look at |
 | `pages --chain KEY` | Per page of a model-read chain: rows, errors, empty cells |
-| `reread --chain KEY --pages N,M --dpi D` | Reads pages again at another resolution and lists differences |
+| `reread --chain KEY --pages N,M\|all --dpi D` | Reads pages again at another resolution and lists differences; every page read is logged in `work/reread_log.csv` |
 | `flags` | Writes every flagged row to `outputs/_flags.csv` |
-| `report` | Writes one line per PDF to `outputs/_verification.csv` (rows, flags, exact duplicates, golden rows, Pearl Scan present, model-read pages) |
+| `report` | Writes one line per PDF to `outputs/_verification.csv` (rows, flags, exact duplicates, golden rows, Pearl Scan present, model-read pages, pages reread and differences found) |
+| `golden --chain KEY --pdf-stem STEM --rows "Name\|Size;Name"` | Writes a golden file with every value column (allergens, diet, nutrients, notes) for the chosen rows, to be checked against the page by hand |
+| `--backend claude-code\|sdk` (before any command) | Chooses how the model reads pages: headless Claude Code (default) or the Anthropic SDK; or set `PIPELINE_LLM_BACKEND` |
 
 If a chain is skipped (not approved) or stopped (rate limit, cost cap or a failed check), its old CSV is moved to `outputs/_stale/`, so no report or evaluation mistakes it for current output.
 
@@ -110,6 +112,13 @@ If a chain is skipped (not approved) or stopped (rate limit, cost cap or a faile
 | When one PDF feeds several sources, only the first source's `name_fixes` and `pearlscan` options apply | None today | Keep in mind when adding sources |
 | The cost cap can be overshot by the parallel calls in flight | At most about $1.50 | None needed |
 | `eval` treats `0.10` and `0.1` as equal | Formatting changes would pass `eval` | The parsers and their tests protect the "as printed" rule |
+
+## 6b. Improvements made before the next batch
+
+- **Per-page row check for every layout:** `coverage` now compares each page's rows with the data-looking lines of the text layer for any layout (it scales to layouts with several lines per row). On this round's outputs it lists 14 pages, all checked and none a loss (intro pages, a wrapped line, shared-row tables).
+- **Golden files with figures:** all golden files now carry nutrient columns, and `golden` writes new ones with every value column. The figures in the existing files come from the pipeline output, which agreed with Pearl Scan this round; for a new batch each figure must be checked against the page or `pdftotext`.
+- **Reread as a standard step:** `reread --pages all` covers every model-read page and logs it; `report` shows how many pages were reread and how many differences. Before approving a model-read source the "reread" column should equal the "model pages" column. This round's rereads were run by hand and are not in the log, so the column shows 0.
+- **Choice of model backend:** headless Claude Code or the Anthropic SDK, `--backend` or `PIPELINE_LLM_BACKEND`, one shared cache. The SDK path is tested with a fake client and has not yet made a real call (no API key was available here): run one page with `--backend sdk` and compare it with the cached headless answer before relying on it.
 
 ## 7. What remains
 
