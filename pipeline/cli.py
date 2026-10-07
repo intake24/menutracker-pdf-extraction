@@ -19,6 +19,7 @@ from pipeline.parsers import PARSERS, vision_pairs, vision_products, vision_tabl
 from pipeline.vision_check import diff_rows, summary
 
 ROOT = Path(__file__).resolve().parent.parent
+DICTIONARY = ROOT / "outputs" / "data-dictionary"
 
 
 class SourceNotApproved(Exception):
@@ -26,27 +27,39 @@ class SourceNotApproved(Exception):
 
 
 def manifest(inputs: Path, chains_file: Path, out: Path) -> list[dict]:
-    """The page, text and parser report of every PDF, with a `status` against the previous manifest: new (not in it), changed (its
-    text or its bytes differ: a replaced PDF, or image-only pages that were re-issued) or same. PDFs that disappeared are listed on screen."""
+    """The page, text and parser report of every PDF in `inputs`, returned with a `status` against the manifest on disk: new (the
+    file name was never seen), changed (the name was seen, but with other bytes: a replaced PDF, or image-only pages that were
+    re-issued) or same (this name and hash are on record). The file keeps every (name, hash) ever seen, so the same name in a later
+    batch gets its own row; rows no longer in `inputs` stay as superseded (the name is there with other bytes) or gone."""
     chains = load_chains(chains_file)
     rows = [manifest_row(p, chains) for p in sorted(inputs.glob("*.pdf"))]
-    before = {r["file"]: r for r in read_csv(out)} if out.exists() else {}
+    before = read_csv(out) if out.exists() else []
+
+    def same_version(old: dict, r: dict) -> bool:   # an old manifest without file_sha is judged by its text hash alone
+        return old["file"] == r["file"] and (old["file_sha"] == r["file_sha"] if old.get("file_sha") else old["text_sha"] == r["text_sha"])
     for r in rows:
-        old = before.get(r["file"])
-        if old is None:
-            r["status"] = "new"
-        else:   # an old manifest without file_sha is judged by its text hash alone
-            same_bytes = old.get("file_sha", r["file_sha"]) == r["file_sha"]
-            r["status"] = "same" if old["text_sha"] == r["text_sha"] and same_bytes else "changed"
-    gone = sorted(set(before) - {r["file"] for r in rows})
+        seen = [o for o in before if o["file"] == r["file"]]
+        r["status"] = "new" if not seen else "same" if any(same_version(o, r) for o in seen) else "changed"
+    names = {r["file"] for r in rows}
+    kept = [o | {"status": "superseded" if o["file"] in names else "gone"} for o in before if not any(same_version(o, r) for r in rows)]
+    gone = sorted({o["file"] for o in before if o["status"] != "gone"} - names)
     if gone:
         print(f"removed since the last manifest: {', '.join(gone)}")
     out.parent.mkdir(parents=True, exist_ok=True)
     with out.open("w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=list(rows[0]))
+        w = csv.DictWriter(f, fieldnames=list(rows[0]), restval="")
+        w.writeheader()
+        w.writerows(rows + kept)
+    return rows
+
+
+def write_report(path: Path, fields: list[str], rows: list[dict]) -> None:
+    """The reports about a batch (`flags`, `report`) live in outputs/data-dictionary/ next to the data they describe."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=fields)
         w.writeheader()
         w.writerows(rows)
-    return rows
 
 
 def approved(chain: dict) -> bool:
@@ -128,7 +141,7 @@ def collect_flags(outputs: Path) -> list[dict]:
     rows = []
     for path in sorted(outputs.glob("*.csv")):
         if path.name.startswith("_"):
-            continue   # reports such as _flags.csv
+            continue   # leftover files starting with _
         for r in read_csv(path):
             for flag in filter(None, (f.strip() for f in r.get("flags", "").split(" | "))):
                 level, _, text = flag.partition(": ")
@@ -335,8 +348,8 @@ def main(argv: list[str] | None = None) -> None:
     reread_p.add_argument("--pages", required=True, help='comma separated page numbers, or "all" for every page the model reads')
     reread_p.add_argument("--dpi", type=int, default=200)
     reread_p.add_argument("--pdf", default="", help="only sources whose file name contains this")
-    sub.add_parser("flags", help="every flagged row of every chain -> outputs/_flags.csv (the PDFs' own inconsistencies and parser warnings)")
-    sub.add_parser("report", help="one line per source: rows, flags, golden rows, Pearl Scan present, model-read pages -> outputs/_verification.csv (no model calls)")
+    sub.add_parser("flags", help="every flagged row of every chain -> outputs/data-dictionary/_flags.csv (the PDFs' own inconsistencies and parser warnings)")
+    sub.add_parser("report", help="one line per source: rows, flags, golden rows, Pearl Scan present, model-read pages -> outputs/data-dictionary/_verification.csv (no model calls)")
     scaffold_p = sub.add_parser("scaffold", help="draft the chains.yaml entry for a new or updated PDF (prints it; edits nothing)")
     scaffold_p.add_argument("--chain", required=True, help="the chain key, e.g. 16_Beefeater (a new chain: <id>_<Name> from menutracker.ipynb)")
     scaffold_p.add_argument("--pdf", required=True, help="file name in inputs/")
@@ -384,10 +397,7 @@ def main(argv: list[str] | None = None) -> None:
         sys.exit(1 if lines else 0)
     elif args.cmd == "report":
         rows = verification_report(chains_file, ROOT / "outputs", ROOT / "inputs" / "ground-truth", ROOT / "golden", ROOT / "work" / "reread_log.csv")
-        with (ROOT / "outputs" / "_verification.csv").open("w", newline="") as f:
-            w = csv.DictWriter(f, fieldnames=list(rows[0]))
-            w.writeheader()
-            w.writerows(rows)
+        write_report(DICTIONARY / "_verification.csv", list(rows[0]), rows)
         for r in rows:
             print(f"{r['chain']:<16}{r['source_file'][:44]:<46}rows {r['rows']:>5}  err {r['errors']:>3}  warn {r['warnings']:>3}  dup {r['exact_duplicates']:>3}  golden {r['golden_rows']:>3}  pearl {r['pearl_scan']:<3}  model pages {r['model_read_pages']:>3}  reread {r['reread_pages']:>3} ({r['reread_differences']} diff)")
         weak = [r for r in rows if r["golden_rows"] == 0 and r["pearl_scan"] == "no"]
@@ -408,14 +418,11 @@ def main(argv: list[str] | None = None) -> None:
     elif args.cmd == "flags":
         rows = collect_flags(ROOT / "outputs")
         fields = ["chain", "source_file", "source_page", "product", "size", "level", "flag"]
-        with (ROOT / "outputs" / "_flags.csv").open("w", newline="") as f:
-            w = csv.DictWriter(f, fieldnames=fields)
-            w.writeheader()
-            w.writerows(rows)
+        write_report(DICTIONARY / "_flags.csv", fields, rows)
         counts = Counter((r["chain"], r["level"]) for r in rows)
         for (chain, level), n in sorted(counts.items()):
             print(f"{chain}: {n} {level}")
-        print(f"{len(rows)} flags -> outputs/_flags.csv")
+        print(f"{len(rows)} flags -> outputs/data-dictionary/_flags.csv")
     elif args.cmd == "coverage":
         gaps = coverage(ROOT / "inputs", chains_file)
         review = review_pages(ROOT / "inputs", chains_file, ROOT / "outputs")

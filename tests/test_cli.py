@@ -266,3 +266,37 @@ def test_manifest_changes_are_detected_from_the_file_bytes_for_image_only_pdfs(t
     cli.manifest(inputs, chains, out)
     shutil.copy(ROOT / "inputs" / "nutritional-information.pdf", inputs / "a.pdf")
     assert cli.manifest(inputs, chains, out)[0]["status"] == "changed"
+
+
+def test_manifest_keeps_every_version_of_a_file_name_across_batches(tmp_path):
+    import shutil
+
+    from pipeline.cli import manifest
+    from pipeline.evaluate import read_csv
+    inputs = tmp_path / "in"
+    inputs.mkdir()
+    chains = tmp_path / "chains.yaml"
+    chains.write_text("{}\n")
+    out = tmp_path / "work" / "manifest.csv"
+    shutil.copy(ROOT / "inputs" / "nutrition.pdf", inputs / "menu.pdf")                                      # batch 1
+    manifest(inputs, chains, out)
+    shutil.copy(ROOT / "inputs" / "nutrition_pizzas.pdf", inputs / "menu.pdf")                               # batch 2: same name, new bytes
+    assert [r["status"] for r in manifest(inputs, chains, out)] == ["changed"]
+    rows = read_csv(out)
+    assert sorted((r["file"], r["status"]) for r in rows) == [("menu.pdf", "changed"), ("menu.pdf", "superseded")]
+    assert len({r["file_sha"] for r in rows}) == 2                                                           # both hashes are on record
+    (inputs / "menu.pdf").unlink()                                                                           # inputs cleared for batch 3
+    shutil.copy(ROOT / "inputs" / "nutrition.pdf", inputs / "menu.pdf")                                      # batch 1's file comes back
+    assert [r["status"] for r in manifest(inputs, chains, out)] == ["same"]                                  # a hash on record is not new
+    assert sorted(r["status"] for r in read_csv(out)) == ["same", "superseded"]
+    (inputs / "menu.pdf").unlink()
+    shutil.copy(ROOT / "inputs" / "nutritional-information.pdf", inputs / "other.pdf")
+    manifest(inputs, chains, out)
+    assert {r["file"]: r["status"] for r in read_csv(out) if r["status"] == "gone"}.keys() == {"menu.pdf"}   # no longer in inputs/
+
+
+def test_write_report_creates_the_data_dictionary_folder(tmp_path):
+    from pipeline.cli import write_report
+    path = tmp_path / "outputs" / "data-dictionary" / "_flags.csv"
+    write_report(path, ["a", "b"], [{"a": "1", "b": "2"}])
+    assert path.read_text() == "a,b\n1,2\n"

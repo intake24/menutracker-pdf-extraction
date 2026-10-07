@@ -16,8 +16,8 @@ uv run python -m pipeline.cli scaffold --chain KEY --pdf FILE   # draft the conf
 uv run python -m pipeline.cli run          # -> outputs/<id>_<Chain>.csv
 uv run python -m pipeline.cli eval         # compare outputs with Pearl Scan and golden rows; exit 1 on failure (a source with nothing to compare against fails too; --lenient to only warn)
 uv run python -m pipeline.cli coverage     # rows against the text layer, per page; lists pages to look at
-uv run python -m pipeline.cli flags        # every flagged row -> outputs/_flags.csv
-uv run python -m pipeline.cli report       # one line per PDF: rows, flags, golden rows, Pearl Scan, model-read and reread pages -> outputs/_verification.csv
+uv run python -m pipeline.cli flags        # every flagged row -> outputs/data-dictionary/_flags.csv
+uv run python -m pipeline.cli report       # one line per PDF: rows, flags, golden rows, Pearl Scan, model-read and reread pages -> outputs/data-dictionary/_verification.csv
 uv run python -m pipeline.cli golden --chain KEY --pdf-stem STEM --rows "Name|Size;Name"   # skeleton of a golden file with every value column
 ```
 
@@ -30,12 +30,13 @@ Pages the text layer cannot give are read by a model, through headless Claude Co
 | Path | In git? | What |
 |---|---|---|
 | `inputs/` | no | The PDFs. `inputs/ground-truth/<Chain>/` holds Pearl Scan's CSVs. |
-| `outputs/` | no | The generated chain CSVs. |
+| `outputs/` | no | The generated chain CSVs. `outputs/data-dictionary/` holds `_flags.csv`, `_verification.csv` and the batch's findings and end-of-round reports. |
 | `config/chains.yaml` | yes | Every chain: its PDFs, which layout parser reads each, region, allergen marker key, approval. |
 | `schemas/columns.yaml` | yes | The column dictionary shared by every chain CSV. |
 | `pipeline/parsers/` | yes | One parser per PDF **layout** (several chains can share one). |
-| `golden/` | yes | See below. |
+| `golden/` | yes | See below. Stays at the root: it is the evidence behind each approval in `chains.yaml`. |
 | `config/ground_truth_errata.yaml` | yes | Known Pearl Scan mistakes, each confirmed against the PDF. |
+| `config/pearlscan_columns.yaml` | yes | Pearl Scan column name to our column name. Read by `eval` only; unused when a batch has no Pearl Scan data. |
 
 ## Output rules
 

@@ -82,8 +82,8 @@ Similar products stay separate. Two rows are merged only when they are very like
 | `coverage` | Finds text-layer pages with more data lines than rows, and lists pages (any layout) with fewer rows than the text layer suggests, as a list to look at |
 | `pages --chain KEY` | Per page of a model-read chain: rows, errors, empty cells |
 | `reread --chain KEY --pages N,M\|all --dpi D` | Reads pages again at another resolution and lists differences; every page read is logged in `work/reread_log.csv` |
-| `flags` | Writes every flagged row to `outputs/_flags.csv` |
-| `report` | Writes one line per PDF to `outputs/_verification.csv` (rows, flags, exact duplicates, golden rows, Pearl Scan present, model-read pages, pages reread and differences found) |
+| `flags` | Writes every flagged row to `outputs/data-dictionary/_flags.csv` |
+| `report` | Writes one line per PDF to `outputs/data-dictionary/_verification.csv` (rows, flags, exact duplicates, golden rows, Pearl Scan present, model-read pages, pages reread and differences found) |
 | `golden --chain KEY --pdf-stem STEM --rows "Name\|Size;Name"` | Writes a golden file with every value column (allergens, diet, nutrients, notes) for the chosen rows, to be checked against the page by hand |
 | `--backend claude-code\|sdk` (before any command) | Chooses how the model reads pages: headless Claude Code (default) or the Anthropic SDK; or set `PIPELINE_LLM_BACKEND` |
 

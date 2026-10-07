@@ -36,7 +36,7 @@ parser (pipeline/parsers/<layout>.py)        text-layer parsers read words and p
 rows (dicts)  ->  merge_by_key (optional)  ->  finalise (pipeline/export.py)
    |                                         column dictionary, arithmetic checks -> flags, duplicate check
    v
-outputs/<id>_<Chain>.csv  (+ outputs/_flags.csv, outputs/_verification.csv from `flags` and `report`)
+outputs/<id>_<Chain>.csv  (+ outputs/data-dictionary/_flags.csv and _verification.csv from `flags` and `report`)
    |
    v
 checks: eval (Pearl Scan + golden rows), coverage, pages, reread, report, flags
@@ -48,6 +48,20 @@ a person sets approved: true in config/chains.yaml
 Two kinds of reading: **text-layer parsers** (most PDFs) are deterministic and cost nothing; **vision parsers** (`vision_table`, `vision_products`, `vision_pairs`) are used only where the PDF has no usable text, and every page read is cached in `work/llm/`, so re-running costs nothing.
 
 Pearl Scan's CSVs in `inputs/ground-truth/` are never used to produce values. Only `eval` and `report` read them, to compare. See section 2b of the end-of-round report.
+
+## 3b. Folders and a new batch
+
+| Folder | Holds | In git |
+|---|---|---|
+| `inputs/` | The PDFs ready for extraction. `inputs/ground-truth/` holds Pearl Scan CSVs, used only by `eval` to cross-check and to improve the pipeline; a batch without them still runs | no |
+| `outputs/` | One CSV per chain | no |
+| `outputs/data-dictionary/` | What describes the batch: `_flags.csv` and `_verification.csv` (written by `flags` and `report`), and the batch's `findings-report-<batch>.md` and `end-of-round-report-<batch>.md` (written by the agent at the end of the round) | no |
+| `golden/` | Hand-checked sample rows, one file per PDF. It is the evidence behind each `approved: true` in `config/chains.yaml`, so it grows from batch to batch and stays at the root | yes |
+| `work/` | Caches: model answers (`work/llm/`), rendered pages, `manifest.csv`. Keep it: it saves time and tokens | no |
+
+To start a batch: clear `inputs/` and `outputs/`, copy the new PDFs into `inputs/`, run `manifest`, and work through the steps in section 7. Do not clear `golden/`, `work/` or `config/`. The manifest records every file name together with its hash, so a PDF with the same name as one from an earlier batch but different content shows as `changed` and the old version stays on record as `superseded` or `gone`.
+
+The two reports of the October 2026 round stay in `docs/` as the committed record of that round. Reports for later batches go to `outputs/data-dictionary/`, which git ignores: copy them elsewhere if you want them versioned.
 
 ## 4. Code map
 
@@ -100,6 +114,8 @@ Pearl Scan's CSVs in `inputs/ground-truth/` are never used to produce values. On
 
 Parser-specific options are documented in the docstring at the top of each parser module; read that docstring before touching an option. Options that only affect `eval` and never the CSV: `pearlscan` (column overrides), `name_fixes` (names Pearl Scan reworded), `known_gaps` (how many Pearl Scan rows may stay unmatched, with the reason in a comment).
 
+`config/pearlscan_columns.yaml` is the translation table from Pearl Scan's column names (`kj`, `satfat`, `kcal_100`) to ours. Only `eval` reads it; `run` and the parsers never do, so it has no effect on `outputs/`. A column mapped to `~` is not compared. A source's `pearlscan` option is merged over this table for that source only (for example `pearlscan: { 'slice/portion/piece': ~ }` skips a column Pearl Scan files differently). With no Pearl Scan data for a batch, this file and the `pearlscan`, `name_fixes` and `known_gaps` options are unused.
+
 Rule of thumb: if a PDF is a new layout, add an option or a parser with a test; never special-case a product name in code.
 
 ## 6. Commands
@@ -115,8 +131,8 @@ Run them with `uv run python -m pipeline.cli <command>` (or `.venv/bin/python -m
 | `coverage` | Rows against the text layer per page; lists pages to look at |
 | `pages --chain KEY` | Per page of a model-read chain: rows, errors, empty cells (no model calls) |
 | `reread --chain KEY --pages N,M\|all --dpi D` | Read model-read pages again at another resolution and list differences; logged in `work/reread_log.csv` |
-| `flags` | Every flagged row of every chain -> `outputs/_flags.csv` |
-| `report` | One line per PDF: rows, flags, golden rows, Pearl Scan, model-read and reread pages -> `outputs/_verification.csv` |
+| `flags` | Every flagged row of every chain -> `outputs/data-dictionary/_flags.csv` |
+| `report` | One line per PDF: rows, flags, golden rows, Pearl Scan, model-read and reread pages -> `outputs/data-dictionary/_verification.csv` |
 | `golden --chain KEY --pdf-stem STEM --rows "Name\|Size;Name"` | Write a golden file with every value column for chosen rows; check each cell against the page by hand |
 
 Tests: `uv run pytest` (about two minutes; they read PDFs from `inputs/`). If `pytest` is not found, use `.venv/bin/python -m pytest`.
@@ -139,7 +155,7 @@ If the layout changed, text-layer parsers usually stop with an error that says w
 
 **Add a parser.** Write the test first (a synthetic page built from words and a test on the real page), put the layout description and the options in the module docstring, register it in `parsers/__init__.py`, make every unexpected situation raise a `ValueError` that says what and where, and add a row to the table above.
 
-**Understand a flag.** `error:` flags are checks that failed (kJ against kcal, saturates above fat, a value that is not a number); `warn:` flags are softer (Atwater estimate, a name that differs a little). Most come from figures the PDF itself prints that do not add up; the value is kept as printed. Find the row in `outputs/_flags.csv`, then the page in the PDF. The Atwater check, for example, estimates calories from protein, carbohydrate, fat and fibre and compares them with the printed calories; it is a calculation on the row's own figures, not data from the PDF or the model.
+**Understand a flag.** `error:` flags are checks that failed (kJ against kcal, saturates above fat, a value that is not a number); `warn:` flags are softer (Atwater estimate, a name that differs a little). Most come from figures the PDF itself prints that do not add up; the value is kept as printed. Find the row in `outputs/data-dictionary/_flags.csv`, then the page in the PDF. The Atwater check, for example, estimates calories from protein, carbohydrate, fat and fibre and compares them with the printed calories; it is a calculation on the row's own figures, not data from the PDF or the model.
 
 **Read a page the model reads.** Render it (`pdftoppm -r 150 -f N -l N -png file.pdf out`), compare with the row in the CSV, and run `reread` on the page.
 

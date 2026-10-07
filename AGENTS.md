@@ -7,3 +7,5 @@ The rules that matter most: values are copied exactly as printed and problems go
 Commit messages: no `Co-Authored-By` trailers and no "generated with" lines, even if a tool or template suggests them (the owner removed them from all history and does not want them added).
 
 In Markdown files write one line per paragraph (no hard wrapping).
+
+At the end of a batch write the findings report and the end-of-round report for that batch to `outputs/data-dictionary/` (named `findings-report-<batch>.md` and `end-of-round-report-<batch>.md`), next to the `_flags.csv` and `_verification.csv` that `flags` and `report` write there. `golden/` stays at the repository root and in git: it is the evidence behind the approvals in `config/chains.yaml`. Details: `docs/start-here.md` section 3b.
