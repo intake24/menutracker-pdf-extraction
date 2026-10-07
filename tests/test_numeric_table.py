@@ -373,10 +373,10 @@ def test_odeon_page_1_overlaid_rows_are_read_in_drawing_order():
     import yaml
 
     from pipeline.ingest import page_words_fine
-    src = yaml.safe_load((Path(__file__).resolve().parent.parent / "docs" / "odeon-uk-config-draft.yaml").read_text())["59_Odeon"]["sources"][0]
+    src = yaml.safe_load((Path(__file__).resolve().parent.parent / "config" / "chains.yaml").read_text())["59_Odeon"]["sources"][0]
     pdf = Path(__file__).resolve().parent.parent / "inputs" / src["pdf"]
     words = page_words_fine(pdf, text_flow=True)[0]
-    rows = parse_pages([words], src["columns"], src["header"], True, (), (), (), True, True, ["#N/A"])
+    rows = parse_pages([words], src["columns"], src["header"], src.get("wrapped_names", False), (), (), (), src["name_amount"], src["free_sections"], src["invalid_values"])
     names = {r["Product_Name"]: r for r in rows}
     assert names["Onions"]["Serving_Size"] == "142" and names["Guacamole (New)"]["Serving_Size"] == "90"
     assert names["Onions"]["energykCal_Per Portion"] != names["Guacamole (New)"]["energykCal_Per Portion"]
