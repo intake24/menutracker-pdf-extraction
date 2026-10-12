@@ -15,6 +15,13 @@ def _decode(line: bytes) -> str:
         return line.decode("cp1252")
 
 
+def read_output(path: Path) -> list[dict]:
+    """A chain CSV, or a golden file, with our own column names: the standard headings are mapped back (a file that has ours is unchanged)."""
+    from pipeline.columns import standard_headings
+    back = {standard: ours for ours, standard in standard_headings().items()}
+    return [{back.get(k, k): v for k, v in r.items()} for r in read_csv(path)]
+
+
 def read_csv(path: Path) -> list[dict]:
     """Read a CSV as UTF-8, or as Windows-1252 where a line isn't (Pearl Scan files edited in Excel; some mix both)."""
     raw = path.read_bytes().removeprefix(b"\xef\xbb\xbf")

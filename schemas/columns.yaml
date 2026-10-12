@@ -27,8 +27,9 @@ allergens: [gluten, wheat, rye, barley, oats, spelt, kamut, celery, crustacean, 
             milk, mollusc, mustard, peanut, sesame, soya, sulphite, treeNuts]
 trailing_text_columns: [treeNutSource]
 
-# The research team's template for column headings (their "Variable" and "Standardised format"), kept here as the reference for how our
-# columns relate to it. Key = our column, standard = the template's heading, variable = the template's description. config/pearlscan_columns.yaml
+# The research team's template for column headings (their "Variable" and "Standardised format"). write_csv applies it: a CSV in outputs/ carries
+# the standard heading for each of these columns (a rename, no value changes); code, config and golden/ use our names, and
+# evaluate.read_output maps the headings back. Key = our column, standard = the template's heading, variable = the template's description. config/pearlscan_columns.yaml
 # maps the same headings the other way round (template heading -> our column) for `eval`. Our names add the basis to the nutrient
 # ("_Per Portion", "_Per 100g/ml") and also cover bases the template does not (Per Pizza, Per Slice, Per Product As Sold).
 standard_headings:

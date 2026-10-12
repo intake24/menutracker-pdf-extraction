@@ -117,6 +117,7 @@ Everything else stays as printed and is flagged by the number check: other units
 
 **Tell data users**
 
+- The CSV headings of the template columns are the standard ones (`item_name`, `menu_section`, `kcal`, `kj_100`, ...); the rest keep our names. Nothing is converted.
 - The unit is not in the CSV. The same column holds different units in different sources: sodium is in g in Papa John's, Odeon and Domino's, and in mg in the Vue food and sweets PDFs (the sweets heading says `(g)` but the values are mg). Caffeine in the Starbucks drinks is mg. A quick check: sodium is about 0.4 times the salt figure when in g and about 400 times when in mg.
 - A `warn: normalised` flag shows what the PDF printed.
 

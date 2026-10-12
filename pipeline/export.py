@@ -4,7 +4,7 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from pipeline.columns import PROVENANCE, Columns, build_row_model
+from pipeline.columns import PROVENANCE, Columns, build_row_model, standard_headings
 from pipeline.validate import check_row, duplicate_issues
 
 
@@ -136,12 +136,16 @@ def finalise(rows: list[dict], columns: Columns) -> list[dict]:
 
 
 def write_csv(rows: list[dict], columns: Columns, path: Path) -> list[str]:
-    """Write one chain CSV with only the dictionary columns that have a value; returns the header."""
+    """Write one chain CSV with only the dictionary columns that have a value; returns the header.
+
+    The columns of the research team's template are written under its standard heading (Product_Name as item_name, energykCal_Per Portion
+    as kcal, ...): a pure rename, no value changes. Everything that reads an output back goes through `evaluate.read_output`."""
     used = [c for c in columns.types if c == "Product_Name" or any(r.get(c) not in (None, "") for r in rows)]
-    header = used + PROVENANCE
+    names = standard_headings()
+    header = [names.get(c, c) for c in used + PROVENANCE]
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=header, extrasaction="ignore")
         w.writeheader()
-        w.writerows({k: "" if v is None else v for k, v in r.items()} for r in rows)
+        w.writerows({names.get(k, k): "" if v is None else v for k, v in r.items()} for r in rows)
     return header

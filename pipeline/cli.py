@@ -10,7 +10,7 @@ import yaml
 
 from pipeline.columns import PROVENANCE, load_columns
 from pipeline.coverage import numeric_lines, page_gaps, shortfalls
-from pipeline.evaluate import compare_golden, compare_ground_truth, ground_truth_file, read_csv
+from pipeline.evaluate import compare_golden, compare_ground_truth, ground_truth_file, read_csv, read_output
 from pipeline.export import drop_rows, finalise, merge_by_key, write_csv
 from pipeline import llm
 from pipeline.llm import LlmError
@@ -142,7 +142,7 @@ def collect_flags(outputs: Path) -> list[dict]:
     for path in sorted(outputs.glob("*.csv")):
         if path.name.startswith("_"):
             continue   # leftover files starting with _
-        for r in read_csv(path):
+        for r in read_output(path):
             for flag in filter(None, (f.strip() for f in r.get("flags", "").split(" | "))):
                 level, _, text = flag.partition(": ")
                 rows.append({"chain": path.stem, "source_file": r.get("source_file", ""), "source_page": r.get("source_page", ""),
@@ -158,7 +158,7 @@ def verification_report(chains_file: Path, outputs: Path, ground_truth: Path, go
     logged = read_csv(reread_log) if reread_log is not None and reread_log.exists() else []
     for key, chain in load_chains(chains_file).items():
         path = outputs / f"{key}.csv"
-        rows = read_csv(path) if path.exists() else []
+        rows = read_output(path) if path.exists() else []
         by_pdf: dict[str, list[dict]] = {}
         for source in chain["sources"]:
             by_pdf.setdefault(source["pdf"], []).append(source)   # a PDF can feed several sources (page ranges): one line for the PDF
@@ -203,7 +203,7 @@ def write_golden_skeleton(outputs: Path, golden: Path, key: str, stem: str, pick
     path = golden / f"{stem}.csv"
     if path.exists():
         raise FileExistsError(f"{path} exists: edit it by hand, or delete it first")
-    rows = read_csv(outputs / f"{key}.csv")
+    rows = read_output(outputs / f"{key}.csv")
     skip = set(PROVENANCE) | {"Ingredients", "Product_Description"}
     columns = [c for c in rows[0] if c not in skip]
     chosen = []
@@ -229,7 +229,7 @@ def review_pages(inputs: Path, chains_file: Path, outputs: Path) -> list[str]:
         path = outputs / f"{key}.csv"
         if not approved(chain) or not path.exists():
             continue
-        rows = read_csv(path)
+        rows = read_output(path)
         for pdf in dict.fromkeys(s["pdf"] for s in chain["sources"]):
             lines = numeric_lines(inputs / pdf, 3)
             if sum(lines.values()) < 5:
@@ -294,7 +294,7 @@ def evaluate(chains_file: Path, outputs: Path, ground_truth: Path, golden: Path,
         if not out.exists():
             failures.append(f"{key}: {out.name} missing, run `run` first")
             continue
-        ours_all = read_csv(out)
+        ours_all = read_output(out)
         compared: set[str] = set()   # one PDF can have several sources (page ranges): compare it once, with all their rows
         for source in chain["sources"]:
             if source["pdf"] in compared:
@@ -325,8 +325,8 @@ def evaluate(chains_file: Path, outputs: Path, ground_truth: Path, golden: Path,
                     failures += [f"{key} {stem}: unmatched row {n}" for n in r["unmatched"]]
                     failures += [f"{key} {stem}: {m}" for m in r["mismatches"]]
             if gold.exists():
-                msgs = compare_golden(read_csv(gold), ours)
-                print(f"{key} {stem}: golden {len(read_csv(gold))} rows, {len(msgs)} failures")
+                msgs = compare_golden(read_output(gold), ours)
+                print(f"{key} {stem}: golden {len(read_output(gold))} rows, {len(msgs)} failures")
                 failures += [f"{key} {stem}: {m}" for m in msgs]
     return failures
 

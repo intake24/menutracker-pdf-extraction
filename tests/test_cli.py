@@ -42,7 +42,7 @@ def test_chain_without_allergen_information_has_no_allergen_columns(tmp_path):
     [(path, rows)] = written.items()
     header = path.read_text().splitlines()[0].split(",")
     assert "milk" not in header and "gluten" not in header
-    assert "energykJ_Per 100g/ml" in header and "energykJ_Per Portion" in header
+    assert "kj_100" in header and "kj" in header          # the standard headings of the research team
     assert {r["source_file"] for r in rows} == {"nutrition.pdf"}
 
 
@@ -102,7 +102,7 @@ def test_pizza_express_merges_the_uk_and_northern_ireland_pdfs_and_keeps_regions
     assert {k: len(v) for k, v in by_region.items()} == {"UK": 453, "NI": 365}
     assert {r["source_file"] for r in by_region["NI"]} == {"BEL-Nutritional-Menu---May-2025.ashx.pdf"}
     header = path.read_text().splitlines()[0].split(",")
-    assert "milk" not in header and "energykJ_Per 100g/ml" in header
+    assert "milk" not in header and "kj_100" in header
     dupes = [r for r in rows if "duplicate" in r["flags"]]   # the PDF lists Smoky BBQ Chicken twice, in each region
     assert sorted((r["region"], r["Product_Name"]) for r in dupes) == [("NI", "Smoky BBQ Chicken"), ("UK", "Smoky BBQ Chicken")]
 

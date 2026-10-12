@@ -72,7 +72,7 @@ The two reports of the October 2026 round stay in `docs/` as the committed recor
 | `pipeline/columns.py`, `schemas/columns.yaml` | The column dictionary shared by every CSV: allowed columns, their order, nutrient bases, allergen columns |
 | `pipeline/allergens.py` | Turns printed allergen text ("Contains: Wheat, Milk") into allergen cells; an unknown word raises |
 | `pipeline/validate.py` | Arithmetic checks (kJ against kcal, saturates against fat, sugars against carbohydrate, Atwater estimate) and the duplicate check; results go to `flags`, values never change |
-| `pipeline/export.py` | `finalise` (checks every row against the dictionary), `merge_by_key`, `write_csv` |
+| `pipeline/export.py` | `finalise` (checks every row against the dictionary), `merge_by_key`, `write_csv` (which writes the template columns under the research team's standard headings; `evaluate.read_output` maps them back) |
 | `pipeline/evaluate.py` | Comparison with Pearl Scan (cells, rows, errata, known gaps) and with golden rows |
 | `pipeline/coverage.py`, `pipeline/vision_check.py` | Checks that need no ground truth: rows against the text layer per page, and comparison of two reads of a model-read page |
 | `pipeline/llm.py` | The model backend: headless Claude Code or the Anthropic SDK, one shared cache, cost cap |

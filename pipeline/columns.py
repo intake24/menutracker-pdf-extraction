@@ -32,6 +32,12 @@ def load_columns(path: Path = COLUMNS_FILE) -> Columns:
     return Columns(spec["version"], types, spec["nutrient_words"], spec["bases"])
 
 
+def standard_headings(path: Path = COLUMNS_FILE) -> dict[str, str]:
+    """Our column -> the research team's standard heading, for the columns the template covers (`standard_headings` in columns.yaml).
+    Code and config use our names; a CSV written to outputs/ carries these headings instead."""
+    return {c: h["standard"] for c, h in yaml.safe_load(path.read_text())["standard_headings"].items()}
+
+
 def nutrient_pattern(words: list[str]) -> str:
     return r"^(?:<\s?)?\d+(?:\.\d+)?$|^(?i:" + "|".join(words) + ")$"
 

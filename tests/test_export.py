@@ -19,8 +19,7 @@ def test_finalise_flags_without_changing_values_then_write(tmp_path):
     assert out[1]["egg"] == "N"   # invalid values are kept for the reviewer, never silently changed
 
     header = write_csv(out, columns, tmp_path / "16_Test.csv")
-    assert header == ["Product_Name", "energykCal_Per Portion", "energykJ_Per Portion", "fat_Per Portion",
-                      "saturates_Per Portion", "egg", "milk", *PROVENANCE]  # only columns with a value
+    assert header == ["item_name", "kcal", "kj", "fat", "satfat", "egg", "milk", *PROVENANCE]  # only columns with a value, template columns under their standard heading
     with (tmp_path / "16_Test.csv").open(newline="") as f:
         written = list(csv.DictReader(f))
     assert written[0]["egg"] == "No" and written[0]["source_page"] == "2" and written[1]["milk"] == ""
@@ -125,3 +124,21 @@ def test_drop_rows_removes_the_named_products_only():
     rows = [{"Product_Name": "Swap chips"}, {"Product_Name": "Chips"}]
     assert drop_rows(rows, ["Swap chips"]) == [{"Product_Name": "Chips"}]
     assert drop_rows(rows, []) == rows
+
+
+def test_write_csv_uses_the_research_teams_standard_headings_and_read_output_maps_them_back(tmp_path):
+    from pipeline.evaluate import read_output
+    columns = load_columns()
+    rows = [{"Product_Name": "Toast", "Category": "BREAKFAST", "Size": "Large", "energykCal_Per Portion": "93", "fat_Per 100g/ml": "1",
+             "sodium_Per Portion": "10", "milk": "Yes", "region": "UK", "source_page": 2}]
+    header = write_csv(finalise(rows, columns), columns, tmp_path / "16_Test.csv")
+    assert header == ["item_name", "Size", "menu_section", "fat_100", "kcal", "sodium_Per Portion", "milk", *PROVENANCE]   # no template name: unchanged
+    back = read_output(tmp_path / "16_Test.csv")[0]
+    assert back["Product_Name"] == "Toast" and back["energykCal_Per Portion"] == "93" and back["fat_Per 100g/ml"] == "1" and back["Size"] == "Large"
+    assert "kcal" not in back and "item_name" not in back
+
+
+def test_read_output_also_reads_a_file_that_still_has_our_own_headings(tmp_path):
+    from pipeline.evaluate import read_output
+    (tmp_path / "g.csv").write_text("Product_Name,energykCal_Per Portion\nToast,93\n")
+    assert read_output(tmp_path / "g.csv") == [{"Product_Name": "Toast", "energykCal_Per Portion": "93"}]
