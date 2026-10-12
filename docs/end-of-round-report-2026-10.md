@@ -56,7 +56,7 @@ The research team reviewed the Pearl Scan mistakes and agreed with our verdict o
 - a decimal comma becomes a point (`1,75` becomes `1.75`), but in kJ and kcal a comma before exactly three digits is a thousands comma and is removed (`1,702` becomes `1702`), and any other comma there is left and flagged;
 - `1/2` in `Recommended_Portions` becomes `0.5`.
 
-They also judged that Cookhouse's "Swap chips & onion rings for a fresh mixed salad (-398kcal)" is a choice that saves calories from a steak, not a food, so it is no longer a row (`drop_rows`). Result: 28 cells changed in 5 chains (Vue, Starbucks, Odeon, Papa John's, Coffee #1) and one Cookhouse row removed (211 rows). The errata file still has 75 entries: 12 entries that the new rules made unnecessary were removed, and 12 were added where Pearl Scan kept a unit that we now remove (10 for Starbucks, 2 for Vue sweets).
+They also judged that Cookhouse's "Swap chips & onion rings for a fresh mixed salad (-398kcal)" is a choice that saves calories from a steak, not a food, so it is no longer a row (`drop_rows`). Result: 31 cells changed in 5 chains (Vue, Starbucks, Odeon, Papa John's, Coffee #1) and one Cookhouse row removed (211 rows). The errata file still has 75 entries: 12 entries that the new rules made unnecessary were removed, and 12 were added where Pearl Scan kept a unit that we now remove (10 for Starbucks, 2 for Vue sweets).
 
 ## 3. How the data is mapped
 
