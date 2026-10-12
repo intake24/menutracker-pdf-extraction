@@ -76,19 +76,20 @@ def _clean_number(column: str, value: str) -> str:
 
 
 def strip_units(rows: list[dict], units: dict[str, str]) -> list[dict]:
-    """Remove from nutrient cells the unit that the PDF's column heading declares ("Sodium (mg)": `108mg` is 108). `units` is a source
-    option, nutrient -> unit (`{fibre: g, sodium: mg}`), for every basis of that nutrient. Another unit than the declared one stays, and the
-    cell is then flagged by the number check. Each change is a `warn:`."""
+    """Remove `g` or `mg` from the cells of a nutrient whose PDF column heading declares a unit ("Sodium (mg)": `108mg` is 108). `units` is a
+    source option, nutrient -> unit (`{fibre: g, sodium: mg}`), for every basis of that nutrient. Only declared nutrients are touched. The
+    number is not converted: when the cell's unit differs from the heading's, the flag says so. Each change is a `warn:`."""
     if not units:
         return rows
     out = []
     for row in rows:
         row, notes = dict(row), []
         for column, value in row.items():
-            unit = units.get(column.split("_")[0])
-            if unit and isinstance(value, str) and (m := re.fullmatch(rf"((?:<\s?)?\d+(?:[.,]\d+)?)\s?{re.escape(unit)}", value)):
+            heading = units.get(column.split("_")[0])
+            if heading and isinstance(value, str) and (m := re.fullmatch(r"((?:<\s?)?\d+(?:[.,]\d+)?)\s?(m?g)", value)):
                 row[column] = m[1]
-                notes.append(f"warn: normalised {column} '{value}' to '{m[1]}'")
+                differs = f" (the unit {m[2]} differs from the heading's {heading})" if m[2] != heading else ""
+                notes.append(f"warn: normalised {column} '{value}' to '{m[1]}'{differs}")
         if notes:
             row["flags"] = " | ".join(filter(None, [row.get("flags"), *notes]))
         out.append(row)

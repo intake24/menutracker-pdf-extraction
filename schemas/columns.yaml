@@ -21,7 +21,7 @@ bases: ["Per 100g/ml", "Per Portion", "Per Pizza", "Per Slice", "Per Product As 
 nutrients: [carbohydrates, energykCal, energykJ, fat, fibre, protein, salt, saturates, sugars,
             vitaminB6, vitaminB12, vitaminC, zinc, sodium, caffeine]
 # A nutrient cell holds the PDF's value as printed: a number, "<number", or one of these words. Three flagged clean-ups apply first
-# (pipeline/export.py `normalise`): a heading-declared unit is removed (source option heading_units), a decimal comma becomes a point, and a thousands comma in kJ/kcal is removed.
+# (pipeline/export.py `normalise`): g or mg is removed where the heading declares a unit (source option heading_units), a decimal comma becomes a point, and a thousands comma in kJ/kcal is removed.
 nutrient_words: [Negligible, Trace, Traces, Tr, N/A, NA, "-", not declared]
 allergens: [gluten, wheat, rye, barley, oats, spelt, kamut, celery, crustacean, egg, fish, lupin,
             milk, mollusc, mustard, peanut, sesame, soya, sulphite, treeNuts]

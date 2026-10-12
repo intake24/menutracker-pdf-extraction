@@ -6,7 +6,7 @@ Written 2026-10-06. This is the short, current report: read it first. For the ev
 
 All 17 food chains are extracted, approved and saved in `outputs/`: 17 CSV files, 8,768 rows, from 35 PDFs. The 304 tests pass, and `eval` passes with every source checked.
 
-Where Pearl Scan also has a nutrition figure, ours matches it, apart from 74 recorded Pearl Scan mistakes (listed in `config/ground_truth_errata.yaml`) and a few name differences we accepted (40 on the Cookhouse main menu, 12 on Top Golf). Every Pearl Scan figure on those two menus is still among our rows.
+Where Pearl Scan also has a nutrition figure, ours matches it, apart from 75 recorded Pearl Scan mistakes (listed in `config/ground_truth_errata.yaml`) and a few name differences we accepted (40 on the Cookhouse main menu, 12 on Top Golf). Every Pearl Scan figure on those two menus is still among our rows.
 
 Pearl Scan has no allergen data for most chains, so allergens are checked in four other ways:
 
@@ -38,7 +38,7 @@ Each one was fixed with a test that failed first.
 
 **Pearl Scan did shape how the pipeline was built.** While building each parser we compared its output with Pearl Scan and fixed what differed. Pearl Scan's row counts caught three silent losses of a page's last row (Coffee #1, Starbucks, Domino's). The menu naming rules (add-ons keep their own name, options are "<dish> - <option>") were written partly to match its conventions. Sixteen settings in `config/chains.yaml` (`name_fixes`, `known_gaps`, `pearlscan`) exist only to line names and columns up for `eval` and do not change the CSVs. The 75 recorded Pearl Scan mistakes decided which differences we treated as Pearl Scan's fault.
 
-**What to expect from the next batch.** This round's accuracy (every shared figure agreeing, apart from 74 Pearl Scan mistakes) is an upper bound, not a promise.
+**What to expect from the next batch.** This round's accuracy (every shared figure agreeing, apart from 75 Pearl Scan mistakes) is an upper bound, not a promise.
 
 | Expect to hold | Expect to be weaker |
 |---|---|
@@ -52,11 +52,11 @@ The checks in section 4 replace Pearl Scan, and each is weaker than a full compa
 
 The research team reviewed the Pearl Scan mistakes and agreed with our verdict on the name and structure errors (Diet Pepsi filed under Tango, popcorn rows reordered, Cherry/Berry typos, `1/2` turned into the date `01-Feb`, missing brand names). They set three rules for the values, and the pipeline now applies them (`normalise` in `pipeline/export.py`, each change flagged as `warn: normalised ...`):
 
-- a unit that the PDF's column heading declares is removed from the cell (`Sodium (mg)`: `108mg` becomes `108`; each source lists its heading units in `heading_units`); any other unit, such as `1133g` in a column headed `(mg)` or `108mg` in a column headed `(g)`, and markers such as `*` and `#N/A`, stay as printed and are flagged;
+- `g` or `mg` is removed from the cells of a nutrient whose PDF column heading declares a unit (`Sodium (mg)`: `108mg` becomes `108`; each source lists its heading units in `heading_units`). Where the cell's unit differs from the heading's (`1133g` under `(mg)`, `108mg` under `(g)`) the unit is still removed and the flag says so; markers such as `*` and `#N/A` stay as printed and are flagged;
 - a decimal comma becomes a point (`1,75` becomes `1.75`), but in kJ and kcal a comma before exactly three digits is a thousands comma and is removed (`1,702` becomes `1702`), and any other comma there is left and flagged;
 - `1/2` in `Recommended_Portions` becomes `0.5`.
 
-They also judged that Cookhouse's "Swap chips & onion rings for a fresh mixed salad (-398kcal)" is a choice that saves calories from a steak, not a food, so it is no longer a row (`drop_rows`). Result: 28 cells changed in 5 chains (Vue, Starbucks, Odeon, Papa John's, Coffee #1) and one Cookhouse row removed (211 rows). The errata file went from 75 to 74 entries: 12 entries that the new rules made unnecessary were removed, 10 were added for Starbucks, where Pearl Scan kept the `g` that it removed elsewhere, and 1 for a Vue cell whose unit differs from its heading.
+They also judged that Cookhouse's "Swap chips & onion rings for a fresh mixed salad (-398kcal)" is a choice that saves calories from a steak, not a food, so it is no longer a row (`drop_rows`). Result: 28 cells changed in 5 chains (Vue, Starbucks, Odeon, Papa John's, Coffee #1) and one Cookhouse row removed (211 rows). The errata file still has 75 entries: 12 entries that the new rules made unnecessary were removed, and 12 were added where Pearl Scan kept a unit that we now remove (10 for Starbucks, 2 for Vue sweets).
 
 ## 3. How the data is mapped
 

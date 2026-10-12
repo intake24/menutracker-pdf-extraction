@@ -295,7 +295,11 @@
   item: Raspberry Lemonade
   column: protein
   why: The PDF prints a stray "g" after this figure (<0.5g); Pearl Scan kept it here (it removed it in other files). The research team prefers it removed, so we remove it and the row is flagged.
-- file: m19982-nutritional-info-food.csv
-  item: Nacho Libre - Large
+- file: m20011-nutritional-info-sweets.csv
+  item: Tonys Chocoloney Caramel & Sea Salt
   column: sodium
-  why: The PDF prints "1133g" in a column headed "Sodium (mg)". The unit differs from the heading, so we keep it as printed and the row is flagged; Pearl Scan removed it.
+  why: The PDF prints the unit (mg) in this cell, under a column headed "Sodium (g)". Pearl Scan kept the unit; the research team wants units removed, so we remove it and the flag notes that it differs from the heading.
+- file: m20011-nutritional-info-sweets.csv
+  item: Tonys Chocoloney Triple Chocolate
+  column: sodium
+  why: The PDF prints the unit (mg) in this cell, under a column headed "Sodium (g)". Pearl Scan kept the unit; the research team wants units removed, so we remove it and the flag notes that it differs from the heading.
