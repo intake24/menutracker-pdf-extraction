@@ -5,7 +5,7 @@ Written 2026-10-05 after the eleventh chain (Krispy Kreme). It is the record of 
 ## 1. Rules that hold for every chain
 
 - One CSV per chain, `outputs/<id>_<Key>.csv`, one row per food, drink or product (per size or variant where the PDF prints one row per size or variant). Column order and the allowed columns are in `schemas/columns.yaml`; a chain CSV holds only the columns that have a value.
-- Values are copied exactly as printed (`<0.5`, `Trace`, `171k cal`, `1/2`, typos such as `Peacan`). Problems are shown in the `flags` column (`error:` or `warn:`) and never fixed in the value.
+- Values are copied as printed (`<0.5`, `Trace`, `171k cal`, typos such as `Peacan`), except three clean-ups agreed with the research team on 2026-10-12, each flagged `warn: normalised`: a unit that the column heading declares ("Sodium (mg)") is removed from the cell (other units and markers such as `*`, `#N/A` stay and are flagged), a decimal comma becomes a point (a comma before exactly three digits in kJ or kcal is a thousands comma and is removed), and `1/2` in `Recommended_Portions` becomes `0.5`. Cookhouse's swap "Swap chips & onion rings for a fresh mixed salad" (-398 kcal) is not a food and is left out (`drop_rows`). Problems are shown in the `flags` column (`error:` or `warn:`) and never fixed in the value.
 - Allergen cells: `Yes` (printed as present), `May contain`, `No` only where the PDF says that an unmarked cell means absent, blank where the PDF does not say (not stated). Each source sets this with its `markers` setting: see section 3.
 - Provenance columns on every row: `region`, `source_file`, `source_page`, `method` (`parser` or `llm`), `flags`.
 - An unknown marker, label, column header or diet word stops the run with a message. A new layout is noticed, never guessed.
@@ -63,7 +63,7 @@ Row counts are those of `outputs/` on 2026-10-05 (8,768 in total).
 | A warning that applies to some rows only (traces, cross contact) | Encoded as a rule so the row carries `May contain` | `rules` (Papa John's) |
 | Diet cells (vegetarian, vegan, halal) | Kept as printed (YES/NO) in `Suitable_for_*` columns | `schemas/columns.yaml`, `vision_pairs` |
 | Serving size | Compared with Pearl Scan only where it prints it; Pearl Scan invented sizes (250 ml for a 500 ml bottle) | `pearlscan:` overrides |
-| Pearl Scan mistakes | Recorded with the reason in `config/ground_truth_errata.yaml` (66 entries); never copied into outputs | errata file, `name_fixes` for renamed items |
+| Pearl Scan mistakes | Recorded with the reason in `config/ground_truth_errata.yaml` (74 entries); never copied into outputs | errata file, `name_fixes` for renamed items |
 | Duplicates | Same name, category, cheese, crust, size, serving size, milk and region with different values is an error; identical values are not | `pipeline/validate.py` |
 | Rows the PDF lists without figures | Kept with the cells the PDF does give | `vision_pairs` matrix-only joins |
 

@@ -75,3 +75,56 @@ def test_a_name_printed_twice_is_not_merged_because_the_pairing_would_be_a_guess
     adult = _row("Fries", "Sides", 17, **{"energykCal_Per Portion": "384"})
     kids = _row("Fries", "Sides", 23, **{"energykCal_Per Portion": "209"})
     assert len(merge_by_key([adult, kids, _row("Fries", "Sides", 2, wheat="Yes"), _row("Fries", "Sides", 5, wheat="Yes")])) == 4
+
+
+def _fin(**cells):
+    return finalise([{"Product_Name": "x", "region": "UK", "source_page": 1, **cells}], load_columns())[0]
+
+
+def test_a_decimal_comma_becomes_a_point_in_nutrient_cells_and_the_change_is_flagged():
+    r = _fin(**{"salt_Per 100g/ml": "1,75", "fat_Per Portion": "<0,005"})
+    assert (r["salt_Per 100g/ml"], r["fat_Per Portion"]) == ("1.75", "<0.005")
+    assert "warn: normalised salt_Per 100g/ml '1,75' to '1.75'" in r["flags"] and "error" not in r["flags"]
+
+
+def test_a_thousands_comma_in_an_energy_cell_is_removed_but_other_commas_there_are_left_for_review():
+    r = _fin(**{"energykJ_Per 100g/ml": "1,702", "energykCal_Per 100g/ml": "408"})
+    assert r["energykJ_Per 100g/ml"] == "1702" and "kJ/kcal mismatch" not in r["flags"]   # the check now sees the real figure
+    r = _fin(**{"energykJ_Per Portion": "1,2"})
+    assert r["energykJ_Per Portion"] == "1,2" and "error" in r["flags"]
+
+
+def test_finalise_leaves_a_unit_in_a_nutrient_cell_alone_and_flags_it():
+    r = _fin(**{"fibre_Per Portion": "2.7g"})
+    assert r["fibre_Per Portion"] == "2.7g" and "error" in r["flags"]   # the unit is only removed where the PDF's column heading declares it
+
+
+def test_strip_units_removes_the_unit_the_column_heading_declares_and_no_other():
+    from pipeline.export import strip_units
+    row = {"Product_Name": "x", "fibre_Per Portion": "2.7g", "fat_Per Portion": "<0.5 g", "protein_Per 100g/ml": "0g",
+           "sodium_Per Portion": "108mg", "salt_Per Portion": "1133g", "sugars_Per Portion": "Trace", "carbohydrates_Per Portion": "#N/A"}
+    out = strip_units([row], {"fibre": "g", "fat": "g", "protein": "g", "sodium": "mg", "salt": "mg", "sugars": "g", "carbohydrates": "g"})[0]
+    assert (out["fibre_Per Portion"], out["fat_Per Portion"], out["protein_Per 100g/ml"], out["sodium_Per Portion"]) == ("2.7", "<0.5", "0", "108")
+    assert out["salt_Per Portion"] == "1133g"                                  # g in a column headed mg: kept for the checks to flag
+    assert out["sugars_Per Portion"] == "Trace" and out["carbohydrates_Per Portion"] == "#N/A"
+    assert "warn: normalised sodium_Per Portion '108mg' to '108'" in out["flags"]
+    assert strip_units([row], {})[0] == row                                    # no units declared: nothing changes
+
+
+def test_other_cells_are_not_touched_by_the_clean_ups():
+    r = _fin(**{"Product_Name": "1,5 g burger", "fibre_Per Portion": "Trace", "salt_Per Portion": "#N/A", "notes": "0g, 1/2"})
+    assert (r["Product_Name"], r["fibre_Per Portion"], r["salt_Per Portion"], r["notes"]) == ("1,5 g burger", "Trace", "#N/A", "0g, 1/2")
+
+
+def test_recommended_portions_fractions_become_decimals():
+    assert _fin(Recommended_Portions="1/2")["Recommended_Portions"] == "0.5"
+    r = _fin(Recommended_Portions="1/4")
+    assert r["Recommended_Portions"] == "0.25" and "warn: normalised Recommended_Portions '1/4' to '0.25'" in r["flags"]
+    assert _fin(Recommended_Portions="2")["Recommended_Portions"] == "2"
+
+
+def test_drop_rows_removes_the_named_products_only():
+    from pipeline.export import drop_rows
+    rows = [{"Product_Name": "Swap chips"}, {"Product_Name": "Chips"}]
+    assert drop_rows(rows, ["Swap chips"]) == [{"Product_Name": "Chips"}]
+    assert drop_rows(rows, []) == rows

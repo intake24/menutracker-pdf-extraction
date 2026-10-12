@@ -28,7 +28,7 @@ def test_run_writes_one_csv_per_chain_and_passes_eval(tmp_path):
     for path, rows in written.items():
         flagged = [r for r in rows if r["flags"]]
         if path.stem in ("11_PizzaExpress", "52_FiveGuys", "59_Odeon", "8_Pizzahut", "47_Coffee1", "7_Starbucks"):   # their PDFs contain figures that fail the checks
-            assert all(f.startswith(SOURCE_FLAGS) or "String should match pattern" in f   # Odeon: a hidden #N/A row; Coffee #1: "1,702"
+            assert all(f.startswith(SOURCE_FLAGS) or f.startswith("warn: normalised") or "String should match pattern" in f   # Odeon: a hidden #N/A row, "<0,01"; Coffee #1: "1,702"
                        for r in flagged for f in r["flags"].split(" | "))
         else:
             assert not flagged

@@ -20,8 +20,37 @@ text_columns: [Product_Name, Product_Description, Size, Milk, CoffeeType, Ingred
 bases: ["Per 100g/ml", "Per Portion", "Per Pizza", "Per Slice", "Per Product As Sold"]
 nutrients: [carbohydrates, energykCal, energykJ, fat, fibre, protein, salt, saturates, sugars,
             vitaminB6, vitaminB12, vitaminC, zinc, sodium, caffeine]
-# A nutrient cell holds the PDF's value as printed: a number, "<number", or one of these words.
+# A nutrient cell holds the PDF's value as printed: a number, "<number", or one of these words. Three flagged clean-ups apply first
+# (pipeline/export.py `normalise`): a heading-declared unit is removed (source option heading_units), a decimal comma becomes a point, and a thousands comma in kJ/kcal is removed.
 nutrient_words: [Negligible, Trace, Traces, Tr, N/A, NA, "-", not declared]
 allergens: [gluten, wheat, rye, barley, oats, spelt, kamut, celery, crustacean, egg, fish, lupin,
             milk, mollusc, mustard, peanut, sesame, soya, sulphite, treeNuts]
 trailing_text_columns: [treeNutSource]
+
+# The research team's template for column headings (their "Variable" and "Standardised format"), kept here as the reference for how our
+# columns relate to it. Key = our column, standard = the template's heading, variable = the template's description. config/pearlscan_columns.yaml
+# maps the same headings the other way round (template heading -> our column) for `eval`. Our names add the basis to the nutrient
+# ("_Per Portion", "_Per 100g/ml") and also cover bases the template does not (Per Pizza, Per Slice, Per Product As Sold).
+standard_headings:
+  Category: { standard: menu_section, variable: Menu section }
+  Product_Name: { standard: item_name, variable: Item name }
+  Serving_Size: { standard: servingsize, variable: Serving size }
+  Serving_Size_Unit: { standard: servingsizeunit, variable: Serving size unit }
+  energykCal_Per Portion: { standard: kcal, variable: Energy kcal per serving/portion }
+  energykCal_Per 100g/ml: { standard: kcal_100, variable: Energy kcal per 100g }
+  energykJ_Per Portion: { standard: kj, variable: Energy kj per serving/portion }
+  energykJ_Per 100g/ml: { standard: kj_100, variable: Energy kj per 100g }
+  protein_Per Portion: { standard: protein, variable: Protein per serving/portion }
+  protein_Per 100g/ml: { standard: protein_100, variable: Protein per 100g }
+  carbohydrates_Per Portion: { standard: carb, variable: Carbohydrates per serving/portion }
+  carbohydrates_Per 100g/ml: { standard: carb_100, variable: Carbohydrates per 100g }
+  sugars_Per Portion: { standard: sugar, variable: Sugar per serving/portion }
+  sugars_Per 100g/ml: { standard: sugar_100, variable: Sugar per 100g }
+  fat_Per Portion: { standard: fat, variable: Fat per serving/portion }
+  fat_Per 100g/ml: { standard: fat_100, variable: Fat per 100g }
+  saturates_Per Portion: { standard: satfat, variable: Saturated fat per serving/portion }
+  saturates_Per 100g/ml: { standard: satfat_100, variable: Saturated fat per 100g }
+  fibre_Per Portion: { standard: fibre, variable: Fibre per serving/portion }
+  fibre_Per 100g/ml: { standard: fibre_100, variable: Fibre per 100g }
+  salt_Per Portion: { standard: salt, variable: Salt per serving/portion }
+  salt_Per 100g/ml: { standard: salt_100, variable: Salt per 100g }

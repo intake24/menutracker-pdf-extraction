@@ -35,3 +35,16 @@ def test_dictionary_has_the_count_and_suitability_columns_later_chains_need():
     for col in ["Serves", "Portion_Type", "Number_of_Slices", "Total_Slices", "Total_Weight",
                 "Suitable_for_Vegetarian", "Suitable_for_Vegan", "Suitable_for_Coeliac"]:
         assert types[col] == "text"
+
+
+def test_standard_headings_name_our_columns_and_agree_with_the_pearl_scan_mapping():
+    import yaml
+
+    from pipeline.columns import COLUMNS_FILE
+    spec = yaml.safe_load(COLUMNS_FILE.read_text())
+    ours = set(load_columns().types)
+    mapping = yaml.safe_load((COLUMNS_FILE.parent.parent / "config" / "pearlscan_columns.yaml").read_text())
+    for column, h in spec["standard_headings"].items():
+        assert column in ours, column
+        if h["standard"] != "menu_section":       # sections follow our own naming rules and are not compared
+            assert mapping[h["standard"]] == column, (h["standard"], column)

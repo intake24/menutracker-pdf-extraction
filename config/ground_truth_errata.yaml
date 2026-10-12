@@ -5,30 +5,6 @@
   column: '*'
   why: The PDF lists "Diet Pepsi, 200 ml, 1.2 kcal" as an item of its own, below the Tango Orange Sugar Free group; Pearl Scan filed it as a size of Tango.
 - file: m19982-nutritional-info-food.csv
-  item: Pork Frankfurter - Large
-  column: fibre
-  why: The PDF prints a stray "g" after this figure ("0g", "2.7g"); Pearl Scan removed it. We keep it as printed and the row is flagged.
-- file: m19982-nutritional-info-food.csv
-  item: Pork Frankfurter - Regular
-  column: fibre
-  why: The PDF prints a stray "g" after this figure ("0g", "2.7g"); Pearl Scan removed it. We keep it as printed and the row is flagged.
-- file: m19982-nutritional-info-food.csv
-  item: Bread Roll - Regular
-  column: fibre
-  why: The PDF prints a stray "g" after this figure ("0g", "2.7g"); Pearl Scan removed it. We keep it as printed and the row is flagged.
-- file: m19982-nutritional-info-food.csv
-  item: Nacho Libre - Large
-  column: sodium
-  why: The PDF prints a stray "g" after this figure ("0g", "2.7g"); Pearl Scan removed it. We keep it as printed and the row is flagged.
-- file: m19982-nutritional-info-food.csv
-  item: Harlem Hot - Large
-  column: satfat
-  why: The PDF prints a stray "g" after this figure ("0g", "2.7g"); Pearl Scan removed it. We keep it as printed and the row is flagged.
-- file: m19982-nutritional-info-food.csv
-  item: Doritos Tangy Cheese
-  column: protein
-  why: The PDF prints a stray "g" after this figure ("0g", "2.7g"); Pearl Scan removed it. We keep it as printed and the row is flagged.
-- file: m19982-nutritional-info-food.csv
   item: Sweet Popcorn - Kids/Snackit
   column: '*'
   why: The PDF has several popcorn tables (the last is "Salted Popcorn (Dublin)"); Pearl Scan dropped "(Dublin)" and shifted rows, so rows of this name pair with the wrong table. Our rows were read from
@@ -96,14 +72,6 @@
   column: '*'
   why: 'Pearl Scan typo: the PDF prints Sig Crispers'
 - file: nutritional-information_v0.1.csv
-  item: CHEESE & TOMATO - Stuffed Crust Pepperoni - Large
-  column: salt_100
-  why: The PDF prints the figure with a decimal comma (1,75); Pearl Scan changed it to 1.75. We keep it as printed and the row is flagged.
-- file: nutritional-information_v0.1.csv
-  item: THE MEXICAN - Original Base - Small
-  column: fat_100
-  why: The PDF prints the figure with a decimal comma (8,6); Pearl Scan changed it to 8.6. We keep it as printed and the row is flagged.
-- file: nutritional-information_v0.1.csv
   item: CHEESY POTATO TOTS
   column: recommended_portions
   why: The PDF prints 1/2; Pearl Scan's file holds the date 01-Feb (spreadsheet auto-format).
@@ -115,10 +83,6 @@
   item: BACON & CHEESE POTATO TOTS
   column: recommended_portions
   why: The PDF prints 1/2; Pearl Scan's file holds the date 01-Feb (spreadsheet auto-format).
-- file: nutritional-information_v0.1.csv
-  item: POTATO TOTS WITH FOUR CHEESES
-  column: recommended_portions
-  why: The PDF prints 1/2; Pearl Scan converted it to 0.50.
 - file: nutritional-information_v0.1.csv
   item: LA VIE VEGAN HAM & CHEESE STICKS
   column: '*'
@@ -244,14 +208,6 @@
   column: protein_100
   why: The row prints its figures out of the usual order (protein 2.2 under the protein column); Pearl Scan has 22.
 - file: pre-packed-product-matrix-april-2025-edition-v87-25_04_2025-belfast-version.csv
-  item: EVENT POPCORN - Sweet Popcorn 180 x 50g
-  column: salt
-  why: The PDF prints a decimal comma (<0,005); Pearl Scan changed it to <0.005. We keep it as printed and the row is flagged.
-- file: pre-packed-product-matrix-april-2025-edition-v87-25_04_2025-belfast-version.csv
-  item: EVENT POPCORN - Sweet Popcorn 180 x 50g
-  column: salt_100
-  why: The PDF prints a decimal comma (<0,01); Pearl Scan changed it to <0.01. We keep it as printed and the row is flagged.
-- file: pre-packed-product-matrix-april-2025-edition-v87-25_04_2025-belfast-version.csv
   item: Cadbury Crème Egg
   column: sugar_100
   why: The row prints 14 figures instead of 18; figures are read by their column position, Pearl Scan by order, so the sugars cell differs.
@@ -291,15 +247,55 @@
   item: ' Vegan Veggie Supreme - Gluten Free (9" Square)'
   column: num_of_slices
   why: The PDF (page 21) prints 6 slices for the individual and gluten free pizzas and 8 for the sharing ones; Pearl Scan has the counts the other way round.
-- file: C1-Core-Food-May-2025-Issue-Date-06.05.25-V47-Nutritional-Ingredient-Info.csv
-  item: Oat & Raisin Cookie
-  column: kj_100
-  why: The PDF (page 16) prints "1,702" with a thousands comma; Pearl Scan removed it. We keep it as printed and the row is flagged by the number check.
 - file: cookhouse_and_pub_kids_menu_default.csv
   item: Skin-on Chips
   column: '*'
   why: The PDF prints "Swap your Skin-on Chips (158kcal) for Mash (110kcal) or ..."; Pearl Scan shortened the first name to "Skin-on Chips". We keep the name as printed ("Swap your Skin-on Chips"); the figure 158 was compared by eye.
 - file: cookhouse_and_pub_main_menu_priceless_v0.1.csv
   item: Swap chips & onion rings for a fresh mixed salad
-  column: kcal
-  why: The PDF prints "(-398kcal)", a saving; we store the digits (398) and keep the sign in `notes` because the calorie columns hold no negative number. Pearl Scan stored -398.
+  column: '*'
+  why: The PDF prints "(-398kcal)", the calories a customer saves by swapping the chips on a steak; the research team judged it a choice, not a food, so it is not in our output (drop_rows in chains.yaml). Pearl Scan has it as a row.
+- file: SUM25_UK_AllergenBook_CORE_FOOD_v03.csv
+  item: Cloudy Apple Juice
+  column: fat
+  why: The PDF prints a stray "g" after this figure (<0.5g); Pearl Scan kept it here (it removed it in other files). The research team prefers it removed, so we remove it and the row is flagged.
+- file: SUM25_UK_AllergenBook_CORE_FOOD_v03.csv
+  item: Cloudy Apple Juice
+  column: fibre
+  why: The PDF prints a stray "g" after this figure (<0.5g); Pearl Scan kept it here (it removed it in other files). The research team prefers it removed, so we remove it and the row is flagged.
+- file: SUM25_UK_AllergenBook_CORE_FOOD_v03.csv
+  item: Cloudy Apple Juice
+  column: protein
+  why: The PDF prints a stray "g" after this figure (<0.5g); Pearl Scan kept it here (it removed it in other files). The research team prefers it removed, so we remove it and the row is flagged.
+- file: SUM25_UK_AllergenBook_CORE_FOOD_v03.csv
+  item: Ginger shot
+  column: fat
+  why: The PDF prints a stray "g" after this figure (<0.5g); Pearl Scan kept it here (it removed it in other files). The research team prefers it removed, so we remove it and the row is flagged.
+- file: SUM25_UK_AllergenBook_CORE_FOOD_v03.csv
+  item: Ginger shot
+  column: fibre
+  why: The PDF prints a stray "g" after this figure (<0.5g); Pearl Scan kept it here (it removed it in other files). The research team prefers it removed, so we remove it and the row is flagged.
+- file: SUM25_UK_AllergenBook_CORE_FOOD_v03.csv
+  item: Ginger shot
+  column: protein
+  why: The PDF prints a stray "g" after this figure (<0.5g); Pearl Scan kept it here (it removed it in other files). The research team prefers it removed, so we remove it and the row is flagged.
+- file: SUM25_UK_AllergenBook_CORE_FOOD_v03.csv
+  item: Raspberry Lemonade
+  column: fat
+  why: The PDF prints a stray "g" after this figure (<0.5g); Pearl Scan kept it here (it removed it in other files). The research team prefers it removed, so we remove it and the row is flagged.
+- file: SUM25_UK_AllergenBook_CORE_FOOD_v03.csv
+  item: Raspberry Lemonade
+  column: satfat
+  why: The PDF prints a stray "g" after this figure (<0.5g); Pearl Scan kept it here (it removed it in other files). The research team prefers it removed, so we remove it and the row is flagged.
+- file: SUM25_UK_AllergenBook_CORE_FOOD_v03.csv
+  item: Raspberry Lemonade
+  column: fibre
+  why: The PDF prints a stray "g" after this figure (<0.5g); Pearl Scan kept it here (it removed it in other files). The research team prefers it removed, so we remove it and the row is flagged.
+- file: SUM25_UK_AllergenBook_CORE_FOOD_v03.csv
+  item: Raspberry Lemonade
+  column: protein
+  why: The PDF prints a stray "g" after this figure (<0.5g); Pearl Scan kept it here (it removed it in other files). The research team prefers it removed, so we remove it and the row is flagged.
+- file: m19982-nutritional-info-food.csv
+  item: Nacho Libre - Large
+  column: sodium
+  why: The PDF prints "1133g" in a column headed "Sodium (mg)". The unit differs from the heading, so we keep it as printed and the row is flagged; Pearl Scan removed it.

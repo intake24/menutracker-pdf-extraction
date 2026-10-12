@@ -11,7 +11,7 @@ import yaml
 from pipeline.columns import PROVENANCE, load_columns
 from pipeline.coverage import numeric_lines, page_gaps, shortfalls
 from pipeline.evaluate import compare_golden, compare_ground_truth, ground_truth_file, read_csv
-from pipeline.export import finalise, merge_by_key, write_csv
+from pipeline.export import drop_rows, finalise, merge_by_key, strip_units, write_csv
 from pipeline import llm
 from pipeline.llm import LlmError
 from pipeline.ingest import load_chains, manifest_row, page_texts, text_sha
@@ -126,13 +126,13 @@ def _parse_chain(chain: dict, inputs: Path, parsed: dict[tuple, list[dict]]) -> 
     rows: list[dict] = []
     for source in chain["sources"]:
         pdf = inputs / source["pdf"]
-        options = {k: v for k, v in source.items() if k not in ("pdf", "region", "category", "approved", "disclaimer")}
+        options = {k: v for k, v in source.items() if k not in ("pdf", "region", "category", "approved", "disclaimer", "drop_rows", "heading_units")}
         # every parse-affecting option, and the bytes of the file: image-only PDFs have no text, so equal text would not mean equal pages
         cache_key = (text_sha(page_texts(pdf)), hashlib.sha256(pdf.read_bytes()).hexdigest(), json.dumps(options, sort_keys=True))
         if cache_key not in parsed:
             parsed[cache_key] = PARSERS[source["parser"]](pdf, source)
         rows += [{"method": "parser"} | r | {"region": source["region"], "source_file": pdf.name}
-                 for r in parsed[cache_key]]
+                 for r in strip_units(drop_rows(parsed[cache_key], source.get("drop_rows", [])), source.get("heading_units", {}))]
     return rows
 
 

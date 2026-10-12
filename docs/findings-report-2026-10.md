@@ -23,7 +23,7 @@ Updated 2026-10-06 for all 17 food chains. This is the evidence record: for ever
 | Starbucks | 2 | 1,557 | 93 + 1,464 rows, 15,477 cells, 0 mismatches; 12 golden rows | guards added after review | Approved (section 3.13) |
 | Brewhouse, Cookhouse, Top Golf | 7 menus (model-read) | 126, 212, 121 | kcal only; every figure of the text layer is a row | text check added | Approved (section 3.14) |
 
-Totals in `outputs/`: 17 chain CSVs, 8,768 rows. Pearl Scan agreement is exact on every compared cell once the 75 recorded Pearl Scan mistakes are excused (apart from name differences accepted as `known_gaps` on two menus). Allergen data has no Pearl Scan ground truth; it is checked by hand-verified golden rows, mark accounting and second reads.
+Totals in `outputs/`: 17 chain CSVs, 8,768 rows. (Update 2026-10-12: after the research team's review the pipeline removes the unit a column heading declares, turns a decimal comma into a point and `1/2` into `0.5`, and leaves out Cookhouse's -398 kcal swap; the errata file has 74 entries; see `end-of-round-report-2026-10.md` section 2c.) Pearl Scan agreement is exact on every compared cell once the 75 recorded Pearl Scan mistakes are excused (apart from name differences accepted as `known_gaps` on two menus). Allergen data has no Pearl Scan ground truth; it is checked by hand-verified golden rows, mark accounting and second reads.
 
 ## 2. How the checks worked and who decides
 

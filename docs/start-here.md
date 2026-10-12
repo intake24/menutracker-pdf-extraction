@@ -6,7 +6,7 @@ For new developers and for AI agents working in this repository. Read this page 
 
 Menu Tracker collects allergen and nutrition PDFs published by UK food chains. This pipeline turns those PDFs into one CSV per chain (`outputs/<id>_<Chain>.csv`, one row per food, drink or product), replacing a paid human service called Pearl Scan. In the first round (October 2026) 17 food chains, 35 PDFs and 8,768 rows were done.
 
-Allergen data is safety-relevant: a wrong "No" can hurt someone. That is why the pipeline copies values exactly as printed, never guesses, and stops with an error when it meets something it does not know.
+Allergen data is safety-relevant: a wrong "No" can hurt someone. That is why the pipeline copies values as printed (three flagged clean-ups, rule 1), never guesses, and stops with an error when it meets something it does not know.
 
 ## 2. Which document to read
 
@@ -112,7 +112,7 @@ The two reports of the October 2026 round stay in `docs/` as the committed recor
 | `markers` | What a mark means and what an unmarked allergen cell means, copied from the PDF's own key. `{'': 'No'}` only where the PDF says every allergen is listed; otherwise blank (not stated) |
 | `pages` | Pages to read (numbers and `a-b` ranges) |
 
-Parser-specific options are documented in the docstring at the top of each parser module; read that docstring before touching an option. Options that only affect `eval` and never the CSV: `pearlscan` (column overrides), `name_fixes` (names Pearl Scan reworded), `known_gaps` (how many Pearl Scan rows may stay unmatched, with the reason in a comment).
+Parser-specific options are documented in the docstring at the top of each parser module; read that docstring before touching an option. `heading_units` (nutrient -> unit, as the column headings declare them) lets `strip_units` remove that unit from the cells. `drop_rows` (a list of exact product names) removes rows from a source after parsing: the research team does not want a row such as Cookhouse's "Swap chips & onion rings for a fresh mixed salad", a choice that saves calories rather than a food. Options that only affect `eval` and never the CSV: `pearlscan` (column overrides), `name_fixes` (names Pearl Scan reworded), `known_gaps` (how many Pearl Scan rows may stay unmatched, with the reason in a comment).
 
 `config/pearlscan_columns.yaml` is the translation table from Pearl Scan's column names (`kj`, `satfat`, `kcal_100`) to ours. Only `eval` reads it; `run` and the parsers never do, so it has no effect on `outputs/`. A column mapped to `~` is not compared. A source's `pearlscan` option is merged over this table for that source only (for example `pearlscan: { 'slice/portion/piece': ~ }` skips a column Pearl Scan files differently). With no Pearl Scan data for a batch, this file and the `pearlscan`, `name_fixes` and `known_gaps` options are unused.
 
@@ -167,7 +167,7 @@ If the layout changed, text-layer parsers usually stop with an error that says w
 
 For people and agents alike:
 
-1. **Values exactly as printed.** No unit conversion, no rounding, no fixing typos. A problem goes into `flags`; the value stays.
+1. **Values as printed.** No unit conversion, no rounding, no fixing typos. A problem goes into `flags`; the value stays. The only exceptions are the clean-ups in `pipeline/export.py` (`normalise`), set by the research team: a unit that the PDF's column heading declares is removed from the cell ("Sodium (mg)": `108mg` becomes `108`; the headings are listed per source in the `heading_units` option), while any other unit and markers such as `*` or `#N/A` stay as printed and are flagged; a decimal comma becomes a point (`1,75` becomes `1.75`), and in kJ and kcal a comma before exactly three digits is a thousands comma and is removed (`1,702` becomes `1702`); and `1/2` in `Recommended_Portions` becomes `0.5`. Each one is flagged.
 2. **Unknown means stop.** An unknown allergen word, label, marker, column or diet word raises. Never map an unknown thing to a guess.
 3. **A blank allergen cell means "not stated".** `No` only where the PDF declares the allergen absent (`markers`).
 4. **Similar products stay separate rows.** Merge only when very likely the same product, and say so in `notes`.
