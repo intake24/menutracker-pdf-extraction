@@ -9,3 +9,5 @@ Commit messages: no `Co-Authored-By` trailers and no "generated with" lines, eve
 In Markdown files write one line per paragraph (no hard wrapping).
 
 At the end of a batch write the findings report and the end-of-round report for that batch to `outputs/data-dictionary/` (named `findings-report-<batch>.md` and `end-of-round-report-<batch>.md`), next to the `_flags.csv` and `_verification.csv` that `flags` and `report` write there. `golden/` stays at the repository root and in git: it is the evidence behind the approvals in `config/chains.yaml`. Details: `docs/start-here.md` section 3b.
+
+CSV headings: the columns of the research team's template are written under their standard headings (`item_name`, `kcal`, `fat_100`, ...), a rename only; the list is `standard_headings` in `schemas/columns.yaml`. Code, config and `golden/` use our own column names, and anything that reads an output CSV goes through `read_output` in `pipeline/evaluate.py`. When you add a column, check it does not collide with a standard heading (a test does).

@@ -48,3 +48,11 @@ def test_standard_headings_name_our_columns_and_agree_with_the_pearl_scan_mappin
         assert column in ours, column
         if h["standard"] != "menu_section":       # sections follow our own naming rules and are not compared
             assert mapping[h["standard"]] == column, (h["standard"], column)
+
+
+def test_a_standard_heading_never_collides_with_another_column_name():
+    from pipeline.columns import PROVENANCE, standard_headings
+    standard = standard_headings()
+    names = [standard.get(c, c) for c in [*load_columns().types, *PROVENANCE]]
+    assert len(names) == len(set(names)), sorted({n for n in names if names.count(n) > 1})   # two columns would share one CSV heading
+    assert len(set(standard.values())) == len(standard)
