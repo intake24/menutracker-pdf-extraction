@@ -94,25 +94,18 @@ def test_a_thousands_comma_in_an_energy_cell_is_removed_but_other_commas_there_a
     assert r["energykJ_Per Portion"] == "1,2" and "error" in r["flags"]
 
 
-def test_finalise_leaves_a_unit_in_a_nutrient_cell_alone_and_flags_it():
-    r = _fin(**{"fibre_Per Portion": "2.7g"})
-    assert r["fibre_Per Portion"] == "2.7g" and "error" in r["flags"]   # the unit is only removed where the PDF's column heading declares it
+def test_g_and_mg_are_removed_from_nutrient_numbers_and_the_change_is_flagged():
+    r = _fin(**{"fibre_Per Portion": "2.7g", "fat_Per Portion": "<0.5 g", "protein_Per 100g/ml": "0g", "sodium_Per Portion": "108mg",
+                "salt_Per Portion": "1,5g"})
+    assert (r["fibre_Per Portion"], r["fat_Per Portion"], r["protein_Per 100g/ml"], r["sodium_Per Portion"], r["salt_Per Portion"]) == \
+        ("2.7", "<0.5", "0", "108", "1.5")
+    assert "warn: normalised sodium_Per Portion '108mg' to '108'" in r["flags"] and "error" not in r["flags"]
 
 
-def test_strip_units_removes_g_or_mg_from_columns_whose_heading_declares_a_unit():
-    from pipeline.export import strip_units
-    row = {"Product_Name": "x", "fibre_Per Portion": "2.7g", "fat_Per Portion": "<0.5 g", "protein_Per 100g/ml": "0g",
-           "sodium_Per Portion": "108mg", "salt_Per Portion": "1133g", "sugars_Per Portion": "Trace", "carbohydrates_Per Portion": "#N/A",
-           "energykCal_Per Portion": "40kcal", "zinc_Per Portion": "5mg"}
-    out = strip_units([row], {"fibre": "g", "fat": "g", "protein": "g", "sodium": "mg", "salt": "mg", "sugars": "g", "carbohydrates": "g",
-                              "energykCal": "kcal"})[0]
-    assert (out["fibre_Per Portion"], out["fat_Per Portion"], out["protein_Per 100g/ml"], out["sodium_Per Portion"]) == ("2.7", "<0.5", "0", "108")
-    assert out["salt_Per Portion"] == "1133"                                   # g in a column headed mg: the unit still goes
-    assert "warn: normalised sodium_Per Portion '108mg' to '108'" in out["flags"]
-    assert "warn: normalised salt_Per Portion '1133g' to '1133' (the unit g differs from the heading's mg)" in out["flags"]
-    assert out["sugars_Per Portion"] == "Trace" and out["carbohydrates_Per Portion"] == "#N/A"
-    assert out["energykCal_Per Portion"] == "40kcal" and out["zinc_Per Portion"] == "5mg"   # only g and mg, only for declared columns
-    assert strip_units([row], {})[0] == row                                    # no units declared: nothing changes
+def test_other_units_and_markers_in_nutrient_cells_stay_and_are_flagged():
+    r = _fin(**{"energykCal_Per Portion": "40kcal", "zinc_Per Portion": "5 µg", "sugars_Per Portion": "*", "carbohydrates_Per Portion": "#N/A"})
+    assert (r["energykCal_Per Portion"], r["zinc_Per Portion"], r["sugars_Per Portion"], r["carbohydrates_Per Portion"]) == ("40kcal", "5 µg", "*", "#N/A")
+    assert r["flags"].count("error") == 4
 
 
 def test_other_cells_are_not_touched_by_the_clean_ups():

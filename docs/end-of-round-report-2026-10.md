@@ -52,7 +52,7 @@ The checks in section 4 replace Pearl Scan, and each is weaker than a full compa
 
 The research team reviewed the Pearl Scan mistakes and agreed with our verdict on the name and structure errors (Diet Pepsi filed under Tango, popcorn rows reordered, Cherry/Berry typos, `1/2` turned into the date `01-Feb`, missing brand names). They set three rules for the values, and the pipeline now applies them (`normalise` in `pipeline/export.py`, each change flagged as `warn: normalised ...`):
 
-- `g` or `mg` is removed from the cells of a nutrient whose PDF column heading declares a unit (`Sodium (mg)`: `108mg` becomes `108`; each source lists its heading units in `heading_units`). Where the cell's unit differs from the heading's (`1133g` under `(mg)`, `108mg` under `(g)`) the unit is still removed and the flag says so; markers such as `*` and `#N/A` stay as printed and are flagged;
+- `g` or `mg` after a nutrient number is removed (`Sodium (mg)`: `108mg` becomes `108`; the reader decides from the PDF's column heading which unit applies, and a unit that disagrees with its heading, such as `1133g` under `(mg)`, is simply removed too); markers such as `*` and `#N/A` stay as printed and are flagged;
 - a decimal comma becomes a point (`1,75` becomes `1.75`), but in kJ and kcal a comma before exactly three digits is a thousands comma and is removed (`1,702` becomes `1702`), and any other comma there is left and flagged;
 - `1/2` in `Recommended_Portions` becomes `0.5`.
 

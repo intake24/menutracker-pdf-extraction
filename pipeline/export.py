@@ -60,12 +60,15 @@ def merge_by_key(rows: list[dict]) -> list[dict]:
     return out
 
 
+UNIT = re.compile(r"(?<=\d)\s?m?g$")                              # "2.7g", "108mg": the reader decides what unit the column is in
 COMMA_NUMBER = re.compile(r"(<\s?)?(\d+),(\d+)$")
 
 
 def _clean_number(column: str, value: str) -> str:
-    """The research team's rules for nutrient cells: a decimal comma becomes a point, and in kJ and kcal a comma followed by exactly
-    three digits is a thousands comma and goes. Anything else (`1,2` kJ, a unit left in the cell) is left for the checks to flag."""
+    """The research team's rules for nutrient cells: `g` or `mg` after the number goes, a decimal comma becomes a point, and in kJ and kcal
+    a comma followed by exactly three digits is a thousands comma and goes. Anything else (`1,2` kJ, `kcal` or a marker in the cell) is left
+    for the checks to flag."""
+    value = UNIT.sub("", value)
     if m := COMMA_NUMBER.match(value):
         sign, whole, rest = m.groups("")
         if not column.startswith(("energykCal", "energykJ")):
@@ -75,27 +78,6 @@ def _clean_number(column: str, value: str) -> str:
     return value
 
 
-def strip_units(rows: list[dict], units: dict[str, str]) -> list[dict]:
-    """Remove `g` or `mg` from the cells of a nutrient whose PDF column heading declares a unit ("Sodium (mg)": `108mg` is 108). `units` is a
-    source option, nutrient -> unit (`{fibre: g, sodium: mg}`), for every basis of that nutrient. Only declared nutrients are touched. The
-    number is not converted: when the cell's unit differs from the heading's, the flag says so. Each change is a `warn:`."""
-    if not units:
-        return rows
-    out = []
-    for row in rows:
-        row, notes = dict(row), []
-        for column, value in row.items():
-            heading = units.get(column.split("_")[0])
-            if heading and isinstance(value, str) and (m := re.fullmatch(r"((?:<\s?)?\d+(?:[.,]\d+)?)\s?(m?g)", value)):
-                row[column] = m[1]
-                differs = f" (the unit {m[2]} differs from the heading's {heading})" if m[2] != heading else ""
-                notes.append(f"warn: normalised {column} '{value}' to '{m[1]}'{differs}")
-        if notes:
-            row["flags"] = " | ".join(filter(None, [row.get("flags"), *notes]))
-        out.append(row)
-    return out
-
-
 def _clean_fraction(value: str) -> str:
     if m := re.fullmatch(r"(\d+)/(\d+)", value):
         return f"{int(m[1]) / int(m[2]):.2f}".rstrip("0").rstrip(".")
@@ -103,7 +85,7 @@ def _clean_fraction(value: str) -> str:
 
 
 def normalise(row: dict, columns: Columns) -> tuple[dict, list[str]]:
-    """The places where finalise changes a value: nutrient cells (see `_clean_number`) and Recommended_Portions (`1/2` is `0.5`); units are removed earlier, by `strip_units`.
+    """The places where finalise changes a value: nutrient cells (see `_clean_number`) and Recommended_Portions (`1/2` is `0.5`)
     Every change is returned as a `warn:` so the original text stays on record."""
     row, notes = dict(row), []
     for column, value in row.items():

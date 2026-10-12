@@ -524,7 +524,6 @@
       region: UK
       category: food
       approved: true
-      heading_units: { protein: g, fat: g, saturates: g, sugars: g, fibre: g, sodium: mg } # the column headings: "Protein (g)" ... "Sodium (mg)"
       dpi: 150 # at 110 the model misread two digits in the small print (1.4 as 0.4, 0.4 as 0)
       instructions: >-
         It is a nutrition table of ice creams and toppings; all figures are per portion. section = the orange heading
@@ -547,7 +546,6 @@
       region: UK
       category: food
       approved: true
-      heading_units: { protein: g, fat: g, saturates: g, sugars: g, fibre: g, sodium: mg } # the column headings: "Protein (g)" ... "Sodium (mg)"
       instructions: >-
         It is a nutrition table of cinema food; all figures are per portion. section = the orange heading above the
         rows. Some items are a bold name line followed by several rows whose left cell (Portion/Pack Size) is a size such
@@ -560,7 +558,6 @@
       region: UK
       category: food
       approved: true
-      heading_units: { protein: g, fat: g, saturates: g, sugars: g, fibre: g, sodium: g } # the column headings: "Protein (g)" ... "Sodium (g)"
       instructions: >-
         It is a nutrition table of sweets; all figures are per portion. section = the orange heading above the rows
         ("PICK'N'MIX"). name = the bold item name exactly as printed (it may contain " - "); size = empty;
@@ -1284,7 +1281,6 @@
       region: UK
       category: food
       approved: true
-      heading_units: { fat: g, saturates: g, carbohydrates: g, sugars: g, fibre: g, protein: g, salt: g } # the column headings: "Fat (g)" ... "Salt (g)"
       pages: [4, 5, 7, 8, 9, 10, 12, 14, 15, 17, 18, 19]
       name_x1: 135
       ingredients_x0: 130
@@ -1315,7 +1311,6 @@
       region: UK
       category: drinks
       approved: true
-      heading_units: { fat: g, saturates: g, carbohydrates: g, sugars: g, fibre: g, protein: g, salt: g, caffeine: mg } # the column headings: "Fat (g)" ... "Salt (g)"
       pages:
         [
           4,

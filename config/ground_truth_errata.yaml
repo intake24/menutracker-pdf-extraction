@@ -298,8 +298,8 @@
 - file: m20011-nutritional-info-sweets.csv
   item: Tonys Chocoloney Caramel & Sea Salt
   column: sodium
-  why: The PDF prints the unit (mg) in this cell, under a column headed "Sodium (g)". Pearl Scan kept the unit; the research team wants units removed, so we remove it and the flag notes that it differs from the heading.
+  why: The PDF prints the unit (mg) in this cell, under a column headed "Sodium (g)". Pearl Scan kept the unit; the research team wants units removed, so we remove it.
 - file: m20011-nutritional-info-sweets.csv
   item: Tonys Chocoloney Triple Chocolate
   column: sodium
-  why: The PDF prints the unit (mg) in this cell, under a column headed "Sodium (g)". Pearl Scan kept the unit; the research team wants units removed, so we remove it and the flag notes that it differs from the heading.
+  why: The PDF prints the unit (mg) in this cell, under a column headed "Sodium (g)". Pearl Scan kept the unit; the research team wants units removed, so we remove it.
