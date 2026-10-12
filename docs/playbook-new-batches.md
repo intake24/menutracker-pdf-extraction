@@ -82,6 +82,8 @@ Rule of thumb: a source is *approved* when (a) it parses without raising, (b) `c
 
 ## 5. What Pearl Scan got wrong (and its conventions)
 
+The research team reviewed this list on 2026-10-12 and set rules for stray units, decimal and thousands commas and fractions; they supersede the treatment of those cases below (section 5b).
+
 - Row glued to the wrong group (Cineworld: `Diet Pepsi 200 ml` filed as a size of Tango Orange).
 - Rows shifted between repeated tables (Vue popcorn: `(Dublin)` dropped, values of the neighbouring table).
 - Stray `g` removed from printed figures; typos added to names (`Rasoberry`, `Cherrv`), others corrected.
@@ -90,6 +92,46 @@ Rule of thumb: a source is *approved* when (a) it parses without raising, (b) `c
 - Papa John's: decimal commas printed in the PDF (`1,75`) written as `1.75`; the fraction `1/2` turned into the date `01-Feb` or `0.50`; a brand spelling (`SHEESE`) written `CHEESE`; count columns (`Total portions`, `Total pieces`, `Portion size`) filed under different Pearl Scan columns for the same printed header. `eval` takes list-valued mappings for those (`pearlscan:` per source) and checks the cell wherever Pearl Scan has a value.
 - Each confirmed mistake is an entry in `config/ground_truth_errata.yaml` with the reason.
 - Consequence: where Pearl Scan is the only check, an unexplained mismatch needs a look at the page before either side is changed. In every case so far both explanations existed (the model once, Pearl Scan several times).
+
+## 5b. Value rules agreed with the research team (2026-10-12)
+
+The research team (the data users) reviewed the Pearl Scan errata. They agreed with our verdict on the structure and name errors (Diet Pepsi filed under Tango, Salted Popcorn rows reordered, Cherry/Berry typos, `1/2` turned into the date `01-Feb`, missing brand names such as Aero and Irn Bru), accepted `1/2` written as `0.50`, and set the rules below for nutrient values. They replace "copy every value exactly as printed" for these cases only. Use them for every new batch.
+
+| Rule | Example | Applies to |
+|---|---|---|
+| `g` or `mg` after a nutrient number is removed | `2.7g` becomes `2.7`, `108mg` becomes `108`, `1133g` under a `(mg)` heading becomes `1133` | every nutrient column of every source (not names, notes or other text) |
+| A decimal comma becomes a point | `1,75` becomes `1.75`, `<0,005` becomes `<0.005` | every nutrient column except kJ and kcal |
+| In kJ and kcal a comma before exactly three digits is a thousands comma and is removed | `1,702` becomes `1702` | `energykJ_*` and `energykCal_*` only; any other comma there (`1,2`) stays and is flagged |
+| A fraction in `Recommended_Portions` becomes a decimal | `1/2` becomes `0.5`, `1/4` becomes `0.25` | the `Recommended_Portions` column only |
+| A row that is a choice, not a food, is left out | Cookhouse "Swap chips & onion rings for a fresh mixed salad" (-398kcal: the calories a customer saves on a steak) | listed by exact product name in the source's `drop_rows` option in `config/chains.yaml` |
+
+Every change except a dropped row is recorded in the row's `flags` as `warn: normalised <column> '<old>' to '<new>'`, so the printed text is never lost. The code is `normalise` and `drop_rows` in `pipeline/export.py` and `_parse_chain` in `pipeline/cli.py`; the tests are in `tests/test_export.py`.
+
+Everything else stays as printed and is flagged by the number check: other units (`kcal`, `µg`), markers (`*`, `#N/A`) and odd forms (`<0/1`, a number with a leading zero such as `08`). Do not strip or guess them; ask the research team.
+
+**What we decided not to do**
+
+- No unit in the column name (for example `sodiumMg_Per Portion`) and no conversion of mg to g. The user ruled it out: the reader decides from the PDF's column heading which unit applies. Conversion would also break the as-printed rule and risk rounding.
+- No flag for the Vue ice-cream sodium cells that print a leading zero (`08`, `05`, `09`, `04`). Two reads (a check of the page image and the pipeline's `reread`) confirmed the PDF prints them, so they stay as printed.
+- No unit check against the column heading. An earlier version removed a unit only where the heading declared it; the user chose the simple rule above.
+
+**Tell data users**
+
+- The unit is not in the CSV. The same column holds different units in different sources: sodium is in g in Papa John's, Odeon and Domino's, and in mg in the Vue food and sweets PDFs (the sweets heading says `(g)` but the values are mg). Caffeine in the Starbucks drinks is mg. A quick check: sodium is about 0.4 times the salt figure when in g and about 400 times when in mg.
+- A `warn: normalised` flag shows what the PDF printed.
+
+**How to handle it in the next batch**
+
+1. After `run`, filter `outputs/data-dictionary/_flags.csv` for `normalised`. Check that each change is one of the rules above and nothing else (no name-like text, no surprising number).
+2. A unit or marker the rules do not cover stays as an `error:` flag. Do not add a new clean-up on your own; take it to the research team and then add a rule with a test that fails first.
+3. Before dropping a row, check that it is a choice or a saving and not a food with its own calories; add it to `drop_rows` with a comment and record the decision with its date. Cookhouse's other add-on, upgrade and swap rows (`+39kcal`, `+160kcal`) were left in because the research team ruled on the one row only; ask before dropping more.
+4. When `eval` compares with Pearl Scan, a difference caused by these rules is a Pearl Scan convention, not an error of ours: add an entry to `config/ground_truth_errata.yaml` with the reason. This round needed 10 entries for Starbucks and 2 for Vue sweets, where Pearl Scan kept the unit. Where Pearl Scan applied the same clean-up (it removed the `g` in the Vue food file, the comma in `1,702`), nothing is needed.
+5. Golden rows carry the cleaned values (the Coffee #1 golden file has `1702`).
+
+**Open points for the research team**
+
+- Their column-heading template covers only per-portion and per-100g figures; our schema also has Per Pizza, Per Slice and Per Product As Sold (see `standard_headings` in `schemas/columns.yaml`).
+- Sodium and caffeine units differ between sources and are not in the column names.
 
 ## 6. The model route (`claude -p`, `claude-sonnet-5-5`)
 

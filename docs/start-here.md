@@ -151,6 +151,8 @@ Tests: `uv run pytest` (about two minutes; they read PDFs from `inputs/`). If `p
 
 If the layout changed, text-layer parsers usually stop with an error that says what they did not expect; that is the intended behaviour. A model-read source has fewer such guards, so run `reread --pages all` and look at the pages `coverage` lists.
 
+**Apply the value rules.** Stray `g`/`mg`, decimal and thousands commas, `1/2` and rows that are choices, not foods, follow the research team's rules in `playbook-new-batches.md` section 5b; every change is a `warn: normalised` flag.
+
 **Add a chain.** Follow `playbook-new-batches.md` section 2 and the end-of-round report section 4: manifest, look at rendered pages (`pdftoppm -r 80`), choose a parser, add the source with `approved: false`, run it on an approved copy of the config (see `chains_file` in `tests/test_cli.py`), read every flag, write golden rows with `golden`, ask for a fresh review, then a person approves.
 
 **Add a parser.** Write the test first (a synthetic page built from words and a test on the real page), put the layout description and the options in the module docstring, register it in `parsers/__init__.py`, make every unexpected situation raise a `ValueError` that says what and where, and add a row to the table above.
