@@ -995,7 +995,7 @@
       region: UK
       category: food
       approved: true
-      pages: ['17-24']
+      pages: ['20-31'] # nutrition tables of the December 2025 booklet
       # Pearl Scan files per-slice figures under the portion columns and gives the whole pizza's weight as the serving size
       pearlscan:
         servingsize: [Total_Weight, Serving_Size]
@@ -1092,35 +1092,6 @@
               saturates_Per 100g/ml,
               salt_Per 100g/ml,
             ]
-    # Allergen tables (pages 2-6, text layer): a Yes/No diet cell per row and a mark per allergen: a filled circle is "contains", an empty
-    # circle is a risk of cross-contamination ("May contain"); an unmarked cell is not stated. The ingredient pages (7-16) are not extracted.
-    - pdf: 144076_PizzaHut_C1_Dine-In_Dietary_Info_A4_ONLINE_.pdf
-      parser: mark_table
-      region: UK
-      category: food
-      approved: true
-      pages: ['2-6']
-      markers: { '●': 'Yes', '○': 'May contain' }
-      labels:
-        Vegetarians: Suitable_for_Vegetarian
-        Vegans: Suitable_for_Vegan
-        Coeliacs: Suitable_for_Coeliac
-        Wheat: wheat
-        Barley: barley
-        Rye: rye
-        Oats: oats
-        Soya: soya
-        Egg: egg
-        Milk: milk
-        Fish: [fish, crustacean] # the column "Fish / shellfish": one mark sets both
-        Mollusc: mollusc
-        Sulphites: sulphite
-        Sesame: sesame
-        Celery: celery
-        Mustard: mustard
-        Lupin: lupin
-        Peanuts: peanut
-        Nuts: treeNuts
 
 47_Coffee1:
   chain: Coffee1
