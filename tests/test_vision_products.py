@@ -144,3 +144,11 @@ def test_headers_match_with_or_without_brackets_around_the_unit():
     item = {**ITEM, "values": {"per 100g / energy (kcal)": "299", "PER SLICE / PORTION SIZE (g)": "94"}}
     row = vp.rows_from_answer({"rows": [item]}, SOURCE, 12)[0]
     assert (row["energykCal_Per 100g/ml"], row["Serving_Size"]) == ("299", "94")
+
+
+def test_skip_allergens_ignores_allergen_text_the_code_does_not_know():
+    item = {**ITEM, "contains": "none", "may": "Traces of nuts"}
+    with pytest.raises(Exception):
+        vp.rows_from_answer({"rows": [item]}, SOURCE, 12)
+    row = vp.rows_from_answer({"rows": [item]}, {**SOURCE, "skip_allergens": True}, 12)[0]
+    assert "gluten" not in row and row["energykCal_Per 100g/ml"] == "299"

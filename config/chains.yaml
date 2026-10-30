@@ -688,8 +688,9 @@
       # Pages with a table (February 2026 issue): pizzas 6-33, stuffed crust 34-38, sides and desserts 39-61, create-your-own 62-63,
       # bases and sauces 66, choux nuts 70. The other pages (cover, contents, welfare, allergen lists for the
       # create-your-own ingredients, drinks, Ben & Jerry's) carry no nutrition table; their allergens are not read yet.
-      pages: ['6-63', 66, 70] # 2026 PDF: pizzas 6-33, stuffed crust 34-38, sides and desserts 39-61, create-your-own 62-63, bases and sauces 66, choux nuts 70
+      pages: ['6-59', '62-63', 70] # 2026 PDF: pizzas 6-33, stuffed crust 34-38, sides and desserts 39-59, create-your-own 62-63, choux nuts 70 (60-61 and 66: no nutrition: Ben & Jerry's, see the pack)
       dpi: 150
+      skip_allergens: true # the March 2026 batch has no allergen columns
       # Each sheet lists the ingredient allergens per dough or base and what "may contain"; "None" is printed when empty,
       # so an allergen that is not listed is absent from the ingredients.
       markers: { '': 'No' }
@@ -720,6 +721,7 @@
       # of a count header (Slice, Piece, Box of) is dropped except where `@Type` records it.
       header_columns:
         'VALUES PER 100G / CARBOHYDRATE g': carbohydrates_Per 100g/ml
+        'VALUES PER 100G / CARBOHYDRATES g': carbohydrates_Per 100g/ml
         'VALUES PER 100G / ENERGY kJ': energykJ_Per 100g/ml
         'VALUES PER 100G / ENERGY kcal': energykCal_Per 100g/ml
         'VALUES PER 100G / FAT g': fat_Per 100g/ml
@@ -765,10 +767,15 @@
         'VALUES PER PORTION / TOTAL PORTION SIZE Slice': Total_Slices
         'VALUES PER PORTION / TOTAL PORTION SIZE Box of': Total_Pieces
         'VALUES PER PORTION / TOTAL PORTIONS Box of': Total_Portions
+        'VALUES PER PORTION / TOTAL PORTIONS Per Box': Total_Portions
         'VALUES PER PORTION / TOTAL IN BOX Pieces': Total_Pieces
+        'VALUES PER PORTION / TOTAL IN BOX Slice': Total_Pieces
         'VALUES PER PORTION / TOTAL IN BOX Box of': Total_Pieces
         'VALUES PER PORTION / NO. OF PORTIONS Per box': Number_of_Portions
         'VALUES PER PORTION / NO. OF PORTIONS Piece': Number_of_Portions
+        'VALUES PER PORTION / NO. OF SERVINGS Serves': Serves
+        'VALUES PER PORTION / NO. OF SERVINGS Serving': Serves
+        'VALUES PER PORTION / NO. OF SERVINGS Servings': Serves
         'VALUES PER PORTION (1 Cookie) / ENERGY kcal per Portion': energykCal_Per Portion
         'VALUES PER PORTION (1 Cookie) / ENERGY kcal per Total': energykCal_Per Product As Sold
         'VALUES PER PORTION (1 Cookie) / TOTAL PRODUCT WEIGHT g': Total_Weight

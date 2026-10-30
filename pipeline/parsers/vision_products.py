@@ -123,9 +123,9 @@ def rows_from_answer(answer: dict, source: dict, page_no: int) -> list[dict]:
                 for column in rule["may_contain"]:
                     pending_may.append(column)
         contains, may = _apply_qualifier((item.get("contains") or "").strip(), row.get("Size", "")), (item.get("may") or "").strip()
-        if contains or may:
+        if (contains or may) and not source.get("skip_allergens"):   # skip_allergens: the batch has no allergen columns
             row |= parse_allergens(contains, may, unlisted)
-        for column in pending_may:
+        for column in ([] if source.get("skip_allergens") else pending_may):
             if row.get(column) in (None, "", "No"):
                 row[column] = "May contain"
         rows.append(row)
