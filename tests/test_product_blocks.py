@@ -100,3 +100,28 @@ def test_an_unknown_nutrition_label_stops_the_run():
               nut("Salt", 440, 120), nut("0.1", 470, 120), nut("0.1", 510, 120)]
     with pytest.raises(ValueError, match="Sugars"):
         pb._block(inside, SOURCE, 3)
+
+
+def test_a_sentence_under_the_page_heading_is_the_note_of_its_rows():
+    def word(text, x0, top, size=5.8, font="Gothic"):
+        return {"text": text, "x0": x0, "x1": x0 + 10 * len(text), "top": top, "bottom": top + 6, "size": size, "fontname": font}
+    nx0 = SOURCE["nutrition_x0"]
+    words = [word("PORRIDGE", 10, 5, 7.9), word("Made", 10, 17), word("with", 50, 17), word("milk.", 90, 17),
+             word("PRODUCT", 10, 33), word("Oat", 10, 50), word("Porridge", 10, 60, 5.3),
+             word("KJ", nx0, 50), word("100", nx0 + 30, 50), word("200", nx0 + 60, 50),
+             word("Salt", nx0, 70), word("0.5", nx0 + 30, 70), word("0.6", nx0 + 60, 70)]
+    [row] = pb.parse_page(words, [30, 42, 100], SOURCE, 1)
+    assert (row["Category"], row["notes"], row["Product_Name"]) == ("PORRIDGE", "Made with milk.", "Oat")
+
+
+def test_skip_allergens_ignores_capital_words_that_are_not_allergen_words():
+    def word(text, x0, top, size=5.8, font="Gothic"):
+        return {"text": text, "x0": x0, "x1": x0 + 10 * len(text), "top": top, "bottom": top + 6, "size": size, "fontname": font}
+    nx0 = SOURCE["nutrition_x0"]
+    words = [word("PORRIDGE", 10, 5, 7.9), word("PRODUCT", 10, 33), word("Oat", 10, 50), word("PLEASE", 10, 60, 5.3, "Gothic-Bold"),
+             word("KJ", nx0, 50), word("100", nx0 + 30, 50), word("200", nx0 + 60, 50),
+             word("Salt", nx0, 70), word("0.5", nx0 + 30, 70), word("0.6", nx0 + 60, 70)]
+    with pytest.raises(ValueError, match="PLEASE"):
+        pb.parse_page(words, [30, 42, 100], SOURCE, 1)
+    [row] = pb.parse_page(words, [30, 42, 100], {**SOURCE, "skip_allergens": True}, 1)
+    assert row["Product_Name"] == "Oat" and "milk" not in row

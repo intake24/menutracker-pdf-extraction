@@ -156,10 +156,11 @@ def parse_page(words: list[dict], rules: list[float], source: dict, page_no: int
     body = [r for r in rules if r > header_y]   # the rule under the header row and the rules between products
     # the page's section heading sits above the table header
     top = [line for line in _lines([w for w in words if _centre(w) < header_y - 2 and w["text"] not in furniture])]
-    if any(not caps(line) for line in top):
+    if not any(caps(line) for line in top) and top:
         raise ValueError(f"page {page_no}: text above the table header that is not a heading: {' '.join(w['text'] for line in top for w in line)!r}")
-    section = " ".join(" ".join(w["text"] for w in line) for line in top)
-    note, upcoming = "", None   # a note printed under a heading; a section title printed at the foot of a row, for the header row after it
+    section = " ".join(" ".join(w["text"] for w in line) for line in top if caps(line))
+    # a sentence under the heading ("Porridge is made with Whole Milk as standard.") is the note of the rows
+    note, upcoming = " ".join(" ".join(w["text"] for w in line) for line in top if not caps(line)), None   # also: a section title printed at the foot of a row, for the header row after it
     out = []
     for lo, hi in zip(body, body[1:]):
         inside = [w for w in words if lo <= _centre(w) < hi]
@@ -205,7 +206,7 @@ def parse_page(words: list[dict], rules: list[float], source: dict, page_no: int
                     row[f"{nutrient}_{base}"] = value
         if block["weight"]:
             row |= {"Serving_Size": block["weight"], "Serving_Size_Unit": "g"}
-        out.append(row | _allergens(declaration, source, page_no, name))
+        out.append(row if source.get("skip_allergens") else row | _allergens(declaration, source, page_no, name))
     return out
 
 

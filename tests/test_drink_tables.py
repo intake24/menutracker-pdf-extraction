@@ -94,3 +94,25 @@ def test_a_vitamin_value_that_does_not_match_its_name_or_sits_by_no_row_raises()
     page = page[:-19] + [line("2.21ug", 150, 140)] + figures(106)
     with pytest.raises(ValueError, match="by no row"):
         dt.parse_page(page, [60, 90, 160], SOURCE, 3)
+
+
+def test_invalid_values_option_keeps_an_overflowing_spreadsheet_cell_as_printed():
+    figures = [w("Regular", 240, 106)] + [w("####" if i == 8 else str(i), 300 + 25 * i, 106) for i in range(18)]
+    page = [w("TITLE", 100, 20, bold=True, size=11), w("Per", 300, 50, bold=True), w("100ml", 330, 50, bold=True),
+            w("Per", 700, 50, bold=True), w("product", 730, 50, bold=True), w("Tea", 60, 106, bold=True)] + figures
+    with pytest.raises(ValueError):
+        dt.parse_page(page, [60, 90, 160], {**SOURCE, "invalid_values": None}, 3)
+    [row] = dt.parse_page(page, [60, 90, 160], {**SOURCE, "invalid_values": ["####"]}, 3)
+    assert row["Product_Name"] == "Tea" and "####" in row.values()
+
+
+def test_a_page_with_no_group_labels_takes_the_ones_the_config_gives_for_that_page():
+    figures = [w("Regular", 240, 106)] + [w(str(i), 300 + 25 * i, 106) for i in range(18)]
+    page = [w("TITLE", 100, 20, bold=True, size=11), w("Kcal", 300, 60), w("Fat", 325, 60), w("KJ", 280, 70),
+            w("Tea", 60, 106, bold=True)] + figures
+    with pytest.raises(ValueError, match="no table header"):
+        dt.parse_page(page, [60, 90, 160], {**SOURCE, "unlabelled_pages": {}}, 17)
+    source = {**SOURCE, "unlabelled_pages": {17: ["Per 100ml", "Per product"]}}
+    [row] = dt.parse_page(page, [60, 90, 160], source, 17)
+    assert row["Product_Name"] == "Tea" and row["Size"] == "Regular"
+    assert any(k.endswith("Per 100g/ml") for k in row) and any(k.endswith("Per Portion") for k in row)

@@ -87,6 +87,22 @@ def parse_page(words: list[dict], rules: list[float], source: dict, page_no: int
     heads = [i for i, line in enumerate(lines) if _text(line).startswith("Per ") and "Bold" in line[0]["fontname"]]   # the group labels start a table
     sizes = [round(w["size"], 1) for w in words if "Bold" not in w["fontname"]]
     body_size = max(set(sizes), key=sizes.count) if sizes else 9.5
+    given = (source.get("unlabelled_pages") or {}).get(page_no)   # a page whose group labels are missing from the PDF
+    if not heads and given:
+        column_words = {"Kcal", "Fat", "Sat", "Carb", "Sugar", "Fibre", "Protein", "Salt", "KJ"}
+        lines = [l for l in lines if not all(w["text"] in column_words for w in l)]   # bare column titles, if printed large
+        first = next((i for i, l in enumerate(lines) if sum(bool(NUMBER.match(w["text"])) for w in l) >= 9), None)
+        if first is not None:
+            row_y = _centre(lines[first][0])
+            tiny = [(c["top"] + c["bottom"]) / 2 for c in (titles_chars or []) if (c["top"] + c["bottom"]) / 2 < row_y]
+            top, x, label = (min(tiny) - 1 if tiny else row_y - 1), 0.0, []   # the label sits above the rotated column titles
+            for group in given:   # the words of one group label are close together, the groups far apart
+                for t in group.split():
+                    label.append({"text": t, "x0": x, "x1": x + 8, "top": top, "bottom": top, "size": 9.5, "fontname": "Calibri-Bold"})
+                    x += 9
+                x += 100
+            lines.insert(first, label)
+            heads = [first]
     if not heads:
         if any(sum(bool(NUMBER.match(w["text"])) for w in line) >= 9 for line in lines):
             raise ValueError(f"page {page_no}: figures but no table header (group labels) found")
@@ -136,9 +152,11 @@ def _table(above: list[list[dict]], body: list[list[dict]], rules: list[float], 
         if label not in groups:
             raise ValueError(f"page {page_no}: the group label {label!r} is not in `groups`")
     need = len(group_names) * len(nutrients)
+    extra = source.get("invalid_values")   # e.g. "####": a spreadsheet cell too narrow for its figure, kept as printed and flagged later
+    number = re.compile(NUMBER.pattern + "|^(?:" + "|".join(map(re.escape, extra)) + ")$") if extra else NUMBER
     rows, name_words, allergen_words, extras, size_found = [], [], [], [], False
     for line in body:
-        numbers = [w for w in line if NUMBER.match(w["text"])]
+        numbers = [w for w in line if number.match(w["text"])]
         figures = numbers[-need:] if len(numbers) >= need else []
         rest = [w for w in line if not any(w is f for f in figures)]
         if figures:

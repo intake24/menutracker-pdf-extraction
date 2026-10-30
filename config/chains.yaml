@@ -1133,7 +1133,9 @@
       region: UK
       category: food
       approved: true
-      pages: ['3-18']
+      skip_allergens: true # March 2026 batch: no allergen columns (docs/goal-batch-2026-03.md)
+      rule_width: 450 # page 11 draws stripes 405 pt wide behind some declarations; the row rules are 487 pt
+      pages: ['10-26'] # pages 4-9 of the January 2026 guide are an allergen summary and how-to text
       name_size: 5.8 # names and tags are 6 pt, the ingredient declaration 5.3 pt
       title_size: 7 # section titles are 7.9 pt
       nutrition_x0: 432
@@ -1156,6 +1158,11 @@
           at,
           mfg,
           site,
+          'Allergens,', # the 2026 page title: "Allergens, Ingredients and Nutrition Guide"
+          Ingredients,
+          and,
+          Nutrition,
+          Guide,
         ]
       diet_tags: [V, Vg, GF]
       may_phrases: [May contain, Made in a factory that handles]
@@ -1178,6 +1185,8 @@
     # lists all allergens of its drinks, so an allergen not listed is "No".
     - pdf: C1-Core-Beverage-Allergen-Nutritional-Information-Jan-26-v1.3.pdf
       parser: drink_tables
+      unlabelled_pages: { 17: ['Per 100ml', 'Per product'] } # page 17 (Cold Foam - Iced Americano) prints its figures with no "Per 100ml / Per product" labels: assumed to be the same two groups as every other page
+      invalid_values: ['####'] # per-product kJ cells too narrow for their figure in the 2026 guide; kept as printed and flagged
       region: UK
       category: drinks
       approved: true
