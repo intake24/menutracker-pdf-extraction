@@ -459,3 +459,10 @@ def test_only_pages_skip_words_drops_a_repeated_header_fragment():
     from pipeline.parsers.numeric_table import only_pages
     unit, number = Word(10, 0, 20, 5, "(g)"), Word(30, 0, 40, 5, "14.3")
     assert only_pages([[unit, number]], None, skip_words=["(g)"]) == [[number]]
+
+
+def test_lines_gap_option_joins_a_name_line_and_a_figure_line_printed_three_points_apart():
+    from pipeline.parsers.numeric_table import _lines
+    a, b = Word(5, 100, 30, 106, "Name"), Word(200, 103.5, 220, 109.5, "12")
+    assert len(_lines([a, b])) == 2
+    assert len(_lines([a, b], gap=4.5)) == 1

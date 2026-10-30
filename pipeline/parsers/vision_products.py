@@ -87,7 +87,8 @@ def check_answer(answer: dict, page_no: int) -> None:
 
 def rows_from_answer(answer: dict, source: dict, page_no: int) -> list[dict]:
     check_answer(answer, page_no)
-    headers = {h.casefold(): c for h, c in source["header_columns"].items()}   # the model varies the case: "Kcal"/"kcal"
+    key = lambda h: re.sub(r"[()]", "", h).casefold()   # the model varies the case ("Kcal"/"kcal") and brackets ("Fat g"/"Fat (g)")
+    headers = {key(h): c for h, c in source["header_columns"].items()}
     unlisted = source.get("markers", {}).get("", "")
     rows = []
     for item in answer["rows"]:
@@ -107,9 +108,9 @@ def rows_from_answer(answer: dict, source: dict, page_no: int) -> list[dict]:
             else:
                 row["Size"] = variant
         for header, value in item["values"].items():
-            if header.casefold() not in headers:
+            if key(header) not in headers:
                 raise llm.LlmError(f"page {page_no}, {name}: header {header!r} is not in header_columns")
-            column, unit, kind = _target(headers[header.casefold()])
+            column, unit, kind = _target(headers[key(header)])
             if value := value.strip():
                 row[column] = value
                 if unit:
@@ -210,7 +211,7 @@ def with_text_figures(pdf: Path, source: dict, page_no: int, rows: list[dict]) -
     and each pair must agree on the size, or the run stops."""
     from pipeline.parsers.grouped_table import figure_lines
     spec = source["figures_from_text"]
-    lines = figure_lines(pdf, page_no, spec["columns"], spec["size_x0"], spec["size_order"])
+    lines = figure_lines(pdf, page_no, spec["columns"], spec["size_x0"], spec["size_order"], spec.get("text_flow", True), spec.get("line_gap"))
     if len(lines) != len(rows):
         raise llm.LlmError(f"page {page_no}: the model read {len(rows)} rows, the text layer has {len(lines)} data lines")
     for row, (size, figures) in zip(rows, lines):

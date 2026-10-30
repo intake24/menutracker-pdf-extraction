@@ -117,7 +117,7 @@ def test_text_figures_replace_the_models_and_a_size_disagreement_stops_the_run(m
     from pathlib import Path
     import pipeline.parsers.grouped_table as gt
     spec = {"columns": ["a", "b"], "size_x0": 1, "size_order": ["Small"]}
-    monkeypatch.setattr(gt, "figure_lines", lambda *args: [("Small", {"a": "1", "b": "2"})])
+    monkeypatch.setattr(gt, "figure_lines", lambda *args, **kw: [("Small", {"a": "1", "b": "2"})])
     rows = [{"Product_Name": "X", "Size": "Small", "a": "9"}]
     out = vp.with_text_figures(Path("x.pdf"), {"figures_from_text": spec}, 2, rows)
     assert (out[0]["a"], out[0]["b"]) == ("1", "2")
@@ -138,3 +138,9 @@ def test_a_label_the_model_misread_is_replaced_by_the_printed_one_and_flagged(mo
     assert out[0]["Product_Name"] == "Plant-Based Margheri-tastic" and "Margherita-tastic" in out[0]["flags"] and "flags" not in out[1]
     with pytest.raises(LlmError, match="not printed"):
         vp.snap_labels(Path("x.pdf"), 1, [{"Product_Name": "Hawaiian Special Deluxe"}], ["Product_Name"])
+
+
+def test_headers_match_with_or_without_brackets_around_the_unit():
+    item = {**ITEM, "values": {"per 100g / energy (kcal)": "299", "PER SLICE / PORTION SIZE (g)": "94"}}
+    row = vp.rows_from_answer({"rows": [item]}, SOURCE, 12)[0]
+    assert (row["energykCal_Per 100g/ml"], row["Serving_Size"]) == ("299", "94")

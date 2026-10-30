@@ -95,11 +95,11 @@ def _partition_rows(rows: list[float], centres: list[float], breaks: set[int]) -
     return groups
 
 
-def figure_lines(pdf: Path, page_no: int, columns: list[str], size_x0: float, size_order: list[str]) -> list[tuple[str, dict[str, str]]]:
+def figure_lines(pdf: Path, page_no: int, columns: list[str], size_x0: float, size_order: list[str], text_flow: bool = True, line_gap: float | None = None) -> list[tuple[str, dict[str, str]]]:
     """(size, {column: figure}) of every data line of a page, top to bottom, read from the text layer."""
     vocab = {part for name in size_order for part in name.split()}
     out = []
-    for line in _lines(page_words_fine(pdf, text_flow=True)[page_no - 1]):
+    for line in _lines(page_words_fine(pdf, text_flow=text_flow)[page_no - 1], *([line_gap] if line_gap else [])):   # line_gap: rows whose name and figures are printed a few points apart
         nums = [w for w in line if NUMBER.match(w.text)]
         if len(nums) < 9:
             continue

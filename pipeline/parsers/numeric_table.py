@@ -43,14 +43,14 @@ TABLE_GAP = 20           # without header lines: last-cell right edges further a
 COLUMN_GAP = 9           # right edges further apart than this (pt) belong to different columns
 
 
-def _lines(words: list[Word]) -> list[list[Word]]:
+def _lines(words: list[Word], gap: float = LINE_GAP) -> list[list[Word]]:
     """Group words into lines by vertical centre; words of different layers (rows printed over each other) never
     share a line."""
     lines: list[list[Word]] = []
     for w in sorted(words, key=lambda w: ((w.y0 + w.y1) / 2, w.layer)):
         centre = (w.y0 + w.y1) / 2
         for line in reversed(lines[-3:]):
-            if line[0].layer == w.layer and centre - (line[0].y0 + line[0].y1) / 2 <= LINE_GAP:
+            if line[0].layer == w.layer and centre - (line[0].y0 + line[0].y1) / 2 <= gap:
                 line.append(w)
                 break
         else:
