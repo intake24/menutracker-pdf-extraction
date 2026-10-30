@@ -300,3 +300,19 @@ def test_write_report_creates_the_data_dictionary_folder(tmp_path):
     path = tmp_path / "outputs" / "data-dictionary" / "_flags.csv"
     write_report(path, ["a", "b"], [{"a": "1", "b": "2"}])
     assert path.read_text() == "a,b\n1,2\n"
+
+
+def test_a_source_can_name_its_golden_file_when_a_later_batch_reuses_a_pdf_name(tmp_path):
+    from pipeline.cli import evaluate
+    import shutil, csv
+    cfg = tmp_path / "config"; cfg.mkdir()
+    for n in ("pearlscan_columns.yaml", "ground_truth_errata.yaml"):
+        shutil.copy(Path(__file__).resolve().parent.parent / "config" / n, cfg / n)
+    chains = tmp_path / "chains.yaml"
+    chains.write_text("X_Y:\n  chain: X\n  sources:\n    - {pdf: a.pdf, parser: numeric_table, approved: true, golden: a__2026-03}\n")
+    out = tmp_path / "outputs"; out.mkdir()
+    (out / "X_Y.csv").write_text("item_name,menu_section,kcal,region,source_file,source_page,method,flags\nBun,Food,100,UK,a.pdf,1,parser,\n")
+    gold = tmp_path / "golden"; gold.mkdir()
+    (gold / "a.csv").write_text("Product_Name,Category,energykCal_Per Portion\nBun,Food,999\n")          # the earlier batch's file: must not be used
+    (gold / "a__2026-03.csv").write_text("Product_Name,Category,energykCal_Per Portion\nBun,Food,100\n")
+    assert evaluate(chains, out, tmp_path / "gt", gold, cfg) == []

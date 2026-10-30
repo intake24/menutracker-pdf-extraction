@@ -99,7 +99,7 @@ def _heading(line: list[Word], left: float) -> str | None:
     words = []
     for w in line:
         letters = [c for c in w.text if c.isalpha()]
-        joiner = not letters and w.text != "-" and not any(c.isdigit() for c in w.text)   # "&", "+" between heading words
+        joiner = w.text in ("&", "+") and bool(words)   # "&", "+" between heading words, never first
         if not joiner and (not letters or not all(c.isupper() for c in letters)):
             break
         words.append(w.text)
@@ -157,10 +157,10 @@ def _classify(lines: list[list[Word]], tables: list[list[float]], table_of: dict
 
 def _row(line: list[Word], lead: list[Word], anchors: list[float], columns: list[str], category: str,
          page_no: int, number: re.Pattern = NUMBER, name_amount: bool = False,
-         anywhere: re.Pattern = NUMBER) -> dict:
+         anywhere: re.Pattern = NUMBER, nameless: bool = False) -> dict:
     edge = anchors[0] - COLUMN_GAP                         # words wholly left of this are the name
     name = [w for w in line if w.x1 < edge]
-    if not name and not lead:
+    if not name and not (lead and nameless):   # `nameless_rows`: the row's name is printed on lines above its figures
         raise ValueError(f"page {page_no}: numbers without a name: {' '.join(w.text for w in line)!r}")
     product = " ".join(w.text for w in lead + name)
     if sum(bool(number.match(w.text)) for w in name) >= MIN_NUMBERS:
@@ -189,7 +189,7 @@ def _row(line: list[Word], lead: list[Word], anchors: list[float], columns: list
 
 
 def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None = None,
-                wrapped_names: bool = False, titles: list[str] = (), text_values: list[str] = (), furniture: list[str] = (), name_amount: bool = False, free_sections: bool = False, invalid_values: list[str] = (), name_below: bool = False, skip_lines: list[str] = (), wrap_lines: float = WRAP_LINES) -> list[dict]:
+                wrapped_names: bool = False, titles: list[str] = (), text_values: list[str] = (), furniture: list[str] = (), name_amount: bool = False, free_sections: bool = False, invalid_values: list[str] = (), name_below: bool = False, skip_lines: list[str] = (), wrap_lines: float = WRAP_LINES, nameless_rows: bool = False) -> list[dict]:
     def extend(words):   # a word starting with "re:" is a pattern, anything else is matched as it stands
         alt = "|".join(w[3:] if w.startswith("re:") else re.escape(w) for w in words)
         return re.compile(NUMBER.pattern + "|^(?:" + alt + ")$") if words else NUMBER
@@ -224,7 +224,7 @@ def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None 
             tables.append(anchors)
             table_of[sum(h < group[0][0] for h in header_lines)] = anchors
         for anchors, _ in short:   # rows with blank cells at the end sit under the columns of a full table
-            if not any(all(min(abs(a - b) for b in t) <= COLUMN_GAP for a in anchors) for t in tables):
+            if not any(all(abs(a - t[i]) <= COLUMN_GAP for i, a in enumerate(anchors)) for t in tables):   # only the last cells are blank
                 raise ValueError(f"page {page_no}: found {len(anchors)} numeric columns, config names {len(columns)}")
         kinds = _classify(lines, tables, table_of, header_lines)
         data = [i for i, anchors in enumerate(kinds) if anchors]
@@ -262,7 +262,7 @@ def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None 
             elif anchors is None:
                 if in_header:
                     block.append(line)
-                elif heading := _heading(line, left):
+                elif heading := _heading(line, left) or (text if text in titles else None):   # a listed title between rows starts a section too
                     section = heading
                 elif i < last_row and not text.startswith(NOTE_START):
                     if not wrapped_names and not free_sections:
@@ -303,7 +303,7 @@ def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None 
                     if any(w.x1 >= anchors[0] - COLUMN_GAP for w in lead):
                         raise ValueError(f"page {page_no}: text above a row reaches into the columns, so it is not "
                                          f"a name: {' '.join(w.text for w in lead)!r}")
-                rows.append(_row(line, lead, anchors, columns, " - ".join(c for c in (parent, section) if c), page_no, number, name_amount, anywhere))
+                rows.append(_row(line, lead, anchors, columns, " - ".join(c for c in (parent, section) if c), page_no, number, name_amount, anywhere, nameless_rows))
     return rows
 
 
@@ -319,4 +319,4 @@ def only_pages(pages: list[list[Word]], spec: list | None, max_x: float | None =
 def parse(pdf: Path, source: dict) -> list[dict]:
     return parse_pages(only_pages(page_words_fine(pdf, text_flow=source.get("text_flow", False)), source.get("pages"), source.get("max_x"), source.get("skip_words", ())), source["columns"], source.get("header"),
                        source.get("wrapped_names", False), source.get("titles", ()), source.get("text_values", ()), source.get("furniture", ()), source.get("name_amount", False), source.get("free_sections", False),
-                       source.get("invalid_values", ()), source.get("name_below", False), source.get("skip_lines", ()), source.get("wrap_lines", WRAP_LINES))
+                       source.get("invalid_values", ()), source.get("name_below", False), source.get("skip_lines", ()), source.get("wrap_lines", WRAP_LINES), source.get("nameless_rows", False))

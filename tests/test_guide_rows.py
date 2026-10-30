@@ -196,3 +196,34 @@ def test_a_calories_only_row_printed_as_a_number_and_the_word_kcal_is_kept_as_pr
     powder = [w("Cinnamon", 24, 200, bold=True), w("Cinnamon", 140, 200), w("2", 560, 200), w("kcal", 575, 200)]
     got = gr.parse_page(base + row + powder, rules, src, 4)
     assert (got[1]["Product_Name"], got[1]["energykCal_Per Portion"]) == ("Cinnamon", "2 kcal")
+
+
+def _sized_page(size_lines):
+    src = {**FOOD, "diet_columns": [], "skip_allergens": True, "size_x0": 400}
+    rules = [(0, 0, 800), (110, 20, 780), (200, 136, 523), (300, 20, 780), (525, 0, 800)]
+    figures = lambda top: [w(str(i), 530 + 23 * i, top) for i in range(9)]
+    base = [w("Product", 24, 100, bold=True), w("| Food | Menu", 24, 10), w("Latte", 24, 150, bold=True)]
+    sizes = [w(text, 420, top) for text, top in size_lines]
+    return src, rules, base + sizes + figures(150) + figures(170)
+
+
+def test_three_size_lines_for_two_figure_lines_still_stop_the_run():
+    src, rules, page = _sized_page([("Tall", 150), ("Grande", 160), ("Venti", 170)])
+    with pytest.raises(ValueError, match="sizes"):
+        gr.parse_page(page, rules, src, 4)
+
+
+def test_a_size_wrapped_onto_two_lines_is_one_size():
+    src, rules, page = _sized_page([("Tall", 150), ("per", 168), ("sprinkle", 175)])
+    rows = gr.parse_page(page, rules, src, 4)
+    assert [r["Size"] for r in rows] == ["Tall", "per sprinkle"]
+
+
+def test_a_kcal_figure_under_a_column_that_already_has_one_stops_the_run():
+    src = {**FOOD, "diet_columns": [], "skip_allergens": True}
+    rules = [(0, 0, 800), (110, 20, 780), (200, 136, 523), (300, 20, 780), (525, 0, 800)]
+    figures = [w(str(i), 530 + 23 * i, 150) for i in range(9)]
+    base = [w("Product", 24, 100, bold=True), w("| Food | Menu", 24, 10), w("Cake", 24, 150, bold=True)]
+    extra = [w("2", 556, 150), w("kcal", 572, 150)]     # a second figure, with the word kcal, under the calories column
+    with pytest.raises(ValueError, match="figures"):   # stopped by the figure count first; the column check backs it up
+        gr.parse_page(base + figures + extra, rules, src, 4)

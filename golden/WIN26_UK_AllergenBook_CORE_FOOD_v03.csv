@@ -1,0 +1,8 @@
+Product_Name,Category,Suitable_for_Vegetarian,Suitable_for_Vegan,carbohydrates_Per Portion,energykCal_Per Portion,energykJ_Per Portion,fat_Per Portion,fibre_Per Portion,protein_Per Portion,salt_Per Portion,saturates_Per Portion,sugars_Per Portion
+All-Butter Croissant (Freshly Baked),Bakery Menu - Croissants and Morning Pastries,Y,N,23,230,963,13,0.9,4.9,0.54,8.6,3
+Pain au Chocolat,Bakery Menu - Croissants and Morning Pastries,Y,N,33,314,1311,17,2.0,6.2,0.37,11,9.8
+Chocolate Caramel Shortbread,Bakery Menu - Bars & Traybakes,Y,N,41,390,1628,23,0.9,4.3,0.45,14,23
+Spinach & Pea Falafel Wrap,Sandwiches & Toasties - Cold Sandwiches and Wraps,Y,Y,60,375,1577,9.1,6.9,9.7,1.5,2.8,12
+Starbucks Chocolate Gold Coin,"Chocolate, Snacks & Bottled Drinks - Chocolate & Snacks",Y,N,14,120,502,6.4,0.7,1.4,0.03,3.9,14
+Turmeric Shot,"Chocolate, Snacks & Bottled Drinks - Bottled Drinks",Y,Y,9.8,45,191,<0.5,<0.5,<0.5,<0.01,<0.1,9.8
+Cloudy Apple Juice,"Chocolate, Snacks & Bottled Drinks - Bottled Drinks",Y,Y,24,101,427,<0.5,<0.5,<0.5,0,0,24

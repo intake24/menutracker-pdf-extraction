@@ -428,9 +428,14 @@ def test_heading_may_contain_a_plus_or_ampersand_between_capitalised_words():
 def test_skip_lines_drops_description_lines_printed_beside_a_row():
     desc = [Word(5, 106, 60, 114, "Patty,"), Word(65, 106, 100, 114, "Pickles")]
     wrap = line(100, "Lettuce Wrap", {}) + desc + line(116, "", FULL)[1:]
-    opts = dict(wrapped_names=True, wrap_lines=2.5)
+    opts = dict(wrapped_names=True, wrap_lines=2.5, nameless_rows=True)
     [a, w] = parse_pages([line(90, "A", FULL) + wrap], COLUMNS, skip_lines=["Patty, Pickles"], **opts)
     assert w["Product_Name"] == "Lettuce Wrap"
+
+def test_a_figures_only_line_after_a_description_stops_the_run_unless_the_source_allows_nameless_rows():
+    page = line(100, "Burger", FULL) + [Word(5, 110, 90, 118, "served with fries")] + line(116, "", FULL)[1:]
+    with pytest.raises(ValueError, match="numbers without a name"):
+        parse_pages([page], COLUMNS, wrapped_names=True)
 
 
 def test_only_pages_max_x_drops_margin_words():
@@ -473,3 +478,23 @@ def test_a_column_named_dash_is_read_but_not_kept():
     rows = parse_pages([line(100, "A", FULL) + line(110, "B", FULL) + line(120, "C", FULL)], cols)
     assert rows[0] == {"Product_Name": "A", "Category": "", "source_page": 1, "fat_Per Portion": "5.5",
                        "energykJ_Per 100g/ml": "2306", "energykCal_Per 100g/ml": "554", "fat_Per 100g/ml": "39"}
+
+
+def test_a_listed_title_between_rows_starts_a_new_section():
+    title = [Word(5, 115, 60, 123, "Drinks")]
+    rows = parse_pages([line(100, "A", FULL) + line(110, "B", FULL) + title + line(120, "C", FULL) + line(130, "D", FULL)],
+                       COLUMNS, titles=["Drinks"])
+    assert [r["Category"] for r in rows] == ["", "", "Drinks", "Drinks"]
+
+
+def test_a_starred_note_between_rows_is_a_note_not_a_section():
+    note = [Word(5, 115, 15, 123, "*"), Word(20, 115, 60, 123, "ADULT"), Word(65, 115, 100, 123, "ONLY")]
+    rows = parse_pages([line(100, "A", FULL) + line(110, "B", FULL) + note + line(120, "C", FULL) + line(130, "D", FULL)], COLUMNS)
+    assert {r["Category"] for r in rows} == {""}
+
+
+def test_a_short_group_must_sit_under_the_first_columns_of_a_full_table():
+    last3 = {i: v for i, v in FULL.items() if i in (1, 2, 3)}   # a separate group ending elsewhere, missing the first column
+    page = line(100, "A", FULL) + line(110, "B", FULL) + line(120, "C", FULL) + line(130, "D", last3) + line(140, "E", last3)
+    with pytest.raises(ValueError, match="numeric columns"):
+        parse_pages([page], COLUMNS)

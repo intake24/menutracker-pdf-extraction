@@ -110,7 +110,9 @@ def test_a_sentence_under_the_page_heading_is_the_note_of_its_rows():
              word("PRODUCT", 10, 33), word("Oat", 10, 50), word("Porridge", 10, 60, 5.3),
              word("KJ", nx0, 50), word("100", nx0 + 30, 50), word("200", nx0 + 60, 50),
              word("Salt", nx0, 70), word("0.5", nx0 + 30, 70), word("0.6", nx0 + 60, 70)]
-    [row] = pb.parse_page(words, [30, 42, 100], SOURCE, 1)
+    with pytest.raises(ValueError, match="not a heading"):   # a source that has not asked for heading notes still stops
+        pb.parse_page(words, [30, 42, 100], {**SOURCE, "heading_notes": False}, 1)
+    [row] = pb.parse_page(words, [30, 42, 100], {**SOURCE, "heading_notes": True}, 1)
     assert (row["Category"], row["notes"], row["Product_Name"]) == ("PORRIDGE", "Made with milk.", "Oat")
 
 
@@ -122,6 +124,6 @@ def test_skip_allergens_ignores_capital_words_that_are_not_allergen_words():
              word("KJ", nx0, 50), word("100", nx0 + 30, 50), word("200", nx0 + 60, 50),
              word("Salt", nx0, 70), word("0.5", nx0 + 30, 70), word("0.6", nx0 + 60, 70)]
     with pytest.raises(ValueError, match="PLEASE"):
-        pb.parse_page(words, [30, 42, 100], SOURCE, 1)
+        pb.parse_page(words, [30, 42, 100], {**SOURCE, "skip_allergens": False}, 1)
     [row] = pb.parse_page(words, [30, 42, 100], {**SOURCE, "skip_allergens": True}, 1)
     assert row["Product_Name"] == "Oat" and "milk" not in row

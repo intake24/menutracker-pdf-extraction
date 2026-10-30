@@ -87,8 +87,11 @@ def check_answer(answer: dict, page_no: int) -> None:
 
 def rows_from_answer(answer: dict, source: dict, page_no: int) -> list[dict]:
     check_answer(answer, page_no)
-    key = lambda h: re.sub(r"[()]", "", h).casefold()   # the model varies the case ("Kcal"/"kcal") and brackets ("Fat g"/"Fat (g)")
-    headers = {key(h): c for h, c in source["header_columns"].items()}
+    key = lambda h: " ".join(re.sub(r"[()]", " ", h).casefold().split())   # the model varies the case ("Kcal"/"kcal") and brackets ("Fat g"/"Fat (g)"/"Fat(g)")
+    headers: dict[str, str] = {}
+    for h, c in source["header_columns"].items():
+        if headers.setdefault(key(h), c) != c:
+            raise llm.LlmError(f"header_columns: {h!r} and another header read as the same header but name different columns")
     unlisted = source.get("markers", {}).get("", "")
     rows = []
     for item in answer["rows"]:

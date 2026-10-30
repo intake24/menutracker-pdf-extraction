@@ -170,23 +170,33 @@ def parse_page(words: list[dict], rules: list[tuple[float, float, float]], sourc
             diff = sorted(k for k in got if got[k] != read.get(k, "") and not (k == "treeNutSource" and same_nuts))   # every allergen cell, May contain and the nut source (in any order) included
             if diff:
                 flags = "warn: the allergen column and the bold capitals of the ingredients differ on " + ", ".join(diff)
-        sizes_found = [w for l in _lines(size_words) for w in l]
+        size_lines = _lines(size_words)
+        sizes_found = [w for l in size_lines for w in l]
         lines = sorted(figures_by_line, key=lambda nums: _centre(nums[0]))
         if len({w["text"] for w in sizes_found}) != len(sizes_found):
             raise ValueError(f"page {page_no}, {name}: a size appears twice in one row: two products may be read as one (a rule is missing)")
-        by_line = [[] for _ in lines]   # a size can wrap onto two lines ("per" / "sprinkle"): its words go to the nearest figure line
-        for sw in sizes_found:
-            by_line[min(range(len(lines)), key=lambda k: abs(_centre(lines[k][0]) - _centre(sw)))].append(sw)
-        if size_words and any(not group for group in by_line):
+        if len(size_lines) > len(lines):   # a size can wrap onto two printed lines ("per" / "sprinkle"): join lines one line height apart
+            merged = [size_lines[0]]
+            for l in size_lines[1:]:
+                height = max(w["bottom"] - w["top"] for w in l)
+                if _centre(l[0]) - _centre(merged[-1][-1]) <= 1.5 * height:
+                    merged[-1] = merged[-1] + l
+                else:
+                    merged.append(l)
+            size_lines = merged
+        if size_words and len(size_lines) != len(lines):
             raise ValueError(f"page {page_no}, {name}: {len(sizes_found)} sizes for {len(lines)} figure lines")
         for k, nums in enumerate(lines):
             row = {"Product_Name": name, "Category": " - ".join(x for x in (menu, section) if x), "source_page": page_no} | cells
             if size_words:
-                row["Size"] = " ".join(w["text"] for w in sorted(by_line[k], key=lambda w: _centre(w)))
+                row["Size"] = " ".join(w["text"] for w in sorted(size_lines[k], key=lambda w: (_centre(w), w["x0"])))
             cells_ = {}
             for w in nums:   # a cell the guide leaves blank (a drink with no fibre figure) stays blank: figures go to their column by position
                 if id(w) in kcal_only:
-                    cells_[nutrients.index("energykCal")] = w["text"] + " kcal"
+                    k_i = nutrients.index("energykCal")
+                    if k_i in cells_:
+                        raise ValueError(f"page {page_no}, {name}: a figure {w['text']!r} is under no column, or two are in one")
+                    cells_[k_i] = w["text"] + " kcal"
                     continue
                 i = min(range(len(anchors)), key=lambda j: abs(anchors[j] - w["x1"]))
                 if abs(anchors[i] - w["x1"]) > COLUMN_GAP or i in cells_:

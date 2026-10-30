@@ -115,3 +115,20 @@ def test_an_approximate_amount_is_kept_as_printed():
 def test_a_digit_in_the_group_column_does_not_make_a_data_row():
     rows = parse([w("Own:", 5, 90), w("Step", 30, 90), w("1", 60, 90, 6)], row(100, "Pepsi", "", "455", "191.1"))
     assert [r["Product_Name"] for r in rows] == ["Pepsi"]
+
+
+def test_one_name_line_is_never_the_name_of_two_rows():
+    two = [[w("Per", 220, 100), w("100g", 235, 100), w("403", 320, 100)], [w("Latte", 120, 110)],
+           [w("Per", 220, 120), w("100g", 235, 120), w("300", 320, 120)]]
+    with pytest.raises(ValueError, match="without a size or an item name"):
+        parse(*two)
+
+
+def test_a_capitals_heading_is_not_also_the_name_of_the_nameless_row_under_it():
+    with pytest.raises(ValueError, match="without a size or an item name"):
+        parse([w("MILKSHAKES", 5, 100)], [w("Per", 220, 110), w("100g", 235, 110), w("403", 320, 110)])
+
+
+def test_an_approximate_amount_with_no_calories_is_a_serving_not_a_name():
+    r = parse([w("Wine", 120, 100), w("~175", 250, 100), w("ml", 275, 100)])[0]
+    assert (r["Product_Name"], r["Serving_Size"], r["Serving_Size_Unit"]) == ("Wine", "~175", "ml")

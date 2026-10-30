@@ -156,7 +156,9 @@ def parse_page(words: list[dict], rules: list[float], source: dict, page_no: int
     body = [r for r in rules if r > header_y]   # the rule under the header row and the rules between products
     # the page's section heading sits above the table header
     top = [line for line in _lines([w for w in words if _centre(w) < header_y - 2 and w["text"] not in furniture])]
-    if not any(caps(line) for line in top) and top:
+    # `heading_notes`: a sentence printed under the capitals heading is the note of the rows; any other text above the header stops the run
+    if top and (not source.get("heading_notes") or not any(caps(line) for line in top) or any(
+            not caps(line) and _centre(line[0]) < max(_centre(l[0]) for l in top if caps(l)) for line in top)):
         raise ValueError(f"page {page_no}: text above the table header that is not a heading: {' '.join(w['text'] for line in top for w in line)!r}")
     section = " ".join(" ".join(w["text"] for w in line) for line in top if caps(line))
     # a sentence under the heading ("Porridge is made with Whole Milk as standard.") is the note of the rows

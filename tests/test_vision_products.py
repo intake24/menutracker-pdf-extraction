@@ -152,3 +152,11 @@ def test_skip_allergens_ignores_allergen_text_the_code_does_not_know():
         vp.rows_from_answer({"rows": [item]}, SOURCE, 12)
     row = vp.rows_from_answer({"rows": [item]}, {**SOURCE, "skip_allergens": True}, 12)[0]
     assert "gluten" not in row and row["energykCal_Per 100g/ml"] == "299"
+
+
+def test_two_configured_headers_that_differ_only_in_brackets_must_name_the_same_column():
+    clash = {**SOURCE, "header_columns": {**HEADERS, "PER SLICE / FAT (g)": "fat_Per Slice", "PER SLICE / FAT g": "saturates_Per Slice"}}
+    with pytest.raises(LlmError, match="same header"):
+        vp.rows_from_answer({"rows": [ITEM]}, clash, 12)
+    row = vp.rows_from_answer({"rows": [{**ITEM, "values": {"PER SLICE / FAT(g)": "9"}}]}, {**SOURCE, "header_columns": {**HEADERS, "PER SLICE / FAT g": "fat_Per Slice"}}, 12)[0]
+    assert row["fat_Per Slice"] == "9"

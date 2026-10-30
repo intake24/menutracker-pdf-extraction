@@ -276,7 +276,7 @@ def parse(pdf: Path, source: dict) -> list[dict]:
         matrix = _select(matrix, j.get("matrix_name"), "allergen", page_no, "name")
         nutrition = _select([r | {"_page": p, "_i": i} for p in j["nutrition"] for i, r in enumerate(read[p])], j.get("nutrition_section"), "nutrition", page_no)
         consumed |= {_key(r) for r in matrix + nutrition}
-        if not matrix:
+        if not j["matrix"]:   # the join names no allergen page (not: the page read empty)
             rows += nutrition_only_rows(nutrition, source, page_no)
         else:
             rows += join_rows(matrix, nutrition, source, page_no, j.get("by_name", False), ledger) if nutrition else matrix_only_rows(matrix, source, page_no)

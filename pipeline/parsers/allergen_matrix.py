@@ -186,7 +186,7 @@ def parse_pages(pages: list[list[Word]], labels: dict[str, str], markers: dict[s
             left = [w for w in line if w.x0 < area]
             right = [w for w in line if w.x0 >= area]
             texts = [w.text for w in left]
-            if not any(NUMBER.match(w.text) for w in left if w.x1 > group_column_end):
+            if not any(AMOUNT.match(w.text) for w in left if w.x1 > group_column_end):
                 if heading := _heading(line, group_column_end):
                     category = heading
                     continue
@@ -227,12 +227,14 @@ def parse_pages(pages: list[list[Word]], labels: dict[str, str], markers: dict[s
                             and abs(_centre(l[0]) - _centre(line[0])) <= 2 * (line[0].y1 - line[0].y0))
                 before = lines[idx - 1] if idx else None
                 after = lines[idx + 1] if idx + 1 < len(lines) else None
-                if not (name_only(before) or name_only(after)):
+                # the line above is this row's name only if it was just read as an item without figures and no row above has taken it
+                before_ok = (name_only(before) and idx - 1 not in skip and bool(data) and data[-1]["y"] == _centre(before[0])
+                             and not data[-1]["listed"])
+                if not (before_ok or name_only(after)):
                     raise ValueError(f"page {page_no}: a data row without a size or an item name: {' '.join(texts)!r}")
                 parts = []
-                if name_only(before):
-                    if data and data[-1]["y"] == _centre(before[0]) and not data[-1]["listed"]:
-                        data.pop()
+                if before_ok:
+                    data.pop()
                     parts += [w.text for w in before]
                 if name_only(after):
                     skip.add(idx + 1)

@@ -168,7 +168,7 @@ def verification_report(chains_file: Path, outputs: Path, ground_truth: Path, go
             source = {**sources[0], "parser": "+".join(dict.fromkeys(s["parser"] for s in sources)), "approved": all(s.get("approved") for s in sources)}
             mine = [r for r in rows if r.get("source_file") == pdf]
             stem = Path(pdf).stem
-            gold = golden / f"{stem}.csv"
+            gold = golden / f"{sources[0].get('golden', stem)}.csv"
             llm = [r for r in mine if r.get("method") == "llm"]
             out.append({"chain": key, "source_file": pdf, "parser": source["parser"], "approved": bool(source.get("approved")), "rows": len(mine),
                         "errors": sum("error:" in r.get("flags", "") for r in mine), "warnings": sum("warn:" in r.get("flags", "") for r in mine),
@@ -307,7 +307,7 @@ def evaluate(chains_file: Path, outputs: Path, ground_truth: Path, golden: Path,
             stem = Path(source["pdf"]).stem
             ours = [r for r in ours_all if r["source_file"] == source["pdf"]]
             gt = ground_truth_file(ground_truth, stem)
-            gold = golden / f"{stem}.csv"
+            gold = golden / f"{source.get('golden', stem)}.csv"   # `golden:` names the file when a later batch's PDF has the same name as an earlier one
             if gt is None and not gold.exists():
                 print(f"{key} {stem}: not evaluated")
                 if strict:
