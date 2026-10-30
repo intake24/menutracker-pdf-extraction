@@ -16,6 +16,7 @@
 
 11_PizzaExpress:
   chain: Pizza Express
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
   sources:
     - pdf: PEX-Nutritional-Menu---Feb-26.ashx.pdf
       parser: numeric_table
@@ -58,6 +59,7 @@
 
 16_Beefeater:
   chain: Beefeater
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
   sources:
     - pdf: beefeater_ss25_breakfast_menu_allergy_nutrition_v1.pdf
       parser: premier_inn_breakfast
@@ -70,7 +72,7 @@
         However, due to the layout and operation of our kitchens we do not have specific allergen free
         zones and it is therefore not possible to fully guarantee separation of allergens. There is
         significant risk of cross-contamination in our buffet areas and deep fat fryers.
-      approved: true
+      approved: false # no March 2026 PDF for this chain (docs/goal-batch-2026-03.md)
     - pdf: beefeater_ss25_drinks_menu_allergy_nutrition_v1.pdf
       parser: whitbread_drinks_grid
       region: UK
@@ -84,10 +86,11 @@
         strict controls in place to reduce the risk of contamination, unfortunately, it is not possible
         for us to guarantee that our dishes will be 100% allergen free. There is also significant risk
         of cross contamination from our fryers.
-      approved: true
+      approved: false # no March 2026 PDF for this chain (docs/goal-batch-2026-03.md)
 
 17_Brewersfayre:
   chain: Brewers Fayre
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
   sources:
     - pdf: brewers_fayre_allergy_nutrition_ss25_breakfast_menu.pdf
       parser: premier_inn_breakfast
@@ -100,7 +103,7 @@
         However, due to the layout and operation of our kitchens we do not have specific allergen free
         zones and it is therefore not possible to fully guarantee separation of allergens. There is
         significant risk of cross-contamination in our buffet areas and deep fat fryers.
-      approved: true
+      approved: false # no March 2026 PDF for this chain (docs/goal-batch-2026-03.md)
     - pdf: brewers_fayre_allergy_nutrition_ss25_drinks_menu.pdf
       parser: whitbread_drinks_grid
       region: UK
@@ -114,10 +117,11 @@
         strict controls in place to reduce the risk of contamination, unfortunately, it is not possible
         for us to guarantee that our dishes will be 100% allergen free. There is also significant risk
         of cross contamination from our fryers.
-      approved: true
+      approved: false # no March 2026 PDF for this chain (docs/goal-batch-2026-03.md)
 
 21_TableTable:
   chain: Table Table
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
   sources:
     - pdf: table_table_allergy_nutrition_ss25_breakfast_menu.pdf
       parser: premier_inn_breakfast
@@ -130,7 +134,7 @@
         However, due to the layout and operation of our kitchens we do not have specific allergen free
         zones and it is therefore not possible to fully guarantee separation of allergens. There is
         significant risk of cross-contamination in our buffet areas and deep fat fryers.
-      approved: true
+      approved: false # no March 2026 PDF for this chain (docs/goal-batch-2026-03.md)
     - pdf: table_table_allergy_nutrition_ss25_drinks_menu.pdf
       parser: whitbread_drinks_grid
       region: UK
@@ -144,10 +148,11 @@
         strict controls in place to reduce the risk of contamination, unfortunately, it is not possible
         for us to guarantee that our dishes will be 100% allergen free. There is also significant risk
         of cross contamination from our fryers.
-      approved: true
+      approved: false # no March 2026 PDF for this chain (docs/goal-batch-2026-03.md)
 
 52_FiveGuys:
   chain: Five Guys
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
   sources:
     - pdf: FGUK_FOH_allergen_ingredient_nutrition_LF_LW_Digital_A4_202512209A.pdf
       parser: numeric_table
@@ -183,6 +188,7 @@
 
 46_Cineworld:
   chain: Cineworld
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
   sources:
     - pdf: 26-02-05 Cineworld Allergen and Nutritional Information.pdf
       parser: allergen_matrix
@@ -237,6 +243,7 @@
 
 6_Dominos:
   chain: Dominos
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
   sources:
     - pdf: nutrition_sides-and-desserts.pdf
       parser: numeric_table
@@ -462,31 +469,10 @@
 
 58_Vue:
   chain: Vue
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
   sources:
     # The text layer of these PDFs is corrupt (the embedded font drops characters: 197 prints as 19), so the page
-    # images are read by the model (parser vision_table). No allergen information in these PDFs.
-    - pdf: m19968-nutritional-info-ice-cream.pdf
-      parser: vision_table
-      region: UK
-      category: food
-      approved: true
-      dpi: 150 # at 110 the model misread two digits in the small print (1.4 as 0.4, 0.4 as 0)
-      instructions: >-
-        It is a nutrition table of ice creams and toppings; all figures are per portion. section = the orange heading
-        above the rows. Each item has a bold name line; for the ice creams a second line below it ("1 Scoop Tub") is the
-        size. name = the bold name (join a wrapped name, e.g. "Joe & Sephs: Chocolate Caramel Sauce"); size = the second
-        line if there is one, else empty; portion = the Portion/Pack Size cell ("85g", "Per 1").
-      fields: &vue_fields
-        kj: energykJ_Per Portion
-        kcal: energykCal_Per Portion
-        protein: protein_Per Portion
-        carbohydrate: carbohydrates_Per Portion
-        sugars: sugars_Per Portion
-        fat: fat_Per Portion
-        saturates: saturates_Per Portion
-        fibre: fibre_Per Portion
-        sodium: sodium_Per Portion
-        salt: salt_Per Portion
+    # images are read by the model (parser vision_table). No allergen information in these PDFs. (The March 2026 batch has no ice-cream PDF.)
     - pdf: M20406-Nutritional-Info-FOOD.pdf
       parser: vision_table
       region: UK
@@ -498,6 +484,28 @@
         as "Kids/Snackit", "Regular", "Large": for those rows name = the bold name above them, size = the left cell,
         portion = empty. For an item that has a single row with a weight or count in the left cell, name = the bold
         name, size = empty, portion = that cell.
+      fields: &vue_fields
+        kj: energykJ_Per Portion
+        kcal: energykCal_Per Portion
+        protein: protein_Per Portion
+        carbohydrate: carbohydrates_Per Portion
+        sugars: sugars_Per Portion
+        fat: fat_Per Portion
+        saturates: saturates_Per Portion
+        fibre: fibre_Per Portion
+        sodium: sodium_Per Portion
+        salt: salt_Per Portion
+    - pdf: M20406-Nutritional-Info-DRINKS.pdf
+      parser: vision_table
+      region: UK
+      category: drinks
+      approved: true
+      instructions: >-
+        It is a nutrition table of cinema drinks; all figures are per portion. section = the orange heading above the
+        rows ("DISPENSED SOFT DRINKS"). Each drink is a bold name line (it can wrap onto two lines: join them) followed by
+        several rows whose left cell (Portion/Pack Size) is a size such as "Large", "Regular", "Junior", "Kids": for those
+        rows name = the bold name above them, size = the left cell, portion = empty. For an item that has a single row
+        with a volume or count in the left cell, name = the bold name, size = empty, portion = that cell.
       fields: *vue_fields
     - pdf: M20466-Nutritional-Info-SWEETS.pdf
       parser: vision_table
@@ -511,6 +519,7 @@
       fields: *vue_fields
 59_Odeon:
   chain: Odeon
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
   sources:
     - pdf: nutritional-information-february-2026-pdf-v18-30_01_2026-uk-version.pdf
       parser: numeric_table
@@ -638,6 +647,7 @@
 
 26_PapaJohns:
   chain: Papa Johns
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
   sources:
     # The text layer is empty (image pages), so the pages are read by the model (parser vision_products).
     - pdf: nutritional-information.pdf
@@ -645,10 +655,10 @@
       region: UK
       category: food
       approved: true
-      # Pages with a table: pizzas 6-33, vegan pizzas 34-39, papadias 40-44, sides 45-57, desserts 58-63, create-your-own
-      # tables 66-67, recently delisted 75-79. The other pages (cover, contents, welfare, allergen lists for the
+      # Pages with a table (February 2026 issue): pizzas 6-33, stuffed crust 34-38, sides and desserts 39-61, create-your-own 62-63,
+      # bases and sauces 66, choux nuts 70. The other pages (cover, contents, welfare, allergen lists for the
       # create-your-own ingredients, drinks, Ben & Jerry's) carry no nutrition table; their allergens are not read yet.
-      pages: ['6-63', '66-67', '75-79']
+      pages: ['6-63', 66, 70] # 2026 PDF: pizzas 6-33, stuffed crust 34-38, sides and desserts 39-61, create-your-own 62-63, bases and sauces 66, choux nuts 70
       dpi: 150
       # Each sheet lists the ingredient allergens per dough or base and what "may contain"; "None" is printed when empty,
       # so an allergen that is not listed is absent from the ingredients.
@@ -759,6 +769,7 @@
 
 35_KrispyKreme:
   chain: KrispyKreme
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
   sources:
     # No text layer: the page images are read by the model (parser vision_pairs). Each product has an allergen page (YES/NO
     # diet cells, ticks) and a nutrition page; rows are paired in page order. Ingredient-declaration pages are not extracted.
@@ -774,118 +785,30 @@
       instructions: >-
         It is a doughnut shop's allergen and nutrition guide; each page is one table of products grouped under grey headings.
         The product name is the bold text beside the picture; some have an italic line under it in brackets.
+      # March 2026 batch: no allergen columns, so only the nutrition pages are read (a join with `matrix: []`). The guide's
+      # nutrition pages: doughnuts 4-14, 24, 26, 33 (drinks per 100 ml), 35-41, 44-45, 50-54.
       joins:
-        - { matrix: [3], nutrition: [4] }
-        - { matrix: [5], nutrition: [6] }
-        - { matrix: [7], nutrition: [8] }
-        - { matrix: [9], nutrition: [10] }
-        - { matrix: [11], nutrition: [12] }
-        - { matrix: [22], nutrition: [] } # page 23 only says "see the matrix" and lacks two of the eight boxes
-        - { matrix: [24], nutrition: [] } # page 25 only says "see the matrix"
-        - { matrix: [26], nutrition: [] }
-        - { matrix: [27], nutrition: [28] }
-        - { matrix: [29], nutrition: [30] }
-        - { matrix: [36], nutrition: [37] }
-        - { matrix: [38], nutrition: [39] }
-        - { matrix: [40], nutrition: [41] }
-        - { matrix: [42], nutrition: [43] }
-        - { matrix: [42], nutrition: [44] }
-        - { matrix: [42], nutrition: [45] }
-        - { matrix: [46, 47], nutrition: [48, 49] }
-        - { matrix: [50], nutrition: [] }
-        # hot drinks with oat or dairy milk, iced lattes, tea, cold drinks, pistachio: the allergen pages list each drink once
-        # per kind of milk, the nutrition pages once per size, so these are matched by heading (and by drink name)
-        - {
-            matrix: [51],
-            matrix_section: 'oat',
-            nutrition: [54],
-            nutrition_section: 'OAT DRINK',
-          }
-        - {
-            matrix: [51],
-            matrix_section: 'skimmed',
-            nutrition: [54],
-            nutrition_section: 'SEMI SKIMMED',
-          }
-        - {
-            matrix: [51],
-            matrix_section: 'skimmed',
-            nutrition: [54],
-            nutrition_section: '(?<!semi )skimmed',
-          }
-        - {
-            matrix: [51],
-            matrix_section: 'skimmed',
-            nutrition: [54],
-            nutrition_section: 'WHOLE',
-          }
-        - {
-            matrix: [51],
-            matrix_section: '^TEA',
-            nutrition: [55],
-            nutrition_section: '^TEA',
-          }
-        - {
-            matrix: [52],
-            matrix_section: 'oat',
-            nutrition: [55],
-            nutrition_section: 'ICED LATTE.*OAT',
-          }
-        - {
-            matrix: [52],
-            matrix_section: 'skimmed',
-            nutrition: [57],
-            nutrition_section: 'SEMI SKIMMED',
-            by_name: true,
-          }
-        - {
-            matrix: [52],
-            matrix_section: 'skimmed',
-            nutrition: [57],
-            nutrition_section: '(?<!semi )skimmed',
-            by_name: true,
-          }
-        - {
-            matrix: [52],
-            matrix_section: 'skimmed',
-            nutrition: [58],
-            nutrition_section: 'ICED LATTE.*WHOLE',
-            by_name: true,
-          }
-        - {
-            matrix: [53],
-            matrix_section: 'COLD DRINKS',
-            nutrition: [58],
-            nutrition_section: 'COLD DRINKS',
-          }
-        - {
-            matrix: [53],
-            matrix_name: 'oat',
-            nutrition: [55],
-            nutrition_section: 'PISTACHIO',
-            by_name: true,
-          }
-        - {
-            matrix: [53],
-            matrix_name: 'milk',
-            nutrition: [56],
-            nutrition_section: 'Semi',
-            by_name: true,
-          }
-        - {
-            matrix: [53],
-            matrix_name: 'milk',
-            nutrition: [56],
-            nutrition_section: '(?<!semi-)skimmed',
-            by_name: true,
-          }
-        - {
-            matrix: [53],
-            matrix_name: 'milk',
-            nutrition: [56],
-            nutrition_section: 'Whole',
-            by_name: true,
-          }
+        - { matrix: [], nutrition: [4] }
+        - { matrix: [], nutrition: [6] }
+        - { matrix: [], nutrition: [8] }
+        - { matrix: [], nutrition: [10] }
+        - { matrix: [], nutrition: [12] }
+        - { matrix: [], nutrition: [14] }
+        - { matrix: [], nutrition: [24] }
+        - { matrix: [], nutrition: [26] }
+        - { matrix: [], nutrition: [33] }
+        - { matrix: [], nutrition: [35] }
+        - { matrix: [], nutrition: [37] }
+        - { matrix: [], nutrition: [39] }
+        - { matrix: [], nutrition: [40] }
+        - { matrix: [], nutrition: [41] }
+        - { matrix: [], nutrition: [44] }
+        - { matrix: [], nutrition: [45] }
+        - { matrix: [], nutrition: [50] }
+        - { matrix: [], nutrition: [51] }
+        - { matrix: [], nutrition: [52] }
+        - { matrix: [], nutrition: [53] }
+        - { matrix: [], nutrition: [54] }
       tick_labels:
         Wheat: wheat
         Rye: rye
@@ -926,6 +849,7 @@
 
 8_Pizzahut:
   chain: Pizzahut
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
   merge_by_key: true # the allergen table and the nutrition table list the same products: one row per product where the names agree
   sources:
     # Nutrition tables (pages 17-24, text layer): pizza blocks have the product as a title and a row per size/crust, other tables
@@ -1035,6 +959,7 @@
 
 47_Coffee1:
   chain: Coffee1
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
   sources:
     # Food guide (text layer): one block per product. Allergens are the bold capital words of the ingredient declaration and the capital
     # words after "May contain" (the guide: allergens are in bold capitals in the declaration, those that may be present at the end), so an
@@ -1143,6 +1068,7 @@
 
 7_Starbucks:
   chain: Starbucks
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
   sources:
     # Food guide (text layer): name, Y/N for vegetarian and vegan, ingredient declaration, nine figures, and a summary column of allergens. The guide
     # says allergens are summarised in the last column, so an allergen not named there is "No". Divider pages hold no table.
@@ -1205,94 +1131,45 @@
 
 45_Brewhouse:
   chain: Brewhouse
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
   sources:
-    # One-page menus read by the model (three columns of dishes). Each dish: a bold name up to the first comma, a description, tags, "(589kcal)" and a price. Only kcal is
-    # printed (no allergen information on these pages), so there are no allergen columns. The text layer prints every kcal figure: each must be a row the model read
-    # (`text_check`). Prices are not extracted (not in the dictionary).
-    - pdf: 04.25-BK-Core-Menu-PB2.pdf
+    # March 2026 batch: the four one-page menus of the April 2025 batch are gone; the only PDF is a landscape allergen and nutrition matrix
+    # (3 pages) whose single nutrition column is energy in kJ. The allergen marks (Y, M) are not read. The model reads the dish names.
+    - pdf: Food-Allergens-11.25.pdf
       parser: vision_table
       region: UK
       category: food
       approved: true
       dpi: 200
-      text_check:
-        &brew_check {
-          field: kcal,
-          pattern: '(\d+)\s?kcal',
-          ignore: [2000],
-          tags:
-            {
-              field: diet,
-              keep: 'VE|V',
-              pattern: '((?:\b(?:VE|V|A|I|T|L|P|S)\b[ \t]+)*)\((\d+)\s?kcal\)',
-            },
-        }
-      instructions: &brew_instructions >-
-        It is a pub menu page with several columns of dishes under section headings (large letter-spaced type, for example "Small plates and grazing"; section =
-        that heading as printed, in the case it is printed). A dish is a bold name, a comma, a description in regular type, optional tags (V = vegetarian, VE = vegan, and
-        circled single letters or glass icons for a beer pairing, which are not read), the calories in brackets "(589kcal)" and a price. name = the bold text of the dish up to its first comma (the whole bold text when
-        the dish has no comma), without the tags. kcal = the number in the brackets. diet = only the dietary tag V or VE printed after the description and before the brackets or the
-        price, exactly as printed; empty if none (never the beer pairing letters A, I, T, L, P, S). Lines that begin with "+" are add-ons printed under a dish: name = the text after the "+", kcal =
-        its number, notes = "Add-on to <the name of the dish it is printed under>"; "CHOOSE YOUR SAUCE" lists sauces with their own kcal: each is a row, name = the
-        sauce. EVERY figure in brackets on the page is exactly one row, wherever it is printed: also on option lines such as "+ hot habanero honey glaze" or "Make it vegan - swap the pork for ..." (name = the text of that line without the kcal, the tags and the price; notes = "Option of <the dish it belongs to>"). A dish with several kcal figures (one per glaze, sauce or flavour) gives one row per figure, each named "<dish name> - <the option as printed>" (for example "½ beercan chicken - hot habanero honey glaze", "Ice cream/sorbet - passion fruit sorbet"); the options of such a dish are not add-ons. Do not return prices, section notes, the beer legend or text without a kcal figure. Before you answer, count the brackets with "kcal" on the page and check that you return exactly that many rows.
-      fields:
-        &brew_fields { kcal: energykCal_Per Portion, diet: Diet, notes: notes }
-      name_fixes: &brew_fixes {
-          'Plus ': '',
-          'CHOOSE YOUR SAUCE: ': '',
-          '1/2 ': '½ ',
-          'vegan- swap': 'vegan - swap',
-          'honey glaze': 'honey',
-        } # how Pearl Scan wrote add-ons, a list heading, a fraction and a hyphen
-    - pdf: 04.25-BK-Sunday-Menu-PB2.pdf
-      parser: vision_table
-      region: UK
-      category: food
-      approved: true
-      dpi: 200
-      text_check: *brew_check
-      instructions: *brew_instructions
-      fields: *brew_fields
-      name_fixes: { 'SIDE FOR TWO - ': '' } # Pearl Scan added the label of the side to its name
-    - pdf: 33496-Daytime-Menu-Apr-2025-PB2-v1.pdf
-      parser: vision_table
-      region: UK
-      category: food
-      approved: true
-      dpi: 200
-      text_check: *brew_check
-      instructions: *brew_instructions
-      fields: *brew_fields
-      name_fixes: *brew_fixes
-    - pdf: 33545-SS25-NGC-Menu-Apr-2025-PB2-v2.pdf
-      parser: vision_table
-      region: UK
-      category: food
-      approved: true
-      dpi: 200
-      text_check: *brew_check
-      instructions: *brew_instructions
-      fields: *brew_fields
-      name_fixes: { 'add ': '' } # Pearl Scan kept the word "add" of an add-on line, the add-on is the item
+      instructions: >-
+        It is a landscape allergen and nutrition matrix of a pub menu: one row per dish, with the columns Menu category, Recipe, Dietary restriction, many
+        allergen columns marked Y or M, and at the far right "Nutrition Energy (kj)". section = the Menu category printed on the row (it can be printed once for
+        several rows: repeat it for each). name = the Recipe exactly as printed. kj = the figure in the Energy (kj) column exactly as printed (with its thousands
+        comma, if any); empty when the cell is blank. diet = the text in the Dietary restriction column (V or VE), empty if none. Do not return allergen marks.
+        Every row of the table is one row of your answer, also rows whose Energy cell is blank.
+      fields: { kj: energykJ_Per Portion, diet: Diet }
 
 49_CookhousePub:
   chain: CookhousePub
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
   sources:
     # Pub menus read by the model (the text layer of the main menu is partly garbled, but it prints the figures). Only kcal is printed. A dish has a bold name, a description and
     # "(429kcal)". Add-ons ("Add peppercorn sauce 1.79 (+39kcal)") are rows named by themselves, never with the name of the dish they go with; the figure is the digits only (the
     # sign and thousands comma are not part of the number). The figures of the text layer are checked against the rows (`text_check`).
-    - pdf: cookhouse_and_pub_kids_menu_default.pdf
+    - pdf: cookhouse_and_pub_main_menu_priceless.pdf
       parser: vision_table
       region: UK
       category: food
       approved: true
       dpi: 200
+      pages: [2, 3, 4, 5, 6, 7]
       text_check: &ck_check {
           field: kcal,
           pattern: '(\d[\d,]*)\s?kcal(?!\s*per serve)',
           strip: ',',
           ignore: [1800, 2000],
         } # the footer: adults need around 1800 or 2000 kcal
+      drop_rows: ['Swap chips & onion rings for a fresh mixed salad'] # a choice that saves 398 kcal from the steak it goes with (research team, 2026-10-12), not a food
       instructions: &ck_instructions >-
         It is a pub menu page with section headings (for example "Scrummy STARTERS" or "Starters & SHARERS"; section = the heading as printed, with its mixed capitals;
         a heading can have a sub-heading such as "ADD A DESSERT": then section = "<heading> - <sub-heading>"). A dish is a bold name, a description and the calories in
@@ -1309,21 +1186,19 @@
         Blackcurrant or Orange") is one name, whole. Do not return prices, text without a kcal figure, the drinks list
         without kcal, allergen keys or badges. Before you answer, count the brackets with "kcal" on the page and check that you return exactly that many rows.
       fields: &ck_fields { kcal: energykCal_Per Portion, notes: notes }
-    - pdf: cookhouse_and_pub_main_menu_priceless.pdf
+    - pdf: cookhouse_and_pub_mothers_day_menu_carvery.pdf
       parser: vision_table
       region: UK
       category: food
       approved: true
       dpi: 200
-      pages: [2, 3, 4, 5, 6, 7, 8]
       text_check: *ck_check
-      drop_rows: ['Swap chips & onion rings for a fresh mixed salad'] # a choice that saves 398 kcal from the steak it goes with (research team, 2026-10-12), not a food
-      known_gaps: 40 # the names differ from Pearl Scan's curated names ("With mash", "Choose from:"); every Pearl Scan figure is among our rows and the text layer proves each printed figure is a row (Pearl Scan left out 7)
       instructions: *ck_instructions
       fields: *ck_fields
 
 73_TopGolf:
   chain: TopGolf
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
   sources:
     # Limited-time menu (12 pages; pages 11 and 12 print no figures) read by the model. A dish is a name in capitals, a price, "(839 kcal.)" and a description. Only kcal is
     # printed. The figures of the text layer are checked against the rows (`text_check`).
@@ -1333,8 +1208,7 @@
       category: food
       approved: true
       dpi: 200
-      pages: [1, 2, 3, 4, 5, 6, 7, 9, 10]
-      known_gaps: 12 # the names differ from Pearl Scan's ("8 BULL'S-EYE BBQ SAUCE" for "BULL'S-EYE BBQ SAUCE - 8", "OASIS SUMMER FRUITS"); every Pearl Scan figure is among our rows and the text layer proves each printed figure is a row
+      pages: [1, 3, 4, 5, 6, 7, 9, 10] # pages 2, 11 and 12 print no kcal figures in the February 2026 menu
       text_check: &tg_check {
           field: kcal,
           pattern: '(\d[\d,]*)\s?k?cal\b',

@@ -9,7 +9,7 @@ flagged (the nutrition page's name is kept). An unknown tick header or diet word
 Source options (config/chains.yaml):
   joins         [{matrix: [pages], nutrition: [pages]}]: the rows of the matrix pages, in order, are paired with the rows of the
                 nutrition pages, in order (one matrix page may serve several nutrition pages; `nutrition: []` keeps the
-                matrix rows alone). Optional: matrix_section / nutrition_section / matrix_name (regular expressions: only rows under a
+                matrix rows alone; `matrix: []` keeps the nutrition rows alone: no allergen page needed). Optional: matrix_section / nutrition_section / matrix_name (regular expressions: only rows under a
                 matching heading, or with a matching name), by_name (each nutrition row gets the allergen row of the same drink; the size and any
                 bracketed note are ignored, and allergen rows without a nutrition row are kept with a warning)
   fields        key the model returns for a figure -> dictionary column; "weight" is the portion weight and is split into
@@ -238,6 +238,12 @@ def matrix_only_rows(matrix: list[dict], source: dict, page_no: int) -> list[dic
     return rows
 
 
+def nutrition_only_rows(nutrition: list[dict], source: dict, page_no: int) -> list[dict]:
+    """Rows of a nutrition page with no allergen page (a `joins` entry with `matrix: []`): the name and the figures only."""
+    return [{"Product_Name": _name(n), "Category": (n.get("section") or "").strip(), "source_page": n.get("_page", page_no),
+             "method": "llm"} | nutrition_cells(n, source) for n in nutrition]
+
+
 def page_rows(pdf: Path, source: dict, page_no: int, pages_dir: Path | None = None) -> list[dict]:
     """One page on its own (for `pages` and `reread`): diet and allergen cells for a matrix page, figures for a nutrition page."""
     kind = kinds(source)[page_no]
@@ -270,7 +276,10 @@ def parse(pdf: Path, source: dict) -> list[dict]:
         matrix = _select(matrix, j.get("matrix_name"), "allergen", page_no, "name")
         nutrition = _select([r | {"_page": p, "_i": i} for p in j["nutrition"] for i, r in enumerate(read[p])], j.get("nutrition_section"), "nutrition", page_no)
         consumed |= {_key(r) for r in matrix + nutrition}
-        rows += join_rows(matrix, nutrition, source, page_no, j.get("by_name", False), ledger) if nutrition else matrix_only_rows(matrix, source, page_no)
+        if not matrix:
+            rows += nutrition_only_rows(nutrition, source, page_no)
+        else:
+            rows += join_rows(matrix, nutrition, source, page_no, j.get("by_name", False), ledger) if nutrition else matrix_only_rows(matrix, source, page_no)
     rows += [_leftover(m, source, 0) for k, m in sorted(ledger.get("unused", {}).items()) if k not in ledger.get("paired", set())]
     missed = [(p, r.get("section"), r["name"]) for p in pages for i, r in enumerate(read[p]) if (p, i) not in consumed]
     if missed:

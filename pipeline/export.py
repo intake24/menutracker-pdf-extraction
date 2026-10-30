@@ -135,6 +135,12 @@ def finalise(rows: list[dict], columns: Columns) -> list[dict]:
     return out
 
 
+def drop_allergens(rows: list[dict], columns: Columns) -> list[dict]:
+    """The rows without allergen cells and the tree nut source (a chain with `allergens: false` in config/chains.yaml)."""
+    gone = {*columns.allergens, "treeNutSource"}
+    return [{k: v for k, v in r.items() if k not in gone} for r in rows]
+
+
 def write_csv(rows: list[dict], columns: Columns, path: Path) -> list[str]:
     """Write one chain CSV with only the dictionary columns that have a value; returns the header.
 

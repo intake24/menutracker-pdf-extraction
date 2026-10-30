@@ -11,7 +11,7 @@ import yaml
 from pipeline.columns import PROVENANCE, load_columns
 from pipeline.coverage import numeric_lines, page_gaps, shortfalls
 from pipeline.evaluate import compare_golden, compare_ground_truth, ground_truth_file, read_csv, read_output
-from pipeline.export import drop_rows, finalise, merge_by_key, write_csv
+from pipeline.export import drop_allergens, drop_rows, finalise, merge_by_key, write_csv
 from pipeline import llm
 from pipeline.llm import LlmError
 from pipeline.ingest import load_chains, manifest_row, page_texts, text_sha
@@ -98,6 +98,8 @@ def run(inputs: Path, chains_file: Path, outputs: Path, only: str | None = None,
             continue
         if chain.get("merge_by_key"):   # several sources describe the same products (allergen table and nutrition table)
             rows = merge_by_key(rows)
+        if chain.get("allergens") is False:   # the March 2026 batch onwards: nutrition only
+            rows = drop_allergens(rows, columns)
         rows = finalise(rows, columns)
         path = outputs / f"{key}.csv"
         write_csv(rows, columns, path)

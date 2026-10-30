@@ -209,3 +209,9 @@ def test_a_pdf_name_with_dots_still_gives_its_page_image(tmp_path, monkeypatch):
     pdf = Path(__file__).resolve().parent.parent / "inputs" / "04.25-BK-Core-Menu-PB2.pdf"
     assert vp.raw_rows(pdf, {"joins": [{"matrix": [1], "nutrition": []}], "instructions": "x"}, 1)[0]["name"] == "Original Glazed"
     assert (tmp_path / "pages" / "04.25-BK-Core-Menu-PB2-1.png").exists()
+
+
+def test_a_nutrition_page_with_no_matrix_page_gives_rows_with_figures_only():
+    row = vp.nutrition_only_rows([N], SOURCE, 4)[0]
+    assert (row["Product_Name"], row["energykCal_Per 100g/ml"], row["Serving_Size"]) == ("Original Glazed", "384", "51")
+    assert "wheat" not in row and "Suitable_for_Vegan" not in row and row["method"] == "llm"

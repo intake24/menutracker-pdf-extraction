@@ -142,3 +142,12 @@ def test_read_output_also_reads_a_file_that_still_has_our_own_headings(tmp_path)
     from pipeline.evaluate import read_output
     (tmp_path / "g.csv").write_text("Product_Name,energykCal_Per Portion\nToast,93\n")
     assert read_output(tmp_path / "g.csv") == [{"Product_Name": "Toast", "energykCal_Per Portion": "93"}]
+
+
+def test_drop_allergens_removes_the_allergen_cells_and_the_nut_source_but_keeps_everything_else():
+    from pipeline.columns import load_columns
+    from pipeline.export import drop_allergens
+    rows = [{"Product_Name": "A", "milk": "Yes", "treeNuts": "May contain", "treeNutSource": "Almond",
+             "Suitable_for_Vegan": "YES", "energykCal_Per Portion": "100", "flags": "warn: x"}]
+    assert drop_allergens(rows, load_columns()) == [{"Product_Name": "A", "Suitable_for_Vegan": "YES",
+                                                      "energykCal_Per Portion": "100", "flags": "warn: x"}]
