@@ -445,3 +445,17 @@ def test_rows_with_a_blank_last_cell_belong_to_the_main_table():
     rows = parse_pages([page], COLUMNS)
     assert [r["Product_Name"] for r in rows] == list("ABCDE")
     assert "fat_Per 100g/ml" not in rows[3] and rows[3]["energykCal_Per 100g/ml"] == "554"
+
+
+def test_invalid_values_may_be_a_pattern_and_the_cell_is_kept_as_printed():
+    glued = [Word(RIGHT_EDGES[2] - 25, 130, RIGHT_EDGES[2], 138, "(g)14.3")]
+    cells = {i: v for i, v in FULL.items() if i != 2}
+    page = line(100, "A", FULL) + line(110, "B", FULL) + line(120, "C", FULL) + line(130, "Tenders", cells) + glued
+    rows = parse_pages([page], COLUMNS, invalid_values=[r"re:^\(g\)\d+(\.\d+)?$"])
+    assert rows[3]["fat_Per Portion"] == "(g)14.3"
+
+
+def test_only_pages_skip_words_drops_a_repeated_header_fragment():
+    from pipeline.parsers.numeric_table import only_pages
+    unit, number = Word(10, 0, 20, 5, "(g)"), Word(30, 0, 40, 5, "14.3")
+    assert only_pages([[unit, number]], None, skip_words=["(g)"]) == [[number]]

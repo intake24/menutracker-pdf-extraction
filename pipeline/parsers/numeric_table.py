@@ -188,8 +188,9 @@ def _row(line: list[Word], lead: list[Word], anchors: list[float], columns: list
 
 def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None = None,
                 wrapped_names: bool = False, titles: list[str] = (), text_values: list[str] = (), furniture: list[str] = (), name_amount: bool = False, free_sections: bool = False, invalid_values: list[str] = (), name_below: bool = False, skip_lines: list[str] = (), wrap_lines: float = WRAP_LINES) -> list[dict]:
-    def extend(words):
-        return re.compile(NUMBER.pattern + "|^(?:" + "|".join(map(re.escape, words)) + ")$") if words else NUMBER
+    def extend(words):   # a word starting with "re:" is a pattern, anything else is matched as it stands
+        alt = "|".join(w[3:] if w.startswith("re:") else re.escape(w) for w in words)
+        return re.compile(NUMBER.pattern + "|^(?:" + alt + ")$") if words else NUMBER
     number = extend([*text_values, *invalid_values])
     anywhere = extend(invalid_values)   # may stand under a nutrient column: kept as printed and flagged downstream
     rows = []
@@ -304,15 +305,16 @@ def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None 
     return rows
 
 
-def only_pages(pages: list[list[Word]], spec: list | None, max_x: float | None = None) -> list[list[Word]]:
+def only_pages(pages: list[list[Word]], spec: list | None, max_x: float | None = None, skip_words: list[str] = ()) -> list[list[Word]]:
     """With a `pages` option, every other page is emptied (page numbers stay the PDF's own); `max_x` drops words that
-    start further right (a rotated document code in the margin)."""
+    start further right (a rotated document code in the margin); `skip_words` drops words with exactly that text (a unit
+    line such as "(g)" repeated inside the cells of one row)."""
     keep = set(expand_pages(spec)) if spec else None
-    return [[w for w in p if max_x is None or w.x0 < max_x] if keep is None or n in keep else []
+    return [[w for w in p if (max_x is None or w.x0 < max_x) and w.text not in skip_words] if keep is None or n in keep else []
             for n, p in enumerate(pages, start=1)]
 
 
 def parse(pdf: Path, source: dict) -> list[dict]:
-    return parse_pages(only_pages(page_words_fine(pdf, text_flow=source.get("text_flow", False)), source.get("pages"), source.get("max_x")), source["columns"], source.get("header"),
+    return parse_pages(only_pages(page_words_fine(pdf, text_flow=source.get("text_flow", False)), source.get("pages"), source.get("max_x"), source.get("skip_words", ())), source["columns"], source.get("header"),
                        source.get("wrapped_names", False), source.get("titles", ()), source.get("text_values", ()), source.get("furniture", ()), source.get("name_amount", False), source.get("free_sections", False),
                        source.get("invalid_values", ()), source.get("name_below", False), source.get("skip_lines", ()), source.get("wrap_lines", WRAP_LINES))
