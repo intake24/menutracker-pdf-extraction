@@ -56,6 +56,14 @@
       titles: *pizza_express_titles
       columns: *pizza_express_columns
       approved: true
+    - pdf: MW-Nutrition-PDF--Jan-26.ashx.pdf
+      parser: numeric_table
+      region: UK # Mac & Wings (listed under Pizza Express in the March 2026 PDF list)
+      category: food
+      header: Energy
+      wrapped_names: true
+      columns: *pizza_express_columns
+      approved: true
 
 16_Beefeater:
   chain: Beefeater
@@ -524,6 +532,28 @@
     - pdf: nutritional-information-february-2026-pdf-v18-30_01_2026-uk-version.pdf
       parser: numeric_table
       region: UK
+      category: food
+      approved: true
+      # No allergen information in this PDF (the pre-packed product matrix is a separate PDF), so no `markers`.
+      header: Energy
+      text_flow: true # page 1 has rows printed over each other
+      free_sections: true # sub-section titles ("Toppings (Condiments)") sit between rows
+      invalid_values: ['#N/A'] # a hidden row under "Guacamole" has Excel errors instead of figures
+      name_amount: true # "Bacon Bits - 18g", "Regular Lemonade - 22oz Freestyle": the amount is the serving size
+      columns:
+        - energykJ_Per Portion
+        - energykCal_Per Portion
+        - fat_Per Portion
+        - saturates_Per Portion
+        - carbohydrates_Per Portion
+        - sugars_Per Portion
+        - fibre_Per Portion
+        - protein_Per Portion
+        - salt_Per Portion
+        - sodium_Per Portion
+    - pdf: allergens-matrix-islington-february-2026-food-nutritional-edition-v2-04022026.pdf
+      parser: numeric_table
+      region: UK # the Islington cinema's own menu
       category: food
       approved: true
       # No allergen information in this PDF (the pre-packed product matrix is a separate PDF), so no `markers`.
@@ -1029,6 +1059,52 @@
       pages: ['3-28']
       markers: { '': 'No' }
       furniture: [Core Beverage Allergen, 'Issued:']
+      sizes:
+        [
+          Single,
+          Double,
+          Regular,
+          Large,
+          Small,
+          Medium,
+          Mini,
+          12oz,
+          16oz,
+          8oz,
+          20oz,
+        ]
+      extra_headers: [Vitamin Content]
+      allergen_text: { OAT: Oats (Gluten Free) } # page 1: the oat and coconut milks contain gluten free oats; OAT is listed because of avenin
+      figure_titles: [KJ, Kcal, Fat, Sat, Carb, Sugar, Fibre, Protein, Salt]
+      nutrients:
+        [
+          energykJ,
+          energykCal,
+          fat,
+          saturates,
+          carbohydrates,
+          sugars,
+          fibre,
+          protein,
+          salt,
+        ]
+      groups:
+        Per 100ml: { base: Per 100g/ml }
+        Per 100g: { base: Per 100g/ml }
+        Per product: { base: Per Portion }
+        Per serving: { base: Per Portion }
+        Per 15ml: { base: Per Portion, serving: 15 ml, split: true }
+        Per 22.5ml: { base: Per Portion, serving: 22.5 ml, split: true }
+    - pdf: C1-Winter-Drinks-Nutritional-Allergen-Info-January-2026-V1.4.pdf
+      parser: drink_tables
+      invalid_values: ['####'] # per-product kJ cells too narrow for their figure in the 2026 guide; kept as printed and flagged
+      region: UK
+      category: drinks
+      approved: true
+      pages: ['4-6']
+      title_min_size: 10.5 # product names are bold 10 pt, titles bold 11 pt; the body text is 7 pt
+      markers: { '': 'No' }
+      furniture: [Core Beverage Allergen, 'Issued:', 'V:', 'Winter Drinks Allergen', '4 of 6', '5 of 6', '6 of 6', 'allergen free', 'We take care']
       sizes:
         [
           Single,

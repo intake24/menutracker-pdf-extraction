@@ -75,8 +75,10 @@ def _anchors(edges: list[float]) -> list[float]:
     return [sum(g) / len(g) for g in groups]
 
 
-def _is_title(line: list[dict], body: float) -> bool:
+def _is_title(line: list[dict], body: float, min_size: float | None = None) -> bool:
     """A table's title: bold type larger than the page's body text (the pages are scaled differently, so the size is relative)."""
+    if min_size is not None and line[0]["size"] < min_size:   # `title_min_size`: product names printed bold in a size between body and title
+        return False
     return "Bold" in line[0]["fontname"] and line[0]["size"] >= TITLE_RATIO * body and not _text(line).startswith("Per ") and line[0]["text"] != "PRODUCT"
 
 
@@ -110,7 +112,7 @@ def parse_page(words: list[dict], rules: list[float], source: dict, page_no: int
     starts = []   # a table starts at its title; a table with none (a second table under one title) starts at its group labels
     for k, h in enumerate(heads):
         floor = heads[k - 1] if k else -1
-        titles = [i for i in range(floor + 1, h) if _is_title(lines[i], body_size)]
+        titles = [i for i in range(floor + 1, h) if _is_title(lines[i], body_size, source.get("title_min_size"))]
         if not titles and k == 0:
             raise ValueError(f"page {page_no}: a table with group labels but no title above them")
         starts.append(titles[0] if titles else h)

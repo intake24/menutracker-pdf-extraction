@@ -116,3 +116,14 @@ def test_a_page_with_no_group_labels_takes_the_ones_the_config_gives_for_that_pa
     [row] = dt.parse_page(page, [60, 90, 160], source, 17)
     assert row["Product_Name"] == "Tea" and row["Size"] == "Regular"
     assert any(k.endswith("Per 100g/ml") for k in row) and any(k.endswith("Per Portion") for k in row)
+
+
+def test_title_min_size_keeps_a_bold_product_name_from_being_taken_for_a_table_title():
+    def row(top, name):
+        return [w("Regular", 240, top)] + [w(str(i), 300 + 25 * i, top, size=7) for i in range(18)] + [w(name, 60, top, bold=True, size=10)]
+    page = [w("TITLE", 100, 20, bold=True, size=11), w("Per", 300, 50, bold=True, size=11), w("100ml", 330, 50, bold=True, size=11),
+            w("Per", 700, 50, bold=True, size=11), w("product", 730, 50, bold=True, size=11)] + row(106, "Latte") + row(130, "Tea")
+    page += [w("TITLE2", 100, 160, bold=True, size=11), w("Per", 300, 190, bold=True, size=11), w("100ml", 330, 190, bold=True, size=11),
+             w("Per", 700, 190, bold=True, size=11), w("product", 730, 190, bold=True, size=11)] + row(220, "Mocha")
+    rows = dt.parse_page(page, [60, 118, 150, 232], {**SOURCE, "title_min_size": 10.5}, 3)
+    assert [r["Product_Name"] for r in rows] == ["Latte", "Tea", "Mocha"]
