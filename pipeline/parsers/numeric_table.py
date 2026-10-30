@@ -28,6 +28,7 @@ from collections import Counter
 from pathlib import Path
 
 from pipeline.ingest import Word, page_words_fine
+from pipeline.parsers.drink_tables import expand_pages
 
 NUMBER = re.compile(r"^(?:<\s?)?\d+(?:\.\d+)?$|^(?:Negligible|Traces?|Tr)$")
 AMOUNT = re.compile(r"^(.*?\S)(?:\s+-\s*|\s+)(\d+(?:\.\d+)?)\s?(g|ml|cl|oz)(\s+[-*A-Za-z(].*)?$")
@@ -98,7 +99,8 @@ def _heading(line: list[Word], left: float) -> str | None:
     words = []
     for w in line:
         letters = [c for c in w.text if c.isalpha()]
-        if not letters or not all(c.isupper() for c in letters):
+        joiner = not letters and w.text != "-" and not any(c.isdigit() for c in w.text)   # "&", "+" between heading words
+        if not joiner and (not letters or not all(c.isupper() for c in letters)):
             break
         words.append(w.text)
     rest = line[len(words):]
@@ -158,7 +160,7 @@ def _row(line: list[Word], lead: list[Word], anchors: list[float], columns: list
          anywhere: re.Pattern = NUMBER) -> dict:
     edge = anchors[0] - COLUMN_GAP                         # words wholly left of this are the name
     name = [w for w in line if w.x1 < edge]
-    if not name:
+    if not name and not lead:
         raise ValueError(f"page {page_no}: numbers without a name: {' '.join(w.text for w in line)!r}")
     product = " ".join(w.text for w in lead + name)
     if sum(bool(number.match(w.text)) for w in name) >= MIN_NUMBERS:
@@ -185,7 +187,7 @@ def _row(line: list[Word], lead: list[Word], anchors: list[float], columns: list
 
 
 def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None = None,
-                wrapped_names: bool = False, titles: list[str] = (), text_values: list[str] = (), furniture: list[str] = (), name_amount: bool = False, free_sections: bool = False, invalid_values: list[str] = (), name_below: bool = False) -> list[dict]:
+                wrapped_names: bool = False, titles: list[str] = (), text_values: list[str] = (), furniture: list[str] = (), name_amount: bool = False, free_sections: bool = False, invalid_values: list[str] = (), name_below: bool = False, skip_lines: list[str] = (), wrap_lines: float = WRAP_LINES) -> list[dict]:
     def extend(words):
         return re.compile(NUMBER.pattern + "|^(?:" + "|".join(map(re.escape, words)) + ")$") if words else NUMBER
     number = extend([*text_values, *invalid_values])
@@ -193,7 +195,7 @@ def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None 
     rows = []
     parent = section = ""   # parent: a page title that persists ("Breakfast (selected restaurants only)")
     for page_no, words in enumerate(pages, start=1):
-        lines = [l for l in _lines(words) if not _is_ruler(l)]
+        lines = [l for l in _lines(words) if not _is_ruler(l) and " ".join(w.text for w in l) not in skip_lines]   # skip_lines: description text printed beside a name
         if name_below:
             lines = _names_from_below(lines, number)
         split = [_split(line, number) for line in lines]
@@ -284,7 +286,7 @@ def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None 
                         section = " - ".join(" ".join(w.text for w in l) for l in pending)
                     lead, pending = [w for l in keep for w in l], []
                 elif pending:
-                    if line[0].y0 - pending[-1][0].y0 > WRAP_LINES * (line[0].y1 - line[0].y0):
+                    if line[0].y0 - pending[-1][0].y0 > wrap_lines * (line[0].y1 - line[0].y0):
                         raise ValueError(f"page {page_no}: text above a row is too far away to be a wrapped name: "
                                          f"{' '.join(w.text for w in pending[-1])!r}")
                     lead, pending = [w for l in pending for w in l], []
@@ -295,7 +297,15 @@ def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None 
     return rows
 
 
+def only_pages(pages: list[list[Word]], spec: list | None, max_x: float | None = None) -> list[list[Word]]:
+    """With a `pages` option, every other page is emptied (page numbers stay the PDF's own); `max_x` drops words that
+    start further right (a rotated document code in the margin)."""
+    keep = set(expand_pages(spec)) if spec else None
+    return [[w for w in p if max_x is None or w.x0 < max_x] if keep is None or n in keep else []
+            for n, p in enumerate(pages, start=1)]
+
+
 def parse(pdf: Path, source: dict) -> list[dict]:
-    return parse_pages(page_words_fine(pdf, text_flow=source.get("text_flow", False)), source["columns"], source.get("header"),
+    return parse_pages(only_pages(page_words_fine(pdf, text_flow=source.get("text_flow", False)), source.get("pages"), source.get("max_x")), source["columns"], source.get("header"),
                        source.get("wrapped_names", False), source.get("titles", ()), source.get("text_values", ()), source.get("furniture", ()), source.get("name_amount", False), source.get("free_sections", False),
-                       source.get("invalid_values", ()), source.get("name_below", False))
+                       source.get("invalid_values", ()), source.get("name_below", False), source.get("skip_lines", ()), source.get("wrap_lines", WRAP_LINES))

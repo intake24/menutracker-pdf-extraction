@@ -408,3 +408,32 @@ def test_name_below_takes_the_name_printed_under_a_line_of_numbers():
     assert [(r["Product_Name"], r.get("Serving_Size")) for r in out] == [("Item A", None), ("Wheat peanuts", "150"), ("Item C", None)]
     with pytest.raises(ValueError, match="numbers without a name"):
         parse_pages([[w for r in rows for w in r]], COLUMNS)
+
+
+def test_only_pages_blanks_the_other_pages_but_keeps_numbering():
+    from pipeline.parsers.numeric_table import only_pages
+    pages = [["p1"], ["p2"], ["p3"]]
+    assert only_pages(pages, ["2-3"]) == [[], ["p2"], ["p3"]]
+    assert only_pages(pages, None) == pages
+
+
+def test_heading_may_contain_a_plus_or_ampersand_between_capitalised_words():
+    note = [Word(150, 120, 156, 128, "-"), Word(160, 120, 200, 128, "amount")]
+    heading = [Word(5, 120, 60, 128, "MILKSHAKES"), Word(65, 120, 70, 128, "+"), Word(75, 120, 120, 128, "(MIX-INS)")]
+    bacon, shake = parse_pages([line(100, "MEAT", {}) + line(110, "Bacon", FULL)
+                                + heading + note + line(130, "Shake", FULL)], COLUMNS)
+    assert shake["Category"] == "MILKSHAKES + (MIX-INS)"
+
+
+def test_skip_lines_drops_description_lines_printed_beside_a_row():
+    desc = [Word(5, 106, 60, 114, "Patty,"), Word(65, 106, 100, 114, "Pickles")]
+    wrap = line(100, "Lettuce Wrap", {}) + desc + line(116, "", FULL)[1:]
+    opts = dict(wrapped_names=True, wrap_lines=2.5)
+    [a, w] = parse_pages([line(90, "A", FULL) + wrap], COLUMNS, skip_lines=["Patty, Pickles"], **opts)
+    assert w["Product_Name"] == "Lettuce Wrap"
+
+
+def test_only_pages_max_x_drops_margin_words():
+    from pipeline.parsers.numeric_table import only_pages
+    near, far = Word(10, 0, 20, 5, "a"), Word(587, 0, 592, 5, "code")
+    assert only_pages([[near, far]], None, max_x=580) == [[near]]

@@ -17,14 +17,14 @@
 11_PizzaExpress:
   chain: Pizza Express
   sources:
-    - pdf: PEX-Nutritional-Menu---May-2025.ashx.pdf
+    - pdf: PEX-Nutritional-Menu---Feb-26.ashx.pdf
       parser: numeric_table
       region: UK # "England, Wales & Scotland"
       category: food
       # No allergen information in these PDFs, so no `markers` and the CSV has no allergen columns.
       header: Energy # each table has a column-header block; its left-hand text is the section name
       wrapped_names: true # long names wrap onto a second line
-      titles: ['Breakfast (selected restaurants only)'] # printed once on page 22; applies to the sections after it
+      titles: &pizza_express_titles ['Breakfast (selected restaurants only)', 'Hot Drinks – Café Nero', 'Breakfast: Airport Sites Only (Edinburgh & Gatwick)'] # printed once on page 22 / 18; applies to the sections after it
       # Columns left to right: nine values per portion, then the same nine per 100g.
       columns: &pizza_express_columns
         - energykCal_Per Portion
@@ -46,12 +46,13 @@
         - protein_Per 100g/ml
         - salt_Per 100g/ml
       approved: true
-    - pdf: BEL-Nutritional-Menu---May-2025.ashx.pdf
+    - pdf: BEL-Nutritional-Menu---Feb-26.ashx.pdf
       parser: numeric_table
       region: NI # "Northern Ireland"
       category: food
       header: Energy
       wrapped_names: true
+      titles: *pizza_express_titles
       columns: *pizza_express_columns
       approved: true
 
@@ -148,10 +149,15 @@
 52_FiveGuys:
   chain: Five Guys
   sources:
-    - pdf: nutrition.pdf
+    - pdf: FGUK_FOH_allergen_ingredient_nutrition_LF_LW_Digital_A4_202512209A.pdf
       parser: numeric_table
       region: UK # "UK LOCATIONS ONLY"
       category: food
+      skip_lines: ['Patty, Tomatoes, Pickles,', 'Grilled Onions, Green Peppers,', 'Grilled Mushrooms'] # the filling of the Lettuce Wrap, printed beside its figures
+      wrapped_names: true
+      wrap_lines: 2.5 # the Lettuce Wrap's name sits two lines above its figures
+      max_x: 580 # a rotated document code runs down the right margin
+      pages: ['5-6'] # the March 2026 PDF has the allergen guide (1-2) and ingredients (3-4) before the nutrition guide
       # No allergen information in this PDF, so no `markers` and the CSV has no allergen columns.
       # Columns left to right: nine values per serving, then the same nine per 100g.
       columns:
@@ -178,7 +184,7 @@
 46_Cineworld:
   chain: Cineworld
   sources:
-    - pdf: 25-04-03_20Cineworld_20Allergen_20and_20Nutritional_20Information.pdf
+    - pdf: 26-02-05 Cineworld Allergen and Nutritional Information.pdf
       parser: allergen_matrix
       region: UK
       category: food
@@ -541,7 +547,7 @@
         fibre: fibre_Per Portion
         sodium: sodium_Per Portion
         salt: salt_Per Portion
-    - pdf: m19982-nutritional-info-food.pdf
+    - pdf: M20406-Nutritional-Info-FOOD.pdf
       parser: vision_table
       region: UK
       category: food
@@ -553,7 +559,7 @@
         portion = empty. For an item that has a single row with a weight or count in the left cell, name = the bold
         name, size = empty, portion = that cell.
       fields: *vue_fields
-    - pdf: m20011-nutritional-info-sweets.pdf
+    - pdf: M20466-Nutritional-Info-SWEETS.pdf
       parser: vision_table
       region: UK
       category: food
@@ -566,7 +572,7 @@
 59_Odeon:
   chain: Odeon
   sources:
-    - pdf: nutritional-information-may-2025-pdf-version-10-23_05_2025-uk-version.pdf
+    - pdf: nutritional-information-february-2026-pdf-v18-30_01_2026-uk-version.pdf
       parser: numeric_table
       region: UK
       category: food
@@ -588,7 +594,7 @@
         - sodium_Per Portion
         - salt_Per Portion
         - fibre_Per Portion
-    - pdf: nutritional-information-may-2025-pdf-version-10-23_05_2025-belfast-version.pdf
+    - pdf: nutritional-information-february-2026-pdf-v19-04_02_2026-belfast-version.pdf
       parser: numeric_table
       region: NI # Belfast
       category: food
@@ -634,7 +640,7 @@
         - sodium_Per Portion
         - salt_Per Portion
         - fibre_Per Portion
-    - pdf: pre-packed-product-matrix-april-2025-edition-v88-28_04_2025-uk-version.pdf
+    - pdf: pre-packed-product-matrix-february-2026-edition-v17-06_02_2026-uk-version.pdf
       parser: product_matrix
       region: UK # v88, 28 April 2025
       category: food
@@ -671,7 +677,7 @@
         - { column: fibre_Per Portion, x: 729 }
         - { column: protein_Per Portion, x: 755 }
         - { column: salt_Per Portion, x: 777 }
-    - pdf: pre-packed-product-matrix-april-2025-edition-v87-25_04_2025-belfast-version.pdf
+    - pdf: pre-packed-product-matrix-february-2026-edition-v17-06_02_2026-belfast-version.pdf
       parser: product_matrix
       region: NI # Belfast, v87
       category: food
@@ -873,7 +879,7 @@
     # No text layer: the page images are read by the model (parser vision_pairs). Each product has an allergen page (YES/NO
     # diet cells, ticks) and a nutrition page; rows are paired in page order. Ingredient-declaration pages are not extracted.
     # Key (page 2): a tick means the product contains the allergen; it does not say what a blank means (blank = not stated).
-    - pdf: 2025_Allergen_Nutrition_Book_230525_UK__Minions_.pdf
+    - pdf: UK_Kitkat2025_Allergen_Nutrition_Book_120226_UK__KitKat_.pdf
       parser: vision_pairs
       region: UK
       category: food
@@ -1040,7 +1046,7 @@
   sources:
     # Nutrition tables (pages 17-24, text layer): pizza blocks have the product as a title and a row per size/crust, other tables
     # one row per product; the table is told by how many numbers a row has.
-    - pdf: Pizza_Hut_Restaurants_Dietary_Information_Booklet_March_2025.pdf
+    - pdf: 144076_PizzaHut_C1_Dine-In_Dietary_Info_A4_ONLINE_.pdf
       parser: portion_tables
       region: UK
       category: food
@@ -1144,7 +1150,7 @@
             ]
     # Allergen tables (pages 2-6, text layer): a Yes/No diet cell per row and a mark per allergen: a filled circle is "contains", an empty
     # circle is a risk of cross-contamination ("May contain"); an unmarked cell is not stated. The ingredient pages (7-16) are not extracted.
-    - pdf: Pizza_Hut_Restaurants_Dietary_Information_Booklet_March_2025.pdf
+    - pdf: 144076_PizzaHut_C1_Dine-In_Dietary_Info_A4_ONLINE_.pdf
       parser: mark_table
       region: UK
       category: food
@@ -1178,7 +1184,7 @@
     # Food guide (text layer): one block per product. Allergens are the bold capital words of the ingredient declaration and the capital
     # words after "May contain" (the guide: allergens are in bold capitals in the declaration, those that may be present at the end), so an
     # allergen not named is "No". Diet tags (V), (Vg), (GF) are kept in Diet as printed.
-    - pdf: C1-Core-Food-May-2025-Issue-Date-06.05.25-V47-Nutritional-Ingredient-Info.pdf
+    - pdf: C1-Core-Food-January-2026-Issue-Date-02.01-v1.5.pdf
       parser: product_blocks
       region: UK
       category: food
@@ -1226,7 +1232,7 @@
     # Beverage guide (text layer; the column titles over the figures are rotated, so the nine figures of a group are in the printed order KJ, Kcal,
     # Fat, Sat, Carb, Sugar, Fibre, Protein, Salt). Product name and allergens are printed once beside the size rows. The guide says it
     # lists all allergens of its drinks, so an allergen not listed is "No".
-    - pdf: C_1-Core-Beverage-Allergen-Nutritional-Information-March-2025-Issued-28.03.25-3.pdf
+    - pdf: C1-Core-Beverage-Allergen-Nutritional-Information-Jan-26-v1.3.pdf
       parser: drink_tables
       region: UK
       category: drinks
@@ -1276,7 +1282,7 @@
   sources:
     # Food guide (text layer): name, Y/N for vegetarian and vegan, ingredient declaration, nine figures, and a summary column of allergens. The guide
     # says allergens are summarised in the last column, so an allergen not named there is "No". Divider pages (3, 6, 11, 13, 16, 20) hold no table.
-    - pdf: SUM25_UK_AllergenBook_CORE_FOOD_v03.pdf
+    - pdf: WIN26_UK_AllergenBook_CORE_FOOD_v03.pdf
       parser: guide_rows
       region: UK
       category: food
@@ -1306,7 +1312,7 @@
         ]
     # Beverage guide (text layer): the name and the ingredient declaration are printed once, then one figure line per size (Tall, Grande, Venti), ten
     # figures (the last is caffeine) and a summary column of allergens. Pages 63 and 64 (Modifiers) are a different table and are not read here.
-    - pdf: SUM25_UK_AllergenBook_CORE_BEVERAGE_v02_201.pdf
+    - pdf: WIN26_UK_AllergenBook_CORE_BEVERAGE_v04.pdf
       parser: guide_rows
       region: UK
       category: drinks
@@ -1399,7 +1405,7 @@
         ] # ten figure columns on every page; another count raises
     # Modifiers (pages 63 and 64): calories and a tick (a drawn shape) under each allergen. The legend says a tick means the allergen is present; the guide
     # summarises the allergens of its beverages, so an unticked allergen is "No". The ticks of Wheat to Kamut are not read as gluten (none is ticked here).
-    - pdf: SUM25_UK_AllergenBook_CORE_BEVERAGE_v02_201.pdf
+    - pdf: WIN26_UK_AllergenBook_CORE_BEVERAGE_v04.pdf
       parser: modifier_matrix
       region: UK
       category: drinks
@@ -1563,7 +1569,7 @@
   sources:
     # Limited-time menu (12 pages; pages 11 and 12 print no figures) read by the model. A dish is a name in capitals, a price, "(839 kcal.)" and a description. Only kcal is
     # printed. The figures of the text layer are checked against the rows (`text_check`).
-    - pdf: watford_chigwell_menu_LTO_april22025.pdf
+    - pdf: chigwell_menu_feb2026.pdf
       parser: vision_table
       region: UK
       category: food
@@ -1588,7 +1594,7 @@
         allergen keys or text without a kcal figure. Before
         you answer, count the brackets with "kcal" on the page and check that you return exactly that many rows.
       fields: { kcal: energykCal_Per Portion, notes: notes }
-    - pdf: watford_chigwell_menu_LTO_april22025.pdf
+    - pdf: chigwell_menu_feb2026.pdf
       parser: vision_table
       region: UK
       category: food
