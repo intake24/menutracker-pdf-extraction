@@ -19,3 +19,30 @@ def test_odeon_uk_pre_packed_matrix_gives_one_row_per_product_with_figures_from_
     assert not any(k in r["Product_Name"] for r in rows for k in ("BOTTLED", "IMPULSE", "HANG BAGS"))   # group labels are not names
     smart = next(r for r in rows if r["Product_Name"].startswith("Glaceau Smartwater STILL"))
     assert smart["energykCal_Per Portion"] == "-"   # a dash is kept as printed
+
+
+def test_line_gap_option_splits_rows_printed_three_points_apart():
+    from types import SimpleNamespace
+    from pipeline.parsers.product_matrix import parse_page
+    def word(text, x, top):
+        return {"x0": x, "x1": x + 6 * len(text), "top": top, "bottom": top + 6, "text": text}
+    rects = [{"x0": 0, "x1": 700, "top": t, "bottom": t + 1} for t in (50, 300)]
+    page = SimpleNamespace(rects=rects, chars=[])
+    words = [word("A", 40, 100), word("10", 380, 100), word("B", 40, 103), word("20", 380, 103)]
+    source = {"text_columns": [{"column": "Product_Name", "x0": 38}, {"column": "Pack_Size", "x0": 112}],
+              "numeric_columns": [{"column": "energykJ_Per 100g/ml", "x": 390}, {"column": "energykCal_Per 100g/ml", "x": 420}]}
+    rows, _ = parse_page(page, words, {**source, "line_gap": 2}, 1, "")
+    assert [(r["Product_Name"], r["energykJ_Per 100g/ml"]) for r in rows] == [("A", "10"), ("B", "20")]
+
+
+def test_invalid_values_option_keeps_an_excel_error_as_printed():
+    from types import SimpleNamespace
+    from pipeline.parsers.product_matrix import parse_page
+    def word(text, x, top):
+        return {"x0": x, "x1": x + 6 * len(text), "top": top, "bottom": top + 6, "text": text}
+    page = SimpleNamespace(rects=[{"x0": 0, "x1": 700, "top": t, "bottom": t + 1} for t in (50, 300)], chars=[])
+    words = [word("A", 40, 100), word("10", 380, 100), word("#VALUE!", 410, 100)]
+    source = {"text_columns": [{"column": "Product_Name", "x0": 38}, {"column": "Pack_Size", "x0": 112}],
+              "numeric_columns": [{"column": "energykJ_Per 100g/ml", "x": 390}, {"column": "energykCal_Per 100g/ml", "x": 420}]}
+    rows, _ = parse_page(page, words, {**source, "invalid_values": ["#VALUE!"]}, 1, "")
+    assert rows[0]["energykCal_Per 100g/ml"] == "#VALUE!"

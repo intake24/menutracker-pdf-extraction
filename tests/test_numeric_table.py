@@ -437,3 +437,11 @@ def test_only_pages_max_x_drops_margin_words():
     from pipeline.parsers.numeric_table import only_pages
     near, far = Word(10, 0, 20, 5, "a"), Word(587, 0, 592, 5, "code")
     assert only_pages([[near, far]], None, max_x=580) == [[near]]
+
+
+def test_rows_with_a_blank_last_cell_belong_to_the_main_table():
+    page = (line(100, "A", FULL) + line(110, "B", FULL) + line(120, "C", FULL)
+            + line(130, "D", {i: v for i, v in FULL.items() if i < 5}) + line(140, "E", {i: v for i, v in FULL.items() if i < 5}))
+    rows = parse_pages([page], COLUMNS)
+    assert [r["Product_Name"] for r in rows] == list("ABCDE")
+    assert "fat_Per 100g/ml" not in rows[3] and rows[3]["energykCal_Per 100g/ml"] == "554"

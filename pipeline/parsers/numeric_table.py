@@ -209,13 +209,20 @@ def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None 
         # can't create or hide a column.
         tables: list[list[float]] = []
         table_of: dict[int, list[float]] = {}   # number of header lines before the table -> its column anchors
+        short: list[tuple[list[float], int]] = []   # groups of rows with a blank last cell, tested after the full tables
         for group in _tables(found, header_lines):
             usual = Counter(len(cells) for _, cells in group).most_common(1)[0][0]
             anchors = _anchors([c for _, cells in group if len(cells) == usual for c in cells])
+            if len(anchors) < len(columns) and not header_lines:
+                short.append((anchors, page_no))
+                continue
             if len(anchors) != len(columns):
                 raise ValueError(f"page {page_no}: found {len(anchors)} numeric columns, config names {len(columns)}")
             tables.append(anchors)
             table_of[sum(h < group[0][0] for h in header_lines)] = anchors
+        for anchors, _ in short:   # rows with blank cells at the end sit under the columns of a full table
+            if not any(all(min(abs(a - b) for b in t) <= COLUMN_GAP for a in anchors) for t in tables):
+                raise ValueError(f"page {page_no}: found {len(anchors)} numeric columns, config names {len(columns)}")
         kinds = _classify(lines, tables, table_of, header_lines)
         data = [i for i, anchors in enumerate(kinds) if anchors]
         if not data:

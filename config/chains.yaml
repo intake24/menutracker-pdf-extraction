@@ -590,10 +590,10 @@
         - saturates_Per Portion
         - carbohydrates_Per Portion
         - sugars_Per Portion
-        - protein_Per Portion
-        - sodium_Per Portion
-        - salt_Per Portion
         - fibre_Per Portion
+        - protein_Per Portion
+        - salt_Per Portion
+        - sodium_Per Portion
     - pdf: nutritional-information-february-2026-pdf-v19-04_02_2026-belfast-version.pdf
       parser: numeric_table
       region: NI # Belfast
@@ -613,35 +613,14 @@
         - saturates_Per Portion
         - carbohydrates_Per Portion
         - sugars_Per Portion
-        - protein_Per Portion
-        - sodium_Per Portion
-        - salt_Per Portion
         - fibre_Per Portion
-    - pdf: nutritional-information-may-2025-pdf-version-10-23_05_2025-roi-version.pdf
-      parser: numeric_table
-      region: ROI # Republic of Ireland
-      category: food
-      approved: true # copy of the UK source: a person confirms the columns for this region
-      # No allergen information in this PDF (the pre-packed product matrix is a separate PDF), so no `markers`.
-      header: Energy
-      name_below: true # some rows print the name on the line under their figures
-      text_flow: true # page 1 has rows printed over each other
-      free_sections: true # sub-section titles ("Toppings (Condiments)") sit between rows
-      invalid_values: ['#N/A'] # a hidden row under "Guacamole" has Excel errors instead of figures
-      name_amount: true # "Bacon Bits - 18g", "Regular Lemonade - 22oz Freestyle": the amount is the serving size
-      columns:
-        - energykJ_Per Portion
-        - energykCal_Per Portion
-        - fat_Per Portion
-        - saturates_Per Portion
-        - carbohydrates_Per Portion
-        - sugars_Per Portion
         - protein_Per Portion
-        - sodium_Per Portion
         - salt_Per Portion
-        - fibre_Per Portion
+        - sodium_Per Portion
     - pdf: pre-packed-product-matrix-february-2026-edition-v17-06_02_2026-uk-version.pdf
       parser: product_matrix
+      line_gap: 2 # rows of the 2026 matrix are printed 3 pt apart
+      invalid_values: ['#VALUE!', '#N/A', '#DIV/0!'] # Excel errors printed in a few figure cells; kept as printed and flagged
       region: UK # v88, 28 April 2025
       category: food
       approved: true
@@ -653,32 +632,34 @@
         - { column: Product_Name, x0: 38 }
         - { column: Pack_Size, x0: 112 }
         - { column: Ingredients, x0: 134 }
-        - { column: Storage, x0: 258 }
-        - { column: Instructions, x0: 284 }
-        - { column: Serving, x0: 333 }
+        - { column: Storage, x0: 249 }
+        - { column: Instructions, x0: 271 }
+        - { column: Serving, x0: 325 }
       serving_column: Serving
       pearlscan: { servingsize: ~, servingsizeunit: ~ } # Pearl Scan filled serving sizes the PDF does not print (250 ml for a 500 ml bottle) and left counts blank
       numeric_columns:
-        - { column: energykJ_Per 100g/ml, x: 373 }
-        - { column: energykCal_Per 100g/ml, x: 396 }
-        - { column: fat_Per 100g/ml, x: 418 }
-        - { column: saturates_Per 100g/ml, x: 447 }
-        - { column: carbohydrates_Per 100g/ml, x: 464 }
-        - { column: sugars_Per 100g/ml, x: 492 }
-        - { column: fibre_Per 100g/ml, x: 514 }
-        - { column: protein_Per 100g/ml, x: 540 }
-        - { column: salt_Per 100g/ml, x: 562 }
-        - { column: energykJ_Per Portion, x: 588 }
-        - { column: energykCal_Per Portion, x: 611 }
-        - { column: fat_Per Portion, x: 633 }
-        - { column: saturates_Per Portion, x: 662 }
-        - { column: carbohydrates_Per Portion, x: 679 }
-        - { column: sugars_Per Portion, x: 707 }
-        - { column: fibre_Per Portion, x: 729 }
-        - { column: protein_Per Portion, x: 755 }
-        - { column: salt_Per Portion, x: 777 }
+        - { column: energykJ_Per 100g/ml, x: 374 }
+        - { column: energykCal_Per 100g/ml, x: 397 }
+        - { column: fat_Per 100g/ml, x: 419 }
+        - { column: saturates_Per 100g/ml, x: 442 }
+        - { column: carbohydrates_Per 100g/ml, x: 465 }
+        - { column: sugars_Per 100g/ml, x: 488 }
+        - { column: fibre_Per 100g/ml, x: 510 }
+        - { column: protein_Per 100g/ml, x: 534 }
+        - { column: salt_Per 100g/ml, x: 558 }
+        - { column: energykJ_Per Portion, x: 581 }
+        - { column: energykCal_Per Portion, x: 603 }
+        - { column: fat_Per Portion, x: 626 }
+        - { column: saturates_Per Portion, x: 649 }
+        - { column: carbohydrates_Per Portion, x: 672 }
+        - { column: sugars_Per Portion, x: 695 }
+        - { column: fibre_Per Portion, x: 716 }
+        - { column: protein_Per Portion, x: 741 }
+        - { column: salt_Per Portion, x: 764 }
     - pdf: pre-packed-product-matrix-february-2026-edition-v17-06_02_2026-belfast-version.pdf
       parser: product_matrix
+      line_gap: 2 # rows of the 2026 matrix are printed 3 pt apart
+      invalid_values: ['#VALUE!', '#N/A', '#DIV/0!'] # Excel errors printed in a few figure cells; kept as printed and flagged
       region: NI # Belfast, v87
       category: food
       approved: true
@@ -690,67 +671,30 @@
         - { column: Product_Name, x0: 46 }
         - { column: Pack_Size, x0: 118 }
         - { column: Ingredients, x0: 136 }
-        - { column: Storage, x0: 268 }
-        - { column: Instructions, x0: 294 }
-        - { column: Serving, x0: 342 }
+        - { column: Storage, x0: 246 }
+        - { column: Instructions, x0: 269 }
+        - { column: Serving, x0: 322 }
       serving_column: Serving
       pearlscan: { servingsize: ~, servingsizeunit: ~ } # Pearl Scan filled serving sizes the PDF does not print (250 ml for a 500 ml bottle) and left counts blank
       numeric_columns:
-        - { column: energykJ_Per 100g/ml, x: 380 }
-        - { column: energykCal_Per 100g/ml, x: 403 }
-        - { column: fat_Per 100g/ml, x: 424 }
-        - { column: saturates_Per 100g/ml, x: 451 }
-        - { column: carbohydrates_Per 100g/ml, x: 467 }
-        - { column: sugars_Per 100g/ml, x: 495 }
-        - { column: fibre_Per 100g/ml, x: 516 }
-        - { column: protein_Per 100g/ml, x: 541 }
-        - { column: salt_Per 100g/ml, x: 562 }
-        - { column: energykJ_Per Portion, x: 587 }
-        - { column: energykCal_Per Portion, x: 609 }
-        - { column: fat_Per Portion, x: 630 }
-        - { column: saturates_Per Portion, x: 658 }
-        - { column: carbohydrates_Per Portion, x: 673 }
-        - { column: sugars_Per Portion, x: 701 }
-        - { column: fibre_Per Portion, x: 723 }
-        - { column: protein_Per Portion, x: 748 }
-        - { column: salt_Per Portion, x: 768 }
-    - pdf: pre-packed-product-matrix-april-2025-edition-v87-25_04_2025-roi-version.pdf
-      parser: product_matrix
-      region: ROI # Republic of Ireland, v87
-      category: food
-      approved: true
-      # Pre-packed product matrix: ingredients with allergens in bold (the bold is not in the text layer, so allergens are NOT
-      # derived: the PDF has no allergen column, and the allergen columns stay absent), storage and use text, serving size,
-      # nutrition per 100g and per serving, one product per row. Figures printed with their unit ("22g", "498 kcal") lose
-      # the column's own unit; "N/A" is kept as printed; a dash is kept as printed.
-      text_columns:
-        - { column: Product_Name, x0: 46 }
-        - { column: Pack_Size, x0: 118 }
-        - { column: Ingredients, x0: 136 }
-        - { column: Storage, x0: 268 }
-        - { column: Instructions, x0: 294 }
-        - { column: Serving, x0: 342 }
-      serving_column: Serving
-      pearlscan: { servingsize: ~, servingsizeunit: ~ } # Pearl Scan filled serving sizes the PDF does not print (250 ml for a 500 ml bottle) and left counts blank
-      numeric_columns:
-        - { column: energykJ_Per 100g/ml, x: 380 }
-        - { column: energykCal_Per 100g/ml, x: 403 }
-        - { column: fat_Per 100g/ml, x: 424 }
-        - { column: saturates_Per 100g/ml, x: 451 }
-        - { column: carbohydrates_Per 100g/ml, x: 467 }
-        - { column: sugars_Per 100g/ml, x: 495 }
-        - { column: fibre_Per 100g/ml, x: 516 }
-        - { column: protein_Per 100g/ml, x: 541 }
-        - { column: salt_Per 100g/ml, x: 562 }
-        - { column: energykJ_Per Portion, x: 587 }
-        - { column: energykCal_Per Portion, x: 609 }
-        - { column: fat_Per Portion, x: 630 }
-        - { column: saturates_Per Portion, x: 658 }
-        - { column: carbohydrates_Per Portion, x: 673 }
-        - { column: sugars_Per Portion, x: 701 }
-        - { column: fibre_Per Portion, x: 723 }
-        - { column: protein_Per Portion, x: 748 }
-        - { column: salt_Per Portion, x: 768 }
+        - { column: energykJ_Per 100g/ml, x: 373 }
+        - { column: energykCal_Per 100g/ml, x: 395 }
+        - { column: fat_Per 100g/ml, x: 418 }
+        - { column: saturates_Per 100g/ml, x: 441 }
+        - { column: carbohydrates_Per 100g/ml, x: 464 }
+        - { column: sugars_Per 100g/ml, x: 486 }
+        - { column: fibre_Per 100g/ml, x: 509 }
+        - { column: protein_Per 100g/ml, x: 533 }
+        - { column: salt_Per 100g/ml, x: 556 }
+        - { column: energykJ_Per Portion, x: 580 }
+        - { column: energykCal_Per Portion, x: 603 }
+        - { column: fat_Per Portion, x: 624 }
+        - { column: saturates_Per Portion, x: 647 }
+        - { column: carbohydrates_Per Portion, x: 671 }
+        - { column: sugars_Per Portion, x: 694 }
+        - { column: fibre_Per Portion, x: 715 }
+        - { column: protein_Per Portion, x: 740 }
+        - { column: salt_Per Portion, x: 763 }
 
 26_PapaJohns:
   chain: Papa Johns

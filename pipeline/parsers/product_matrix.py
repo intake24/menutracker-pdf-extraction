@@ -24,6 +24,12 @@ from pipeline.ingest import page_words
 
 NUMBER = re.compile(r"^<?\s?\d[\d.,/]*[a-zA-Z]*$|^(?:Negligible|Traces?|Tr|N/?A|-)$")   # a printed slip (1,5 or <0/1) is kept and flagged later
 SERVING = re.compile(r"^(\d+(?:\.\d+)?)\s*([A-Za-z]+)\s*(\(.*\))?$")   # "30g", "8 sweets", "30g (5-6 servings per pack)"
+def _number(source: dict) -> re.Pattern:
+    """NUMBER, plus the source's `invalid_values` (an Excel error printed in a figure cell, kept as printed and flagged later)."""
+    extra = source.get("invalid_values")
+    return re.compile(NUMBER.pattern + "|^(?:" + "|".join(map(re.escape, extra)) + ")$") if extra else NUMBER
+
+
 LINE_GAP = 3
 UNIT = re.compile(r"^(?:kj|kcal|k|cal|g|mg)$", re.I)   # a unit word printed after a figure
 X_TOLERANCE = 12     # a numeric cell must be this close to a column centre
@@ -41,6 +47,7 @@ def _text(words: list[dict]) -> str:
 
 def _row(band: list[dict], source: dict, page_no: int, top: float, section: str) -> tuple[dict | None, str, bool]:
     text_cols, num_cols = source["text_columns"], source["numeric_columns"]
+    NUMBER = _number(source)
     first = text_cols[0]["x0"]
     cells: dict[str, list[dict]] = {c["column"]: [] for c in text_cols}
     figures: dict[str, str] = {}
@@ -98,6 +105,7 @@ def _row(band: list[dict], source: dict, page_no: int, top: float, section: str)
 
 def parse_page(page, words: list[dict], source: dict, page_no: int, section: str) -> tuple[list[dict], str]:
     text_cols, num_cols = source["text_columns"], source["numeric_columns"]
+    NUMBER = _number(source)
     min_width = source.get("rule_min_width", 600)
     rules = sorted({round(r["top"], 1) for r in page.rects if r["x1"] - r["x0"] >= min_width and r["bottom"] - r["top"] < 2})
     first = text_cols[0]["x0"]
@@ -132,7 +140,7 @@ def parse_page(page, words: list[dict], source: dict, page_no: int, section: str
     rest = [w for w in rest if not (round(w["top"]) in prose and w["x0"] >= text_cols[-1]["x0"] - 5)]
     lines: list[float] = []
     for y in sorted({round(w["top"]) for w in rest if w["x0"] >= numeric_x and NUMBER.match(w["text"])}):
-        if not lines or y - lines[-1] > LINE_GAP:
+        if not lines or y - lines[-1] > source.get("line_gap", LINE_GAP):
             lines.append(y)
     groups: list[list[dict]] = [[] for _ in lines]
     # A band with exactly one line of figures is that product's row: everything in it belongs to it. Words in other bands
