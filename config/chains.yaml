@@ -1234,13 +1234,14 @@
   chain: Starbucks
   sources:
     # Food guide (text layer): name, Y/N for vegetarian and vegan, ingredient declaration, nine figures, and a summary column of allergens. The guide
-    # says allergens are summarised in the last column, so an allergen not named there is "No". Divider pages (3, 6, 11, 13, 16, 20) hold no table.
+    # says allergens are summarised in the last column, so an allergen not named there is "No". Divider pages hold no table.
     - pdf: WIN26_UK_AllergenBook_CORE_FOOD_v03.pdf
       parser: guide_rows
+      skip_allergens: true # the March 2026 batch has no allergen columns (docs/goal-batch-2026-03.md)
       region: UK
       category: food
       approved: true
-      pages: [4, 5, 7, 8, 9, 10, 12, 14, 15, 17, 18, 19]
+      pages: [4, 5, 6, 7, 8, 9, 11, 13, 14, 16, 17] # dividers: 3, 10, 12, 15, 18
       name_x1: 135
       ingredients_x0: 130
       figures_x0: 525
@@ -1267,70 +1268,11 @@
     # figures (the last is caffeine) and a summary column of allergens. Pages 63 and 64 (Modifiers) are a different table and are not read here.
     - pdf: WIN26_UK_AllergenBook_CORE_BEVERAGE_v04.pdf
       parser: guide_rows
+      skip_allergens: true # the March 2026 batch has no allergen columns (docs/goal-batch-2026-03.md)
       region: UK
       category: drinks
       approved: true
-      pages:
-        [
-          4,
-          5,
-          6,
-          7,
-          8,
-          10,
-          11,
-          12,
-          13,
-          14,
-          15,
-          16,
-          18,
-          19,
-          20,
-          21,
-          22,
-          23,
-          24,
-          25,
-          27,
-          28,
-          29,
-          30,
-          32,
-          33,
-          34,
-          35,
-          37,
-          39,
-          40,
-          41,
-          42,
-          43,
-          44,
-          46,
-          47,
-          48,
-          49,
-          50,
-          51,
-          52,
-          53,
-          54,
-          55,
-          56,
-          57,
-          58,
-          59,
-          60,
-          61,
-          65,
-          67,
-          68,
-          69,
-          70,
-          71,
-          72,
-        ]
+      pages: [5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 28, 29, 30, 32, 33, 34, 35, 37, 39, 40, 41, 42, 43, 44, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 60, 61, 62, 64, 65, 66, 67, 68, 69] # dividers: 4, 13, 20, 27, 31, 36, 38, 45, 59, 63, 70
       name_x1: 92
       ingredients_x0: 94
       figures_x0: 495
@@ -1338,65 +1280,17 @@
       name_fixes: {
           Hazelnut Flavour Sugar Free Syrup: Sugar Free Hazelnut Flavour Syrup,
         } # Pearl Scan reordered the words of this name
-      allergens_x0: 728
+      allergens_x0: { 10: 728, 9: 705 } # the summary column starts further left on the nine-figure tables (syrup pumps, page 60)
       markers: { '': 'No' }
       default_base: Per Portion
       no_allergen_marks: ['-']
       allergen_words: { BUTTERMILK: Milk }
       bar_bases: { per portion: Per Portion }
-      nutrients: [
-          energykJ,
-          energykCal,
-          fat,
-          saturates,
-          carbohydrates,
-          sugars,
-          fibre,
-          protein,
-          salt,
-          caffeine,
-        ] # ten figure columns on every page; another count raises
+      nutrients: # ten figure columns (the last is caffeine); the syrup pump table on page 60 has nine
+        10: [energykJ, energykCal, fat, saturates, carbohydrates, sugars, fibre, protein, salt, caffeine]
+        9: [energykJ, energykCal, fat, saturates, carbohydrates, sugars, fibre, protein, salt]
     # Modifiers (pages 63 and 64): calories and a tick (a drawn shape) under each allergen. The legend says a tick means the allergen is present; the guide
     # summarises the allergens of its beverages, so an unticked allergen is "No". The ticks of Wheat to Kamut are not read as gluten (none is ticked here).
-    - pdf: WIN26_UK_AllergenBook_CORE_BEVERAGE_v04.pdf
-      parser: modifier_matrix
-      region: UK
-      category: drinks
-      approved: true
-      pages: [63, 64]
-      name_x1: 134
-      serving_x0: 134
-      kcal_x0: 230
-      marks_x0: 262
-      markers: { '': 'No' }
-      gluten_from: [wheat, rye, barley, spelt, kamut]
-      labels:
-        Wheat: wheat
-        Rye: rye
-        Barley: barley
-        Oat: oats
-        Spelt: spelt
-        Kamut: kamut
-        Soya: soya
-        Milk: milk
-        Brazil: treeNuts
-        Hazelnuts: treeNuts
-        Walnuts: treeNuts
-        Cashews: treeNuts
-        Pecan: treeNuts
-        Pistachio: treeNuts
-        Macadamia: treeNuts
-        Almonds: treeNuts
-        Peanuts: peanut
-        Sesame: sesame
-        Egg: egg
-        Celery: celery
-        Molluscs: mollusc
-        Mustard: mustard
-        Fish: fish
-        Crustaceans: crustacean
-        Lupin: lupin
-        Sulphur: sulphite
 
 45_Brewhouse:
   chain: Brewhouse

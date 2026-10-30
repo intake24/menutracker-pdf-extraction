@@ -57,6 +57,8 @@ def _anchors(edges: list[float]) -> list[float]:
 def parse_page(words: list[dict], rules: list[tuple[float, float, float]], source: dict, page_no: int, carry: dict | None = None) -> list[dict]:
     """`rules`: (y, x0, x1) of the page's horizontal rules."""
     name_x1, fig_x0, all_x0 = source["name_x1"], source["figures_x0"], source["allergens_x0"]
+    by_count = all_x0 if isinstance(all_x0, dict) else None   # allergens_x0 {number of figure columns: x0}: the summary column moves with the table
+    all_x0 = max(by_count.values()) if by_count else all_x0
     sets = source["nutrients"] if isinstance(source["nutrients"], dict) else {len(source["nutrients"]): source["nutrients"]}
     need = max(sets)
     wide = sorted(y for y, x0, x1 in rules if x1 - x0 >= 300)
@@ -91,11 +93,21 @@ def parse_page(words: list[dict], rules: list[tuple[float, float, float]], sourc
             bars.append((_centre(line[0]), parts[0] if parts else "", None))
     bar_ids = {id(w) for w in big}
     words = [w for w in words if id(w) not in bar_ids]
-    edges = [w["x1"] for w in words if NUMBER.match(w["text"]) and fig_x0 <= w["x0"] < all_x0 and w["size"] >= 5.5 and body_top <= _centre(w) < footer]
+    # "2 kcal": a calories-only row (a pinch of powder) prints the unit after the figure; the figure goes to the calories column, unit kept as printed
+    kcal_only, units = set(), set()
+    for u in (w for w in words if w["text"] == "kcal" and w["x0"] >= fig_x0):
+        n = next((n for n in words if NUMBER.match(n["text"]) and abs(_centre(n) - _centre(u)) < 2 and 0 <= u["x0"] - n["x1"] < 8), None)
+        if n is not None:
+            kcal_only.add(id(n))
+            units.add(id(u))
+    words = [w for w in words if id(w) not in units]
+    edges = [w["x1"] for w in words if NUMBER.match(w["text"]) and id(w) not in kcal_only and fig_x0 <= w["x0"] < all_x0 and w["size"] >= 5.5 and body_top <= _centre(w) < footer]
     anchors = _anchors(edges) if edges else []
     if anchors and len(anchors) not in sets:
         raise ValueError(f"page {page_no}: found {len(anchors)} figure columns, expected one of {sorted(sets)}")
     nutrients = sets[len(anchors)] if anchors else []
+    if by_count and anchors:
+        all_x0 = by_count[len(anchors)]
     bounds = sorted(set(seps)) + [footer]   # the last row of a page may have no rule under it: it ends at the footer
     for lo, hi in zip(bounds, bounds[1:]):
         inside = [w for w in words if lo <= _centre(w) < hi and w["size"] >= 5.5]
@@ -146,29 +158,36 @@ def parse_page(words: list[dict], rules: list[tuple[float, float, float]], sourc
         elif diet:
             raise ValueError(f"page {page_no}, {name}: text where no Y/N column is configured: {_text(diet)!r}")
         # allergens: the summary column, checked against the bold capitals of the declaration
-        extras = source.get("allergen_words", {})
-        summary = _allergens_text(allergen_words, extras, page_no, name, source.get("no_allergen_marks", ()))
-        flags = ""
-        read = pb._allergens(declaration, {**source, "may_phrases": ["May contain"]}, page_no, name)
-        if read.get("oats") == "Yes" and read.get("gluten") != "Yes":   # the declaration says the oats are gluten free: oats without gluten
-            summary = re.sub(r"\bOats\b(?! \()", "Oats (Gluten Free)", summary)
-        got = parse_allergens(summary, "", source.get("markers", {}).get("", ""))
-        same_nuts = {x.strip() for x in got.get("treeNutSource", "").split(",") if x.strip()} == {x.strip() for x in read.get("treeNutSource", "").split(",") if x.strip()}
-        diff = sorted(k for k in got if got[k] != read.get(k, "") and not (k == "treeNutSource" and same_nuts))   # every allergen cell, May contain and the nut source (in any order) included
-        if diff:
-            flags = "warn: the allergen column and the bold capitals of the ingredients differ on " + ", ".join(diff)
+        flags, got = "", {}
+        if not source.get("skip_allergens"):   # the March 2026 batch has no allergen columns
+            extras = source.get("allergen_words", {})
+            summary = _allergens_text(allergen_words, extras, page_no, name, source.get("no_allergen_marks", ()))
+            read = pb._allergens(declaration, {**source, "may_phrases": ["May contain"]}, page_no, name)
+            if read.get("oats") == "Yes" and read.get("gluten") != "Yes":   # the declaration says the oats are gluten free: oats without gluten
+                summary = re.sub(r"\bOats\b(?! \()", "Oats (Gluten Free)", summary)
+            got = parse_allergens(summary, "", source.get("markers", {}).get("", ""))
+            same_nuts = {x.strip() for x in got.get("treeNutSource", "").split(",") if x.strip()} == {x.strip() for x in read.get("treeNutSource", "").split(",") if x.strip()}
+            diff = sorted(k for k in got if got[k] != read.get(k, "") and not (k == "treeNutSource" and same_nuts))   # every allergen cell, May contain and the nut source (in any order) included
+            if diff:
+                flags = "warn: the allergen column and the bold capitals of the ingredients differ on " + ", ".join(diff)
         sizes_found = [w for l in _lines(size_words) for w in l]
         lines = sorted(figures_by_line, key=lambda nums: _centre(nums[0]))
         if len({w["text"] for w in sizes_found}) != len(sizes_found):
             raise ValueError(f"page {page_no}, {name}: a size appears twice in one row: two products may be read as one (a rule is missing)")
-        if size_words and len(sizes_found) != len(lines):
+        by_line = [[] for _ in lines]   # a size can wrap onto two lines ("per" / "sprinkle"): its words go to the nearest figure line
+        for sw in sizes_found:
+            by_line[min(range(len(lines)), key=lambda k: abs(_centre(lines[k][0]) - _centre(sw)))].append(sw)
+        if size_words and any(not group for group in by_line):
             raise ValueError(f"page {page_no}, {name}: {len(sizes_found)} sizes for {len(lines)} figure lines")
         for k, nums in enumerate(lines):
             row = {"Product_Name": name, "Category": " - ".join(x for x in (menu, section) if x), "source_page": page_no} | cells
             if size_words:
-                row["Size"] = sizes_found[k]["text"]
+                row["Size"] = " ".join(w["text"] for w in sorted(by_line[k], key=lambda w: _centre(w)))
             cells_ = {}
             for w in nums:   # a cell the guide leaves blank (a drink with no fibre figure) stays blank: figures go to their column by position
+                if id(w) in kcal_only:
+                    cells_[nutrients.index("energykCal")] = w["text"] + " kcal"
+                    continue
                 i = min(range(len(anchors)), key=lambda j: abs(anchors[j] - w["x1"]))
                 if abs(anchors[i] - w["x1"]) > COLUMN_GAP or i in cells_:
                     raise ValueError(f"page {page_no}, {name}: a figure {w['text']!r} is under no column, or two are in one")

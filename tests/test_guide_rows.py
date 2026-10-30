@@ -8,7 +8,9 @@ from pipeline.parsers import modifier_matrix as mm
 
 ROOT = Path(__file__).resolve().parent.parent
 SOURCES = yaml.safe_load((ROOT / "config" / "chains.yaml").read_text())["7_Starbucks"]["sources"]
-FOOD, BEV, MOD = SOURCES
+FOOD, BEV = SOURCES[:2]
+MOD = next(iter(s for s in SOURCES if s['parser'] == 'modifier_matrix'), None)   # absent from the March 2026 config
+needs_mod = pytest.mark.skipif(MOD is None, reason='the March 2026 guide has no modifier matrix; its source was removed from the config')
 FOOD_PDF, BEV_PDF = ROOT / "inputs" / FOOD["pdf"], ROOT / "inputs" / BEV["pdf"]
 
 
@@ -77,7 +79,7 @@ def w(text, x, top, bold=False, size=6.0):
 
 
 def test_a_summary_column_that_differs_from_the_bold_capitals_is_flagged_and_a_row_with_no_name_raises():
-    src = {**FOOD, "diet_columns": []}
+    src = {**FOOD, "diet_columns": [], "skip_allergens": False}
     rules = [(0, 0, 800), (110, 20, 780), (200, 136, 523), (300, 20, 780), (525, 0, 800)]
     figures = [w(str(i), 530 + 23 * i, 150) for i in range(9)]
     base = [w("Product", 24, 100, bold=True), w("| Food | Menu", 24, 10)]
@@ -88,6 +90,7 @@ def test_a_summary_column_that_differs_from_the_bold_capitals_is_flagged_and_a_r
         gr.parse_page(base + row[1:], rules, src, 4)
 
 
+@needs_mod
 def test_the_modifiers_have_calories_a_name_beside_their_lines_and_ticks_found_by_position():
     rows = mm.parse(ROOT / "inputs" / MOD["pdf"], MOD)
     assert len(rows) == 38
@@ -99,6 +102,7 @@ def test_the_modifiers_have_calories_a_name_beside_their_lines_and_ticks_found_b
     assert syrup["energykCal_Per Portion"] == "9" and syrup["milk"] == "No"
 
 
+@needs_mod
 def test_an_unknown_modifier_label_raises():
     chars = [{"text": c, "x0": 100, "x1": 106, "top": 100 + 7 * i, "bottom": 106 + 7 * i, "upright": False} for i, c in enumerate("xirtaM"[::-1])]
     with pytest.raises(ValueError, match="not in `labels`"):
@@ -157,3 +161,38 @@ def test_a_modifier_word_across_the_name_edge_and_a_tick_level_with_no_line_stop
     odd = words + [{"text": "stray", "x0": 300, "x1": 320, "top": 150, "bottom": 156, "size": 6, "fontname": "Regular", "upright": True}]
     with pytest.raises(ValueError, match="allergen columns"):
         mm.parse_page(odd, chars, [tick], src, 63)
+
+
+def test_skip_allergens_reads_no_allergen_cells_and_ignores_capital_words_that_are_not_allergens():
+    src = {**FOOD, "diet_columns": [], "skip_allergens": False}
+    rules = [(0, 0, 800), (110, 20, 780), (200, 136, 523), (300, 20, 780), (525, 0, 800)]
+    figures = [w(str(i), 530 + 23 * i, 150) for i in range(9)]
+    base = [w("Product", 24, 100, bold=True), w("| Food | Menu", 24, 10)]
+    row = [w("Cake", 24, 150, bold=True)] + [w("Sugar", 140, 150), w("SEED", 160, 150, bold=True)] + figures + [w("MILK", 735, 150, bold=True)]
+    with pytest.raises(ValueError, match="SEED"):
+        gr.parse_page(base + row, rules, src, 4)
+    [got] = gr.parse_page(base + row, rules, {**src, "skip_allergens": True}, 4)
+    assert got["Product_Name"] == "Cake" and "milk" not in got and not got.get("flags")
+
+
+def test_allergens_x0_may_depend_on_the_number_of_figure_columns():
+    src = {**FOOD, "diet_columns": [], "skip_allergens": True}
+    rules = [(0, 0, 800), (110, 20, 780), (200, 136, 523), (300, 20, 780), (525, 0, 800)]
+    figures = [w(str(i), 530 + 15 * i, 150) for i in range(9)]
+    base = [w("Product", 24, 100, bold=True), w("| Food | Menu", 24, 10)]
+    row = [w("Cake", 24, 150, bold=True)] + [w("Sugar", 140, 150)] + figures + [w("-", 690, 150)]
+    with pytest.raises(ValueError, match="not a figure"):
+        gr.parse_page(base + row, rules, src, 4)
+    [got] = gr.parse_page(base + row, rules, {**src, "allergens_x0": {9: 680}}, 4)
+    assert got["Product_Name"] == "Cake"
+
+
+def test_a_calories_only_row_printed_as_a_number_and_the_word_kcal_is_kept_as_printed():
+    src = {**FOOD, "diet_columns": [], "skip_allergens": True}
+    rules = [(0, 0, 800), (110, 20, 780), (200, 136, 523), (300, 20, 780), (525, 0, 800)]
+    figures = [w(str(i), 530 + 23 * i, 150) for i in range(9)]
+    base = [w("Product", 24, 100, bold=True), w("| Food | Menu", 24, 10)]
+    row = [w("Cake", 24, 150, bold=True)] + [w("Sugar", 140, 150)] + figures
+    powder = [w("Cinnamon", 24, 200, bold=True), w("Cinnamon", 140, 200), w("2", 560, 200), w("kcal", 575, 200)]
+    got = gr.parse_page(base + row + powder, rules, src, 4)
+    assert (got[1]["Product_Name"], got[1]["energykCal_Per Portion"]) == ("Cinnamon", "2 kcal")
