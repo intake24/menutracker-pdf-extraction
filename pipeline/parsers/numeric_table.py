@@ -180,6 +180,8 @@ def _row(line: list[Word], lead: list[Word], anchors: list[float], columns: list
                              f"{columns[nearest]!r}")
         if abs(anchors[nearest] - w.x1) > COLUMN_GAP:
             raise ValueError(f"page {page_no}: {w.text!r} in row {product!r} is under no column")
+        if columns[nearest] == "-":   # a column the PDF prints but the dictionary has no place for (a second serving size of 100)
+            continue
         if columns[nearest] in row:
             raise ValueError(f"page {page_no}: two cells in column {columns[nearest]!r} in row {product!r}")
         row[columns[nearest]] = w.text

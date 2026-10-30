@@ -466,3 +466,10 @@ def test_lines_gap_option_joins_a_name_line_and_a_figure_line_printed_three_poin
     a, b = Word(5, 100, 30, 106, "Name"), Word(200, 103.5, 220, 109.5, "12")
     assert len(_lines([a, b])) == 2
     assert len(_lines([a, b], gap=4.5)) == 1
+
+
+def test_a_column_named_dash_is_read_but_not_kept():
+    cols = ["-", "-", "fat_Per Portion", "energykJ_Per 100g/ml", "energykCal_Per 100g/ml", "fat_Per 100g/ml"]
+    rows = parse_pages([line(100, "A", FULL) + line(110, "B", FULL) + line(120, "C", FULL)], cols)
+    assert rows[0] == {"Product_Name": "A", "Category": "", "source_page": 1, "fat_Per Portion": "5.5",
+                       "energykJ_Per 100g/ml": "2306", "energykCal_Per 100g/ml": "554", "fat_Per 100g/ml": "39"}

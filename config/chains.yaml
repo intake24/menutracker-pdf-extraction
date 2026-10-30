@@ -1244,11 +1244,11 @@
       region: UK
       category: food
       approved: true
-      dpi: 200
+      dpi: 250 # at 200 the model missed one figure of page 2 (790)
       pages: [2, 3, 4, 5, 6, 7]
       text_check: &ck_check {
           field: kcal,
-          pattern: '(\d[\d,]*)\s?kcal(?!\s*per serve)',
+          pattern: '(\d[\d,]*)\s?kcal(?!\s*per (?:serve|portion))',
           strip: ',',
           ignore: [1800, 2000],
         } # the footer: adults need around 1800 or 2000 kcal
@@ -1275,7 +1275,7 @@
       category: food
       approved: true
       dpi: 200
-      text_check: *ck_check
+      text_check: { field: kcal, pattern: '(\d[\d,]*)\s?kcal(?!\s*per serve)', strip: ',', ignore: [1800, 2000] } # per slice, spoon and portion figures are rows here
       instructions: *ck_instructions
       fields: *ck_fields
 
@@ -1327,3 +1327,37 @@
         named by its text, notes = "Add-on to <the dish>". Do not return prices, descriptions, allergen keys or text without a kcal figure. Before you answer, count the brackets with
         "kcal" on the page and check that you return exactly that many rows.
       fields: { kcal: energykCal_Per Portion, notes: notes }
+
+TBD1_Subway: # chain id not known: Menu Tracker has no script for Subway yet (rename the key when it has one)
+  chain: Subway
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
+  sources:
+    - pdf: ukiandroinutritionalinformationjan2026.pdf
+      parser: numeric_table
+      region: UK # "UK and ROI" on one table
+      category: food
+      approved: false
+      header: Energy
+      free_sections: true # headings such as "Subs", "Wraps" sit between rows
+      # Columns left to right: serving size (g), nine figures per serving, then the same ten per 100g (the second serving size is always 100).
+      columns:
+        - Serving_Size
+        - energykJ_Per Portion
+        - energykCal_Per Portion
+        - fat_Per Portion
+        - saturates_Per Portion
+        - carbohydrates_Per Portion
+        - sugars_Per Portion
+        - fibre_Per Portion
+        - protein_Per Portion
+        - salt_Per Portion
+        - '-'
+        - energykJ_Per 100g/ml
+        - energykCal_Per 100g/ml
+        - fat_Per 100g/ml
+        - saturates_Per 100g/ml
+        - carbohydrates_Per 100g/ml
+        - sugars_Per 100g/ml
+        - fibre_Per 100g/ml
+        - protein_Per 100g/ml
+        - salt_Per 100g/ml
