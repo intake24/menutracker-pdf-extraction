@@ -29,6 +29,7 @@ from pipeline.allergens import ALLERGENS, UnknownAllergen
 from pipeline.ingest import Word, page_words
 
 NUMBER = re.compile(r"^\d+(?:\.\d+)?$")
+AMOUNT = re.compile(r"^~?\d+(?:\.\d+)?$")   # a serving amount; "~520 ml" is printed for drinks poured to taste
 LINE_GAP = 3
 LABEL_SLACK = 2        # a mark's centre must lie within its label's x-span, +/- this
 AREA_SLACK = 4         # the allergen area starts this far left of the first label
@@ -177,11 +178,15 @@ def parse_pages(pages: list[list[Word]], labels: dict[str, str], markers: dict[s
         data: list[dict] = []
         fragments: list[tuple[float, list[Word]]] = []      # group-column text without a data row
         markline: list[tuple[float, dict[str, str], list[str]]] = []   # marks on a line with no data: they apply to a size group
-        for line in _lines([w for w in words if w.y0 > bottom]):
+        lines = _lines([w for w in words if w.y0 > bottom])
+        skip: set[int] = set()   # lines taken into the name of the data row beside them
+        for idx, line in enumerate(lines):
+            if idx in skip:
+                continue
             left = [w for w in line if w.x0 < area]
             right = [w for w in line if w.x0 >= area]
             texts = [w.text for w in left]
-            if not any(NUMBER.match(t) for t in texts):
+            if not any(NUMBER.match(w.text) for w in left if w.x1 > group_column_end):
                 if heading := _heading(line, group_column_end):
                     category = heading
                     continue
@@ -207,17 +212,32 @@ def parse_pages(pages: list[list[Word]], labels: dict[str, str], markers: dict[s
                 continue
             # [group name] [size | item name] (<amount> <unit> | Per 100g) [<kcal>]
             per100 = texts[-3:-1] == ["Per", "100g"] and NUMBER.match(texts[-1]) is not None
-            if per100 or (texts[-2] in units and NUMBER.match(texts[-3]) and NUMBER.match(texts[-1])):
+            if per100 or (texts[-2] in units and AMOUNT.match(texts[-3]) and NUMBER.match(texts[-1])):
                 tail, kcal = 3, texts[-1]
-            elif texts[-1] in units and NUMBER.match(texts[-2]):
+            elif texts[-1] in units and AMOUNT.match(texts[-2]):
                 tail, kcal = 2, ""          # alcohol: an amount and no calories printed
             else:
                 raise ValueError(f"page {page_no}: cannot read a data row: {' '.join(texts)!r}")
             rest = left[:-tail]
             group = [w for w in rest if w.x1 <= group_column_end]
             middle = " ".join(w.text for w in rest if w.x1 > group_column_end)
-            if not middle:
-                raise ValueError(f"page {page_no}: a data row without a size or an item name: {' '.join(texts)!r}")
+            if not middle:   # the name wraps above and below the figures
+                def name_only(l):
+                    return (l is not None and not any(w.x0 >= area or NUMBER.match(w.text) or w.x1 <= group_column_end for w in l)
+                            and abs(_centre(l[0]) - _centre(line[0])) <= 2 * (line[0].y1 - line[0].y0))
+                before = lines[idx - 1] if idx else None
+                after = lines[idx + 1] if idx + 1 < len(lines) else None
+                if not (name_only(before) or name_only(after)):
+                    raise ValueError(f"page {page_no}: a data row without a size or an item name: {' '.join(texts)!r}")
+                parts = []
+                if name_only(before):
+                    if data and data[-1]["y"] == _centre(before[0]) and not data[-1]["listed"]:
+                        data.pop()
+                    parts += [w.text for w in before]
+                if name_only(after):
+                    skip.add(idx + 1)
+                    parts += [w.text for w in after]
+                middle = " ".join(parts)
             if group:
                 fragments.append((_centre(line[0]), group))
             data.append({"y": _centre(line[0]), "kcal": kcal, "per100": per100,

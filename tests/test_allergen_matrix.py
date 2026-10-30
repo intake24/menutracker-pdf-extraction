@@ -98,3 +98,20 @@ def test_headings_may_contain_symbols_and_a_starred_note():
 def test_marks_on_a_note_line_raise_instead_of_being_skipped():
     with pytest.raises(ValueError, match="marks on a note line"):
         parse([w("Note", 400, 100), w("✓", COLS["Milk"] + 1, 100, 6)])
+
+
+def test_a_name_wrapped_above_and_below_its_figures_is_one_item():
+    rows = parse([w("Molten Meltdown", 120, 100)],
+                 [w("Per", 220, 110), w("100g", 235, 110), w("403", 320, 110)] + [w("✓", 401, 110, 6)],
+                 [w("Cookie", 120, 120)])
+    assert [(r["Product_Name"], r["energykCal_Per 100g/ml"], r["egg"]) for r in rows] == [("Molten Meltdown Cookie", "403", "Yes")]
+
+
+def test_an_approximate_amount_is_kept_as_printed():
+    r = parse(row(100, "Cherry Pie", "", "~500", "157.7"))[0]
+    assert (r["Serving_Size"], r["Serving_Size_Unit"], r["energykCal_Per Portion"]) == ("~500", "ml", "157.7")
+
+
+def test_a_digit_in_the_group_column_does_not_make_a_data_row():
+    rows = parse([w("Own:", 5, 90), w("Step", 30, 90), w("1", 60, 90, 6)], row(100, "Pepsi", "", "455", "191.1"))
+    assert [r["Product_Name"] for r in rows] == ["Pepsi"]
