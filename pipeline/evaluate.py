@@ -137,10 +137,10 @@ def compare_golden(golden: list[dict], ours: list[dict]) -> list[str]:
     """Every golden row (matched on Product_Name + Category + Size, and Serving_Size when the golden row states one) must exist with identical cells."""
     by_key: dict[tuple, list[dict]] = {}
     for r in ours:
-        by_key.setdefault((r["Product_Name"], r["Category"], r.get("Size", "")), []).append(r)
+        by_key.setdefault((r["Product_Name"], r.get("Category", ""), r.get("Size", "")), []).append(r)
     failures = []
     for g in golden:
-        matches = by_key.get((g["Product_Name"], g["Category"], g.get("Size", "")))
+        matches = by_key.get((g["Product_Name"], g.get("Category", ""), g.get("Size", "")))
         if matches and len(matches) > 1 and g.get("Serving_Size"):   # a product printed per 15 ml and per 22.5 ml is two rows: the serving size tells them apart
             matches = [o for o in matches if same(g["Serving_Size"], o.get("Serving_Size", ""))]
             if not matches:

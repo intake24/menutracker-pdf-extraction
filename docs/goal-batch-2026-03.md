@@ -1,6 +1,6 @@
 # Goal: March 2026 batch (nutrition only)
 
-Status: draft for the owner's review, written 2026-10-30. Later batches (June 2026, September 2026) reuse this file with the dates changed.
+Status: phase 1 and the first four new chains done 2026-10-31 (results: `outputs/data-dictionary/end-of-round-report-2026-03.md`); Soho Coffee, Ask Italian and Tesco not started. Written 2026-10-30. Later batches (June 2026, September 2026) reuse this file with the dates changed.
 
 ## Objective
 

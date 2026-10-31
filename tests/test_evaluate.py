@@ -169,3 +169,8 @@ def test_golden_serving_size_narrows_only_when_the_key_has_several_rows_and_a_wr
     assert compare_golden([{"Product_Name": "Cake", "Category": "C", "Serving_Size": "84", "kcal": "9"}], one) == ["Cake.Serving_Size: expected '84', got '83'"]
     two = [{"Product_Name": "S", "Category": "C", "Serving_Size": "15", "kcal": "1"}, {"Product_Name": "S", "Category": "C", "Serving_Size": "22.5", "kcal": "2"}]
     assert compare_golden([{"Product_Name": "S", "Category": "C", "Serving_Size": "15.0", "kcal": "1"}], two) == []
+
+
+def test_golden_rows_compare_when_the_chain_has_no_category_column():
+    from pipeline.evaluate import compare_golden
+    assert compare_golden([{"Product_Name": "A", "energykCal_Per Portion": "1"}], [{"Product_Name": "A", "energykCal_Per Portion": "1"}]) == []

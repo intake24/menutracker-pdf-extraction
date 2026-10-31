@@ -134,6 +134,18 @@ Everything else stays as printed and is flagged by the number check: other units
 - Their column-heading template covers only per-portion and per-100g figures; our schema also has Per Pizza, Per Slice and Per Product As Sold (see `standard_headings` in `schemas/columns.yaml`).
 - Sodium and caffeine units differ between sources and are not in the column names.
 
+## 5c. Lessons of the March 2026 batch (first batch without Pearl Scan)
+
+Procedure that worked, for the June and September 2026 batches: archive the previous `inputs/` and `outputs/` outside the repo, copy the new PDFs flat into `inputs/` (`manifest` reads `inputs/*.pdf` only), run `manifest`, rename the `pdf:` entries of `config/chains.yaml` (the same chain publishes a new file name each issue), run chain by chain and fix what fails loud, write golden rows, check them a second way, run `reread` on every model-read source, ask a fresh reviewer, then approve.
+
+What changed between issues of the same document, in order of frequency: page numbers and page counts (set `pages`), column positions and column order (Odeon matrix, Odeon nutrition), a group of columns dropped (Domino's per 100g), new running-head or footer text (`furniture`, `titles`, `skip_lines`, `max_x`), header words printed as one token (`Energy(KJ)`), a table kind that moved from ticks to plain tables (Starbucks modifiers, Pizza Hut).
+
+New source options this round: `numeric_table`: `pages`, `max_x`, `skip_words`, `skip_lines`, `wrap_lines`, `nameless_rows`, `invalid_values` (a leading `re:` makes a pattern), a column named `-` is read and dropped, a listed title between rows starts a section; `product_matrix`: `line_gap`, `invalid_values`; `product_blocks`: `rule_width`, `heading_notes`, `skip_allergens`; `drink_tables`: `invalid_values`, `unlabelled_pages`, `title_min_size`; `guide_rows`: `skip_allergens`, `allergens_x0` by number of figure columns; `vision_pairs`: a join with `matrix: []` reads nutrition pages only; `vision_table`: `unnamed`; `vision_products`: `skip_allergens`, `share_per_100g`; any source: `golden:` names its golden file when a later PDF has the same name as an earlier one; any chain: `allergens: false` drops the allergen columns.
+
+Checks that caught real problems: a stricter size rule found three-sizes-for-two-rows merges, the fresh review found six silent-merge paths in new options (all closed with tests), `reread` found no figure disagreement but many label disagreements (apostrophes, notes), `text_check` found a menu whose per-portion figure was a row. A second check of golden cells against `pdftotext -layout` is cheap for every PDF with a text layer.
+
+Known limits: the PDF-bound tests read the May PDFs (see the end-of-round report of March 2026); allergen-matrix style PDFs with calories written as words (Tesco, Ask Italian) have no parser yet; Soho Coffee prints product names in a non-bold font that `guide_rows` does not accept.
+
 ## 6. The model route (`claude -p`, `claude-sonnet-5-5`)
 
 - One page image per call, schema-constrained, cached by image + prompt + schema + model (`work/llm/`).

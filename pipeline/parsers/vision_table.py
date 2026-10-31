@@ -66,11 +66,14 @@ def check_text_figures(answer: dict, text: str, spec: dict, page_no: int) -> Non
                 raise llm.LlmError(f"page {page_no}: the row with {figure} has the tags {got!r}, the text layer prints {options}")
 
 
-def rows_from_answer(answer: dict, fields: dict[str, str], page_no: int) -> list[dict]:
+def rows_from_answer(answer: dict, fields: dict[str, str], page_no: int, unnamed: str = "") -> list[dict]:
     check_answer(answer, page_no)
     rows = []
     for item in answer["rows"]:
         name = (item.get("name") or "").strip()
+        placeholder = False
+        if not name and unnamed:   # `unnamed`: the PDF prints a row of figures with no name; it stays, under this label and a flag
+            name, placeholder = unnamed, True
         if not name:
             raise llm.LlmError(f"page {page_no}: the model returned a row without a name: {item!r}")
         row = {"Product_Name": name, "Category": (item.get("section") or "").strip(), "source_page": page_no,
@@ -83,6 +86,8 @@ def rows_from_answer(answer: dict, fields: dict[str, str], page_no: int) -> list
         for key, column in fields.items():
             if value := (item.get(key) or "").strip():
                 row[column] = value
+        if placeholder:
+            row["flags"] = "warn: the PDF prints no name for this row"
         rows.append(row)
     return rows
 
@@ -104,7 +109,7 @@ def page_rows(pdf: Path, source: dict, page_no: int, pages_dir: Path | None = No
         if spec := source.get("text_check"):
             check_text_figures(a, page_texts(pdf)[page_no - 1], spec, page_no)
     answer = llm.call(prompt, schema, png, runner=RUNNER, cache_dir=WORK / "llm", budget=BUDGET, validate=validate)
-    return rows_from_answer(answer, fields, page_no)
+    return rows_from_answer(answer, fields, page_no, source.get("unnamed", ""))
 
 
 def pages_of(pdf: Path, source: dict) -> list[int]:

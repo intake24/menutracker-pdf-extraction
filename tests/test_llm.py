@@ -283,3 +283,12 @@ def test_call_hands_the_image_to_a_runner_that_wants_it_and_not_to_the_others(tm
     call("q", {}, img, cache_dir=tmp_path / "c1", budget=Budget(), runner=wants)
     assert got["image"] == img
     call("q", {}, img, cache_dir=tmp_path / "c2", budget=Budget(), runner=lambda prompt, schema, add_dir: {"is_error": False, "structured_output": {"v": 1}, "total_cost_usd": 0.0})
+
+
+def test_a_row_with_no_printed_name_gets_the_configured_placeholder_and_a_flag_only_when_the_source_allows_it():
+    from pipeline.parsers import vision_table as vt
+    answer = {"rows": [{"name": "", "section": "", "kj": "1"}]}
+    with pytest.raises(LlmError):
+        vt.rows_from_answer(answer, {"kj": "energykJ_Per Portion"}, 2)
+    row = vt.rows_from_answer(answer, {"kj": "energykJ_Per Portion"}, 2, unnamed="(no name printed)")[0]
+    assert row["Product_Name"] == "(no name printed)" and row["flags"].startswith("warn:") and row["energykJ_Per Portion"] == "1"

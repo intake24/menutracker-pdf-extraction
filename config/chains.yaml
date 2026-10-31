@@ -1263,7 +1263,7 @@ TBD1_Subway: # chain id not known: Menu Tracker has no script for Subway yet (re
       parser: numeric_table
       region: UK # "UK and ROI" on one table
       category: food
-      approved: false
+      approved: true
       header: Energy
       free_sections: true # headings such as "Subs", "Wraps" sit between rows
       # Columns left to right: serving size (g), nine figures per serving, then the same ten per 100g (the second serving size is always 100).
@@ -1297,7 +1297,7 @@ TBD1_Subway: # chain id not known: Menu Tracker has no script for Subway yet (re
       parser: numeric_table
       region: UK
       category: food
-      approved: false
+      approved: true
       pages: ['3-14']
       max_x: 392 # the Dietary, Contains and May Contain columns (allergens are not read) start at x 395
       header: Kcal
@@ -1320,7 +1320,7 @@ TBD1_Subway: # chain id not known: Menu Tracker has no script for Subway yet (re
       parser: vision_table
       region: UK
       category: drinks
-      approved: false
+      approved: true
       dpi: 200
       pages: [14]
       instructions: >-
@@ -1337,7 +1337,7 @@ TBD2_TheRealGreek: # chain id not known: Menu Tracker has no script for The Real
       parser: numeric_table
       region: UK
       category: food
-      approved: false
+      approved: true
       max_x: 615 # the ALLERGENS column (letter codes) starts at x 622, right of the Salt column
       wrapped_names: true
       skip_lines: [ITEM] # the first column's header is not a section
@@ -1361,7 +1361,7 @@ TBD2_TheRealGreek: # chain id not known: Menu Tracker has no script for The Real
       parser: vision_table
       region: UK
       category: food
-      approved: false
+      approved: true
       dpi: 200
       pages: ['2-19']
       instructions: &fg_instructions >-
@@ -1375,17 +1375,18 @@ TBD2_TheRealGreek: # chain id not known: Menu Tracker has no script for The Real
       parser: vision_table
       region: UK
       category: food
-      approved: false
+      approved: true
       dpi: 200
       pages: ['2-14']
+      unnamed: (no name printed) # the first row of page 2 is a row of figures with no menu, category or dish name
       instructions: *fg_instructions
       fields: *fg_fields
     - pdf: 23b8547a88b64c909bb5d116246cedbfv=b03de5f4.pdf
       parser: vision_table
       region: UK
       category: food
-      approved: false
+      approved: true
       dpi: 200
-      pages: ['2-13']
+      pages: ['2-6'] # pages 7-13 print the column headers and no rows
       instructions: *fg_instructions
       fields: *fg_fields
