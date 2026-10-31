@@ -693,6 +693,7 @@
       pages: ['6-59', '62-63', 70] # 2026 PDF: pizzas 6-33, stuffed crust 34-38, sides and desserts 39-59, create-your-own 62-63, choux nuts 70 (60-61 and 66: no nutrition: Ben & Jerry's, see the pack)
       dpi: 150
       skip_allergens: true # the March 2026 batch has no allergen columns
+      share_per_100g: true # one VALUES PER 100G table serves every portion row of a product (the model fills it on one row only); copied cells are flagged
       # Each sheet lists the ingredient allergens per dough or base and what "may contain"; "None" is printed when empty,
       # so an allergen that is not listed is absent from the ingredients.
       markers: { '': 'No' }

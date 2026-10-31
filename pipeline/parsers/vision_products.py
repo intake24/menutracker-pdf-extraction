@@ -132,6 +132,16 @@ def rows_from_answer(answer: dict, source: dict, page_no: int) -> list[dict]:
             if row.get(column) in (None, "", "No"):
                 row[column] = "May contain"
         rows.append(row)
+    if source.get("share_per_100g"):   # one per 100g table serves every portion row of a product; the model fills it on one row only
+        for r in rows:
+            for other in rows:
+                if other is not r and other["Product_Name"] == r["Product_Name"] and other["source_page"] == r["source_page"]:
+                    gaps = [c for c in other if c.endswith("_Per 100g/ml") and r.get(c) in (None, "")]
+                    if gaps and any(r.get(c) not in (None, "") for c in r if c.endswith("_Per 100g/ml")) is False:
+                        for c in gaps:
+                            r[c] = other[c]
+                        r["flags"] = (r.get("flags", "") + " | " if r.get("flags") else "") + "warn: per 100g figures of the product copied from its other row on the page"
+                        break
     return rows
 
 

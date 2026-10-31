@@ -160,3 +160,13 @@ def test_two_configured_headers_that_differ_only_in_brackets_must_name_the_same_
         vp.rows_from_answer({"rows": [ITEM]}, clash, 12)
     row = vp.rows_from_answer({"rows": [{**ITEM, "values": {"PER SLICE / FAT(g)": "9"}}]}, {**SOURCE, "header_columns": {**HEADERS, "PER SLICE / FAT g": "fat_Per Slice"}}, 12)[0]
     assert row["fat_Per Slice"] == "9"
+
+
+def test_share_per_100g_copies_the_printed_per_100g_figures_to_the_other_rows_of_the_product_and_flags_them():
+    a = {**ITEM, "variant": "Serves 2", "values": {"PER 100G / ENERGY kcal": "242", "PER SLICE / TOTAL SLICES": "2"}}
+    b = {**ITEM, "variant": "Serves 1", "values": {"PER SLICE / TOTAL SLICES": "1"}}
+    plain = vp.rows_from_answer({"rows": [a, b]}, SOURCE, 5)
+    assert "energykCal_Per 100g/ml" not in plain[1]
+    shared = vp.rows_from_answer({"rows": [a, b]}, {**SOURCE, "share_per_100g": True}, 5)
+    assert shared[1]["energykCal_Per 100g/ml"] == "242" and "per 100g figures of the product" in shared[1]["flags"]
+    assert "flags" not in shared[0]
