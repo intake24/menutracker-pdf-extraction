@@ -498,3 +498,16 @@ def test_a_short_group_must_sit_under_the_first_columns_of_a_full_table():
     page = line(100, "A", FULL) + line(110, "B", FULL) + line(120, "C", FULL) + line(130, "D", last3) + line(140, "E", last3)
     with pytest.raises(ValueError, match="numeric columns"):
         parse_pages([page], COLUMNS)
+
+
+def test_section_x_moves_the_words_left_of_it_into_the_category_column_of_each_row():
+    def row(top, section, dish):
+        return [Word(5, top, 40, top + 8, section), Word(60, top, 60 + 6 * len(dish), top + 8, dish)] + line(top, "", FULL)[1:]
+    rows = parse_pages([row(100, "Starters", "Olives") + row(110, "Starters", "Bread") + row(120, "Mains", "Pizza")], COLUMNS, section_x=50)
+    assert [(r["Product_Name"], r["Category"]) for r in rows] == [("Olives", "Starters"), ("Bread", "Starters"), ("Pizza", "Mains")]
+
+
+def test_wrap_below_appends_a_name_line_printed_under_its_figures_to_that_row():
+    rows = parse_pages([line(100, "Caramelised Onion", FULL) + [Word(5, 108, 60, 116, "Confiture")] + line(124, "Olives", FULL)
+                        + line(134, "Bread", FULL) + line(144, "Rolls", FULL)], COLUMNS, wrap_below=True)
+    assert [r["Product_Name"] for r in rows] == ["Caramelised Onion Confiture", "Olives", "Bread", "Rolls"]

@@ -1390,3 +1390,139 @@ TBD2_TheRealGreek: # chain id not known: Menu Tracker has no script for The Real
       pages: ['2-6'] # pages 7-13 print the column headers and no rows
       instructions: *fg_instructions
       fields: *fg_fields
+
+TBD3_AskItalian: # chain id not known: Menu Tracker has no script for Ask Italian yet
+  chain: Ask Italian
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
+  sources:
+    # Pages 39 and 44-57 of the allergen guide hold nutrition tables (per 100g and per portion; Valentine's specials on page 39). The kcal figures that sit in running text on pages 40-41
+    # (a kids menu) are read by the next source.
+    - pdf: jan26_allergenguide_29_01_26.pdf
+      parser: numeric_table
+      region: UK
+      category: food
+      approved: true
+      pages: [39] # the Valentine's specials table
+      section_x: 150 # the Menu Section column is left of the Dish Description column
+      header: Energy
+      titles: [VALENTINE’S SPECIALS]
+      furniture: ['V2 29.01.26', '11/02/26 - 15/02/26', 'Menu Section Dish Description']
+      wrap_below: true # a long dish name wraps onto a line under its figures
+      columns:
+        - energykJ_Per 100g/ml
+        - energykCal_Per 100g/ml
+        - fat_Per 100g/ml
+        - saturates_Per 100g/ml
+        - carbohydrates_Per 100g/ml
+        - sugars_Per 100g/ml
+        - protein_Per 100g/ml
+        - salt_Per 100g/ml
+        - energykJ_Per Portion
+        - energykCal_Per Portion
+        - fat_Per Portion
+        - saturates_Per Portion
+        - carbohydrates_Per Portion
+        - sugars_Per Portion
+        - protein_Per Portion
+        - salt_Per Portion
+    - pdf: jan26_allergenguide_29_01_26.pdf
+      parser: numeric_table
+      region: UK
+      category: food
+      approved: true
+      pages: ['44-57'] # the core menu tables
+      section_x: 150 # the Menu Section column is left of the Dish Description column
+      header: Energy
+      furniture: ['V2 29.01.26', 'Menu Section Dish Description']
+      wrap_below: true # a long dish name wraps onto a line under its figures
+      columns:
+        - energykJ_Per 100g/ml
+        - energykCal_Per 100g/ml
+        - fat_Per 100g/ml
+        - saturates_Per 100g/ml
+        - carbohydrates_Per 100g/ml
+        - sugars_Per 100g/ml
+        - protein_Per 100g/ml
+        - salt_Per 100g/ml
+        - energykJ_Per Portion
+        - energykCal_Per Portion
+        - fat_Per Portion
+        - saturates_Per Portion
+        - carbohydrates_Per Portion
+        - sugars_Per Portion
+        - protein_Per Portion
+        - salt_Per Portion
+    - pdf: jan26_allergenguide_29_01_26.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: true
+      dpi: 200
+      pages: [40, 41]
+      text_check: { field: kcal, pattern: '(\d[\d,]*)\s?kcal', strip: ',', ignore: [2000] }
+      instructions: >-
+        It is a children's and non-gluten menu page of a restaurant: dishes with a name in capitals, a diet word (Vegan, Vegetarian) sometimes, the calories in words ("34 kcal") and a description.
+        section = the heading printed above a group (for example "TO START", "MAINS", "DESSERTS"). name = the dish name as printed (without the diet word and the kcal figure). kcal = the digits before
+        "kcal" for that dish. A description can carry its own kcal figure for a variant ("Make this Vegan with MozzaRisella. 900 kcal"): that is its own row, name = the text of that sentence without the figure,
+        notes = "Variant of <the dish it is printed under>". Every "kcal" figure on the page is exactly one row. Ignore allergen marks and prices.
+      fields: { kcal: energykCal_Per Portion, notes: notes }
+
+TBD4_Tesco: # chain id not known: Menu Tracker has no script for Tesco yet
+  chain: Tesco
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
+  sources:
+    # Allergen matrices of the Tesco cafes (drinks, breakfast, mains, kids, snacks, sides): the only nutrition is "kcal per serving", sometimes as a pair "275/355 kcal" (small / medium).
+    - pdf: January+2026+GB+Allergen+Matrix.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: true
+      dpi: 200
+      pages: ['2-19']
+      text_check: &tesco_check { field: kcal, pattern: '(\d+(?:/\d+)?)\s?kcal', ignore: [2000, '–', '-'], page_ignore: { '8': ['75', '50/75', '50 / 75'] } }
+      instructions: &tesco_instructions >-
+        It is a landscape allergen matrix of a cafe menu: a row per item with the item name on the left, "kcal per serving" next to it and allergen marks (Y or M) to the right. section = the page heading
+        ("Allergens - Drinks", "Allergens - Breakfast" ... written as "Drinks", "Breakfast", "Breakfast Extras", "Mains", "Kids", "Snacks & Bakery", "Sides and Condiments"), or a sub-heading printed in the first column.
+        name = the item exactly as printed (a name can wrap over two or three lines: join them; text in brackets that belongs to the name stays). kcal = the figure before "kcal" exactly as printed, with a slash
+        when two figures are printed ("275/355"); notes = the size header printed above the kcal column on the page ("Small/Medium") when the figure is a pair, else empty. Items with a blank kcal cell or the word
+        "kcal" only are not rows. Ignore every allergen mark. Return every item of the page.
+      fields: &tesco_fields { kcal: energykCal_Per Portion, notes: notes }
+    - pdf: January+2026+NI+Allergen+Matrix.pdf
+      parser: vision_table
+      region: NI
+      category: food
+      approved: true
+      dpi: 200
+      pages: ['2-17']
+      text_check: *tesco_check
+      instructions: *tesco_instructions
+      fields: *tesco_fields
+
+TBD5_SohoCoffee: # chain id not known: Menu Tracker has no script for Soho Coffee yet
+  chain: Soho Coffee
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
+  sources:
+    # Ingredient and nutrition guides (food and drinks): one product per row with vegetarian / vegan ticks, a long ingredient declaration and the nine nutrition figures
+    # "per portion basis". The names are not in a bold font and the declarations are long, so the model reads the name and the figures.
+    - pdf: 2026-Nutritional-Matrix-Food-V2-13.02.26.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: true
+      dpi: 200
+      pages: ['4', '6-9', '11-17', '19-21', '23-24']
+      instructions: &soho_instructions >-
+        It is a landscape ingredient and nutrition guide of a coffee shop: one product per row. Columns: Product (with a short name on the left), Vegetarian?, Vegan?, Ingredients (long text),
+        then Energy (kJ), Energy (kcal), Fat (g), Of which saturates (g), Carbohydrates (g), Of which sugars (g), Fibre (g), Protein (g), Salt (g). section = the group heading printed in the product column
+        or above the rows (for example "Pastries", "Iced Tea"), or the menu named in the page head if there is none. name = the Product exactly as printed (it wraps over several lines: join them; a bracket
+        such as "(whole milk)" belongs to the name). Ignore the ingredients and the ticks. The nine figures are exactly as printed, as strings; leave a blank cell empty. Return every product of the page.
+      fields: &soho_fields { kj: energykJ_Per Portion, kcal: energykCal_Per Portion, fat: fat_Per Portion, saturates: saturates_Per Portion, carbohydrate: carbohydrates_Per Portion, sugars: sugars_Per Portion, fibre: fibre_Per Portion, protein: protein_Per Portion, salt: salt_Per Portion }
+    - pdf: 2026-Nutritional-Matrix-Drinks-V1-January-Launch-07.01.26.pdf
+      parser: vision_table
+      region: UK
+      category: drinks
+      approved: true
+      dpi: 200
+      pages: ['4-6', '8-15', '17-18', '20-22', '24-26', '28-29', '31', '33', '35-36', '38-41']
+      instructions: *soho_instructions
+      fields: *soho_fields
