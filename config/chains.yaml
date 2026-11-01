@@ -1255,7 +1255,7 @@
         "kcal" on the page and check that you return exactly that many rows.
       fields: { kcal: energykCal_Per Portion, notes: notes }
 
-TBD1_Subway: # chain id not known: Menu Tracker has no script for Subway yet (rename the key when it has one)
+9_Subway: # id and key from Menu Tracker's food-chains/
   chain: Subway
   allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
   sources:
@@ -1329,7 +1329,7 @@ TBD1_Subway: # chain id not known: Menu Tracker has no script for Subway yet (re
         Energy Kcal column exactly as printed ("-" when the cell shows a dash). Ignore the dietary and allergen columns and every other table on the page.
       fields: { kcal: energykCal_Per Portion }
 
-TBD2_TheRealGreek: # chain id not known: Menu Tracker has no script for The Real Greek yet
+85_RealGreek: # id and key from Menu Tracker's food-chains/
   chain: The Real Greek
   allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
   sources:
@@ -1391,7 +1391,7 @@ TBD2_TheRealGreek: # chain id not known: Menu Tracker has no script for The Real
       instructions: *fg_instructions
       fields: *fg_fields
 
-TBD3_AskItalian: # chain id not known: Menu Tracker has no script for Ask Italian yet
+25_Ask: # id and key from Menu Tracker's food-chains/
   chain: Ask Italian
   allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
   sources:
@@ -1467,7 +1467,7 @@ TBD3_AskItalian: # chain id not known: Menu Tracker has no script for Ask Italia
         notes = "Variant of <the dish it is printed under>". Every "kcal" figure on the page is exactly one row. Ignore allergen marks and prices.
       fields: { kcal: energykCal_Per Portion, notes: notes }
 
-TBD4_Tesco: # chain id not known: Menu Tracker has no script for Tesco yet
+69_TescoCafe: # id and key from Menu Tracker's food-chains/
   chain: Tesco
   allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
   sources:
@@ -1498,7 +1498,7 @@ TBD4_Tesco: # chain id not known: Menu Tracker has no script for Tesco yet
       instructions: *tesco_instructions
       fields: *tesco_fields
 
-TBD5_SohoCoffee: # chain id not known: Menu Tracker has no script for Soho Coffee yet
+66_SohoCoffee: # id and key from Menu Tracker's food-chains/
   chain: Soho Coffee
   allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
   sources:
