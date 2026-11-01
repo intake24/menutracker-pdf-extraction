@@ -316,3 +316,13 @@ def test_a_source_can_name_its_golden_file_when_a_later_batch_reuses_a_pdf_name(
     (gold / "a.csv").write_text("Product_Name,Category,energykCal_Per Portion\nBun,Food,999\n")          # the earlier batch's file: must not be used
     (gold / "a__2026-03.csv").write_text("Product_Name,Category,energykCal_Per Portion\nBun,Food,100\n")
     assert evaluate(chains, out, tmp_path / "gt", gold, cfg) == []
+
+
+def test_coverage_counts_the_rows_of_all_numeric_sources_of_one_pdf_together(tmp_path, monkeypatch):
+    import pipeline.cli as cli
+    chains = tmp_path / "chains.yaml"
+    chains.write_text("X_Y:\n  chain: X\n  sources:\n    - {pdf: a.pdf, parser: numeric_table, approved: true, columns: [a, b, c, d, e, f], pages: [1]}\n"
+                      "    - {pdf: a.pdf, parser: numeric_table, approved: true, columns: [a, b, c, d, e, f], pages: [2]}\n")
+    monkeypatch.setitem(cli.PARSERS, "numeric_table", lambda pdf, s: [{"source_page": s["pages"][0]}] * 3)
+    monkeypatch.setattr(cli, "numeric_lines", lambda pdf, n: {1: 3, 2: 3})
+    assert cli.coverage(tmp_path, chains) == []

@@ -412,8 +412,9 @@ def test_name_below_takes_the_name_printed_under_a_line_of_numbers():
 
 def test_only_pages_blanks_the_other_pages_but_keeps_numbering():
     from pipeline.parsers.numeric_table import only_pages
-    pages = [["p1"], ["p2"], ["p3"]]
-    assert only_pages(pages, ["2-3"]) == [[], ["p2"], ["p3"]]
+    p1, p2, p3 = (Word(0, 0, 1, 1, t) for t in ("p1", "p2", "p3"))
+    pages = [[p1], [p2], [p3]]
+    assert only_pages(pages, ["2-3"]) == [[], [p2], [p3]]
     assert only_pages(pages, None) == pages
 
 

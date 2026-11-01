@@ -186,12 +186,14 @@ def coverage(inputs: Path, chains_file: Path) -> list[str]:
     for key, chain in load_chains(chains_file).items():
         if not approved(chain):
             continue
+        by_pdf: dict[str, list[dict]] = {}   # a PDF can feed several sources (page ranges): count their rows together
         for source in chain["sources"]:
-            if source["parser"] != "numeric_table":
-                continue   # grids and matrices have no number runs to count; vision pages have no usable text
-            pdf = inputs / source["pdf"]
-            rows = PARSERS["numeric_table"](pdf, source)
-            lines = numeric_lines(pdf, max(3, len(source["columns"]) // 2))
+            if source["parser"] == "numeric_table":   # grids and matrices have no number runs to count; vision pages have no usable text
+                by_pdf.setdefault(source["pdf"], []).append(source)
+        for name, sources in by_pdf.items():
+            pdf = inputs / name
+            rows = [r for source in sources for r in PARSERS["numeric_table"](pdf, source)]
+            lines = numeric_lines(pdf, max(3, min(len(source["columns"]) for source in sources) // 2))
             gaps = shortfalls(rows, lines)
             print(f"{key} {pdf.stem}: {len(rows)} rows, {sum(lines.values())} data-looking lines, {len(gaps)} pages short")
             out += [f"{key} {pdf.stem} page {p}: {r} rows for {n} data-looking lines" for p, (r, n) in sorted(gaps.items())]
