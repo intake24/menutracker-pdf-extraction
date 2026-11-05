@@ -1359,7 +1359,7 @@
       golden: cookhouse_and_pub_kids_menu_default__2026-06 # the May 2025 PDF has the same name
       dpi: 250
       pages: [1, 2]
-      text_check: *ck_check
+      text_check: { <<: *ck_check, page_ignore: { '2': [77] } } # page 2 prints "(77 / 74kcal)" for two juices: the 77 has no "kcal" after it
       instructions: *ck_instructions
       fields: *ck_fields
 73_TopGolf:
@@ -1570,17 +1570,18 @@
   sources:
     # Pages 39 and 44-57 of the allergen guide hold nutrition tables (per 100g and per portion; Valentine's specials on page 39). The kcal figures that sit in running text on pages 40-41
     # (a kids menu) are read by the next source.
-    - pdf: jan26_allergenguide_29_01_26.pdf
+    - pdf: b6039d513237130ab53a1ddc01afb713d1aa7dde.pdf
       parser: numeric_table
       region: UK
       category: food
       approved: true
-      pages: [39] # the Valentine's specials table
+      pages: [35] # the Summer specials table
       section_x: 150 # the Menu Section column is left of the Dish Description column
       header: Energy
-      titles: [VALENTINE’S SPECIALS]
-      furniture: ['V2 29.01.26', '11/02/26 - 15/02/26', 'Menu Section Dish Description']
+      titles: ['SUMMER SPECIALS']
+      furniture: ['V2 23.04.26', '02/06/26 - 31/08/26', 'Menu Section Dish Description']
       wrap_below: true # a long dish name wraps onto a line under its figures
+      column_gap: 12 # cells are centred in their columns: a one-digit cell sits up to 11 pt from the right edge of its column
       columns:
         - energykJ_Per 100g/ml
         - energykCal_Per 100g/ml
@@ -1598,16 +1599,17 @@
         - sugars_Per Portion
         - protein_Per Portion
         - salt_Per Portion
-    - pdf: jan26_allergenguide_29_01_26.pdf
+    - pdf: b6039d513237130ab53a1ddc01afb713d1aa7dde.pdf
       parser: numeric_table
       region: UK
       category: food
       approved: true
-      pages: ['44-57'] # the core menu tables
+      pages: ['40-50'] # the core menu tables
       section_x: 150 # the Menu Section column is left of the Dish Description column
       header: Energy
-      furniture: ['V2 29.01.26', 'Menu Section Dish Description']
+      furniture: ['V2 23.04.26', 'Menu Section Dish Description']
       wrap_below: true # a long dish name wraps onto a line under its figures
+      column_gap: 12 # cells are centred in their columns: a one-digit cell sits up to 11 pt from the right edge of its column
       columns:
         - energykJ_Per 100g/ml
         - energykCal_Per 100g/ml
@@ -1625,13 +1627,85 @@
         - sugars_Per Portion
         - protein_Per Portion
         - salt_Per Portion
-    - pdf: jan26_allergenguide_29_01_26.pdf
+    - pdf: b6039d513237130ab53a1ddc01afb713d1aa7dde.pdf
       parser: vision_table
       region: UK
       category: food
       approved: true
       dpi: 200
-      pages: [40, 41]
+      pages: [36, 37] 
+      text_check: { field: kcal, pattern: '(\d[\d,]*)\s?kcal', strip: ',', ignore: [2000] }
+      instructions: >-
+        It is a children's and non-gluten menu page of a restaurant: dishes with a name in capitals, a diet word (Vegan, Vegetarian) sometimes, the calories in words ("34 kcal") and a description.
+        section = the heading printed above a group (for example "TO START", "MAINS", "DESSERTS"). name = the dish name as printed (without the diet word and the kcal figure). kcal = the digits before
+        "kcal" for that dish. A description can carry its own kcal figure for a variant ("Make this Vegan with MozzaRisella. 900 kcal"): that is its own row, name = the text of that sentence without the figure,
+        notes = "Variant of <the dish it is printed under>". Every "kcal" figure on the page is exactly one row. Ignore allergen marks and prices.
+      fields: { kcal: energykCal_Per Portion, notes: notes }
+
+    - pdf: c476e315ae38db7a9722b0d4ecfc58c1c3f1c7f4.pdf
+      parser: numeric_table
+      region: UK
+      category: food
+      approved: true
+      pages: [34] # the Summer specials table
+      section_x: 150 # the Menu Section column is left of the Dish Description column
+      header: Energy
+      titles: ['SUMMER SPECIALS']
+      furniture: ['V2 23.04.26', '02/06/26 - 31/08/26', 'Menu Section Dish Description']
+      wrap_below: true # a long dish name wraps onto a line under its figures
+      column_gap: 12 # cells are centred in their columns: a one-digit cell sits up to 11 pt from the right edge of its column
+      columns:
+        - energykJ_Per 100g/ml
+        - energykCal_Per 100g/ml
+        - fat_Per 100g/ml
+        - saturates_Per 100g/ml
+        - carbohydrates_Per 100g/ml
+        - sugars_Per 100g/ml
+        - protein_Per 100g/ml
+        - salt_Per 100g/ml
+        - energykJ_Per Portion
+        - energykCal_Per Portion
+        - fat_Per Portion
+        - saturates_Per Portion
+        - carbohydrates_Per Portion
+        - sugars_Per Portion
+        - protein_Per Portion
+        - salt_Per Portion
+    - pdf: c476e315ae38db7a9722b0d4ecfc58c1c3f1c7f4.pdf
+      parser: numeric_table
+      region: UK
+      category: food
+      approved: true
+      pages: ['39-49'] # the core menu tables
+      section_x: 150 # the Menu Section column is left of the Dish Description column
+      header: Energy
+      furniture: ['V2 23.04.26', 'Menu Section Dish Description']
+      wrap_below: true # a long dish name wraps onto a line under its figures
+      column_gap: 12 # cells are centred in their columns: a one-digit cell sits up to 11 pt from the right edge of its column
+      columns:
+        - energykJ_Per 100g/ml
+        - energykCal_Per 100g/ml
+        - fat_Per 100g/ml
+        - saturates_Per 100g/ml
+        - carbohydrates_Per 100g/ml
+        - sugars_Per 100g/ml
+        - protein_Per 100g/ml
+        - salt_Per 100g/ml
+        - energykJ_Per Portion
+        - energykCal_Per Portion
+        - fat_Per Portion
+        - saturates_Per Portion
+        - carbohydrates_Per Portion
+        - sugars_Per Portion
+        - protein_Per Portion
+        - salt_Per Portion
+    - pdf: c476e315ae38db7a9722b0d4ecfc58c1c3f1c7f4.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: true
+      dpi: 200
+      pages: [35, 36] 
       text_check: { field: kcal, pattern: '(\d[\d,]*)\s?kcal', strip: ',', ignore: [2000] }
       instructions: >-
         It is a children's and non-gluten menu page of a restaurant: dishes with a name in capitals, a diet word (Vegan, Vegetarian) sometimes, the calories in words ("34 kcal") and a description.
@@ -1699,3 +1773,78 @@
       pages: ['4', '6-13', '15-16', '18-25', '27-28', '30', '32', '34-35', '37-40'] # dividers are 1-3, 5, 14, 17, 26, 29, 31, 33, 36
       instructions: *soho_instructions
       fields: *soho_fields
+
+20_ChefBrewer: # id and key from Menu Tracker's menutracker.ipynb ("20. Chef & Brewer Pub Co.")
+  chain: Chef & Brewer
+  allergens: false # no allergen columns (docs/goal-batch-2026-03.md)
+  sources:
+    # Four pub menus (picky bits, buffet, two kids menus) that print only calories as "750kcal". The model reads the dish names and figures; the text layer's kcal figures are checked against the rows (`text_check`).
+    - pdf: 07f9682a60004caeab5ee57427101994vfb21ad8c.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: true
+      dpi: 200
+      pages: [1, 2]
+      text_check: &cb_check { field: kcal, pattern: '(\d[\d,]*)\s?kcal', strip: ',', ignore: [2000] } # the footer: adults need around 2000 kcal a day
+      instructions: &cb_instructions >-
+        It is a pub menu page: section headings in capitals (for example "PICKY BITS", "SANDWICHES & WRAPS", "LIGHT BITES", "BIGGER BITES", "LITTLE ONES"), dishes with a bold capitals name, a description and the calories
+        as "750kcal" (sometimes "168kcal per sandwich" and "333kcal per wrap", or "per portion", "per skewer" or "per 2 spoonfuls"). section = the heading as printed (a sub-heading such as "CHOOSE YOUR STARTER" can follow it:
+        then section = "<heading> - <sub-heading>"). name = the dish name as printed, in the case it is printed, without price, symbols or badges. kcal = the digits only, without a thousands comma. A dish with several figures
+        (one per sandwich or wrap, per size or choice) gives one row per figure named "<dish> - <the label printed with the figure>" (for example "ROASTED PEPPER & HOUMOUS - per sandwich"). EVERY figure with "kcal" on the page
+        is exactly one row. Ignore prices, the number of items to choose, the line "Adults need around 2000kcal a day" and text without a kcal figure. Before you answer, count the "kcal" figures on the page and return exactly that many rows.
+      fields: &cb_fields { kcal: energykCal_Per Portion }
+    - pdf: adbf6a3f9b8f49969a4b65bdcd323e3dv4f5ec19f.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: true
+      dpi: 200
+      pages: [1, 2]
+      text_check: *cb_check
+      instructions: *cb_instructions
+      fields: *cb_fields
+    - pdf: 8608c49eb4dc465ebf11794b69be6192v958d6f19.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: true
+      dpi: 200
+      pages: [1]
+      text_check: *cb_check
+      instructions: *cb_instructions
+      fields: *cb_fields
+    - pdf: f683166d4b8d490ba03a0c2a7179aacavcd8a4452.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: true
+      dpi: 200
+      pages: [1]
+      text_check: *cb_check
+      instructions: *cb_instructions
+      fields: *cb_fields
+
+62_Pho: # id and key from Menu Tracker's menutracker.ipynb
+  chain: Pho
+  allergens: false # no allergen columns (docs/goal-batch-2026-03.md)
+  sources:
+    # One table per page with calories, protein, carbs, fat, saturated fat, fibre and sugar per dish (no kJ, no salt). A "<" is printed apart from its figure ("< 0.5"), a few
+    # calorie cells hold two figures ("101 / 110": with or without chillies), the curries print a "*" after the fat figure (coconut milk), and a few cells are a dash: all kept as printed and flagged.
+    # The dish names carry Vietnamese letters in a second font that sits 4.7 pt higher than the figures, hence `line_gap`.
+    - pdf: Pho-Nutritional-Guidelines-2026_web.pdf
+      parser: numeric_table
+      region: UK
+      category: food
+      approved: true
+      header: Calories
+      pages: ['2-8']
+      wrapped_names: true
+      wrap_lines: 5
+      line_gap: 6
+      join_less_than: true
+      join_slash_pairs: true
+      invalid_values: ['re:^\d+(\.\d+)? / \d+(\.\d+)?$', 're:^\d+(\.\d+)?\*$', '-']
+      furniture: [MACROS, Total of which]
+      titles: ['Starters & Sides : món khai vị Excludes dipping sauces Total of which', 'Vietnamese noodle soup : phở Total of which', 'Curry : cà-ri Excludes rice (see below) Total of which', 'Rice bowls : món cơm Excludes rice (see below) Total of which', 'Vermicelli noodles : bún* Includes sauces Total of which', 'Vietnamese salads : gỏi Includes dressings Total of which']
+      columns: [energykCal_Per Portion, protein_Per Portion, carbohydrates_Per Portion, fat_Per Portion, saturates_Per Portion, fibre_Per Portion, sugars_Per Portion]

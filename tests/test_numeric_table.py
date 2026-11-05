@@ -512,3 +512,46 @@ def test_wrap_below_appends_a_name_line_printed_under_its_figures_to_that_row():
     rows = parse_pages([line(100, "Caramelised Onion", FULL) + [Word(5, 108, 60, 116, "Confiture")] + line(124, "Olives", FULL)
                         + line(134, "Bread", FULL) + line(144, "Rolls", FULL)], COLUMNS, wrap_below=True)
     assert [r["Product_Name"] for r in rows] == ["Caramelised Onion Confiture", "Olives", "Bread", "Rolls"]
+
+
+def test_join_less_than_makes_a_lone_sign_and_the_figure_beside_it_one_cell_and_leaves_other_words_alone():
+    from pipeline.parsers.numeric_table import join_less_than
+    page = [Word(5, 110, 60, 118, "Wings"), Word(392, 110, 397, 118, "<"), Word(400, 110, 420, 118, "0.1"),   # "< 0.1" printed with a space (Pho, 2026)
+            Word(430, 110, 435, 118, "<"), Word(500, 110, 520, 118, "0.2"),                                      # too far apart: not joined
+            Word(530, 130, 535, 138, "<"), Word(538, 150, 558, 158, "0.3")]                                      # another line: not joined
+    got = join_less_than([page])[0]
+    assert [w.text for w in got] == ["Wings", "<0.1", "<", "0.2", "<", "0.3"]
+    assert (got[1].x0, got[1].x1) == (392, 420)
+
+
+def test_join_slash_pairs_makes_two_figures_with_a_slash_between_them_one_cell_as_printed():
+    from pipeline.parsers.numeric_table import join_slash_pairs
+    page = [Word(5, 110, 60, 118, "Morning"), Word(380, 110, 395, 118, "101"), Word(398, 110, 402, 118, "/"), Word(405, 110, 420, 118, "110"),   # Pho 2026: "101 / 110"
+            Word(430, 110, 445, 118, "3.79"), Word(450, 130, 454, 138, "/"), Word(456, 130, 470, 138, "5")]                                    # a lone slash with no figure before it: left alone
+    got = join_slash_pairs([page])[0]
+    assert [w.text for w in got] == ["Morning", "101 / 110", "3.79", "/", "5"]
+    assert (got[1].x0, got[1].x1) == (380, 420)
+
+
+def test_line_gap_lets_a_name_in_another_font_sit_higher_than_its_figures():
+    shifted = [Word(5, 100, 60, 108, "Spring")] + [Word(RIGHT_EDGES[i] - 15, 105, RIGHT_EDGES[i], 113, v) for i, v in FULL.items()]   # Pho: the name is 4.7 pt above the figures
+    page = shifted + line(130, "Plain", FULL)
+    with pytest.raises(ValueError, match="without a name"):
+        parse_pages([page], COLUMNS)
+    rows = parse_pages([page], COLUMNS, line_gap=6)
+    assert [r["Product_Name"] for r in rows] == ["Spring", "Plain"] and rows[0]["energykJ_Per Portion"] == "323"
+
+
+def test_column_gap_widens_how_far_a_centred_cell_may_sit_from_its_column():
+    from pipeline.parsers.numeric_table import column_gap
+    rows = [line(100 + 10 * k, f"Item{k}", FULL) for k in range(3)]
+    narrow = line(130, "Narrow", {**FULL, 4: "7"})   # a one-digit cell centred in a column of three-digit cells sits 11 pt left of the others' right edge (Ask, 2026)
+    narrow = [Word(w.x0 - 11, w.y0, w.x1 - 11, w.y1, w.text) if w.text == "7" else w for w in narrow]
+    page = [w for r in rows for w in r] + narrow
+    with pytest.raises(ValueError, match="numeric columns|under no column"):
+        parse_pages([page], COLUMNS)
+    with column_gap(14):
+        got = parse_pages([page], COLUMNS)
+    assert got[-1]["energykCal_Per 100g/ml"] == "7"
+    with pytest.raises(ValueError, match="numeric columns|under no column"):   # restored afterwards
+        parse_pages([page], COLUMNS)

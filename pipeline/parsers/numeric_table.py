@@ -17,6 +17,10 @@ Source options (config/chains.yaml):
   name_below     a line of only numbers followed by a line of only text: the text is that row's name
   free_sections  name-only text that is not a wrapped name is a sub-section label; without wrapped_names, all of it is
   wrapped_names  join a name-only line directly above a data row onto that row's name
+  column_gap     how far (pt, default 9) a cell's right edge may sit from its column's right edge; widen it where cells are centred (Ask, 2026)
+  line_gap       words whose vertical centres are this close (pt, default 3) are one line; raise it where a name's font sits higher than its figures (Pho: 4.7 pt)
+  join_less_than a "<" printed apart from its figure ("< 0.5") becomes one cell "<0.5" (the space is dropped, nothing else changes)
+  join_slash_pairs  two figures with a slash between them ("101 / 110") become one cell as printed; list it under `invalid_values` (a `re:` pattern) to keep it and flag the row
   titles         page titles allowed above a table header, e.g. "Breakfast (selected restaurants only)"; each
                  persists as a parent in Category until the next one. Any other text there raises.
 
@@ -25,6 +29,7 @@ unreadable cell, a cell under no column, text between rows, raises instead of be
 """
 import re
 from collections import Counter
+from contextlib import contextmanager
 from pathlib import Path
 
 from pipeline.ingest import Word, page_words_fine
@@ -41,6 +46,17 @@ LINE_GAP = 3             # words whose vertical centres are this close are on on
 WRAP_LINES = 1.5         # a name-only line within this many line heights above a data row continues its name
 TABLE_GAP = 20           # without header lines: last-cell right edges further apart than this are different tables
 COLUMN_GAP = 9           # right edges further apart than this (pt) belong to different columns
+
+
+@contextmanager
+def column_gap(gap: float):
+    """`column_gap` option: how far (pt) a cell's right edge may sit from its column's; widen it where cells are centred (a one-digit cell among three-digit ones)."""
+    global COLUMN_GAP
+    old, COLUMN_GAP = COLUMN_GAP, gap
+    try:
+        yield
+    finally:
+        COLUMN_GAP = old
 
 
 def _lines(words: list[Word], gap: float = LINE_GAP) -> list[list[Word]]:
@@ -209,7 +225,7 @@ def _merge_wrapped_below(lines: list[list[Word]], number: re.Pattern) -> list[li
 
 
 def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None = None,
-                wrapped_names: bool = False, titles: list[str] = (), text_values: list[str] = (), furniture: list[str] = (), name_amount: bool = False, free_sections: bool = False, invalid_values: list[str] = (), name_below: bool = False, skip_lines: list[str] = (), wrap_lines: float = WRAP_LINES, nameless_rows: bool = False, section_x: float | None = None, wrap_below: bool = False) -> list[dict]:
+                wrapped_names: bool = False, titles: list[str] = (), text_values: list[str] = (), furniture: list[str] = (), name_amount: bool = False, free_sections: bool = False, invalid_values: list[str] = (), name_below: bool = False, skip_lines: list[str] = (), wrap_lines: float = WRAP_LINES, nameless_rows: bool = False, section_x: float | None = None, wrap_below: bool = False, line_gap: float = LINE_GAP) -> list[dict]:
     def extend(words):   # a word starting with "re:" is a pattern, anything else is matched as it stands
         alt = "|".join(w[3:] if w.startswith("re:") else re.escape(w) for w in words)
         return re.compile(NUMBER.pattern + "|^(?:" + alt + ")$") if words else NUMBER
@@ -218,7 +234,7 @@ def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None 
     rows = []
     parent = section = ""   # parent: a page title that persists ("Breakfast (selected restaurants only)")
     for page_no, words in enumerate(pages, start=1):
-        lines = [l for l in _lines(words) if not _is_ruler(l) and " ".join(w.text for w in l) not in skip_lines]   # skip_lines: description text printed beside a name
+        lines = [l for l in _lines(words, line_gap) if not _is_ruler(l) and " ".join(w.text for w in l) not in skip_lines]   # skip_lines: description text printed beside a name
         if name_below:
             lines = _names_from_below(lines, number)
         if wrap_below:
@@ -338,7 +354,59 @@ def only_pages(pages: list[list[Word]], spec: list | None, max_x: float | None =
             for n, p in enumerate(pages, start=1)]
 
 
+def join_less_than(pages: list[list[Word]]) -> list[list[Word]]:
+    """A lone "<" and the number right after it on the same line (gap under 8 pt) become one word "<0.5"."""
+    out = []
+    for words in pages:
+        merged, skip = [], set()
+        for i, w in enumerate(words):
+            if i in skip:
+                continue
+            nxt = next((k for k, o in enumerate(words) if k > i and w.text == "<" and o.layer == w.layer and abs((o.y0 + o.y1) / 2 - (w.y0 + w.y1) / 2) < 3
+                        and 0 <= o.x0 - w.x1 < 8 and re.match(r"^\d+(\.\d+)?$", o.text)), None)
+            if nxt is None:
+                merged.append(w)
+            else:
+                o = words[nxt]
+                merged.append(Word(w.x0, min(w.y0, o.y0), o.x1, max(w.y1, o.y1), "<" + o.text, w.layer))
+                skip.add(nxt)
+        out.append(merged)
+    return out
+
+
+def join_slash_pairs(pages: list[list[Word]]) -> list[list[Word]]:
+    """A figure, a lone "/" and a figure on one line, each within 8 pt of the next, become one word "101 / 110"."""
+    out = []
+    for words in pages:
+        merged, skip = [], set()
+        for i, w in enumerate(words):
+            if i in skip:
+                continue
+            fig = lambda o: re.match(r"^\d+(\.\d+)?$", o.text)
+            same = lambda a, b: a.layer == b.layer and abs((a.y0 + a.y1) / 2 - (b.y0 + b.y1) / 2) < 3
+            sl = next((k for k, o in enumerate(words) if k != i and o.text == "/" and same(o, w) and 0 <= o.x0 - w.x1 < 8), None) if fig(w) else None
+            nx = next((k for k, o in enumerate(words) if sl is not None and k != i and fig(o) and same(o, w) and 0 <= o.x0 - words[sl].x1 < 8), None)
+            if nx is None:
+                merged.append(w)
+            else:
+                o = words[nx]
+                merged.append(Word(w.x0, min(w.y0, o.y0), o.x1, max(w.y1, o.y1), f"{w.text} / {o.text}", w.layer))
+                skip |= {sl, nx}
+        out.append(merged)
+    return out
+
+
 def parse(pdf: Path, source: dict) -> list[dict]:
-    return parse_pages(only_pages(page_words_fine(pdf, text_flow=source.get("text_flow", False)), source.get("pages"), source.get("max_x"), source.get("skip_words", ())), source["columns"], source.get("header"),
+    pages = page_words_fine(pdf, text_flow=source.get("text_flow", False))
+    if source.get("join_less_than"):
+        pages = join_less_than(pages)
+    if source.get("join_slash_pairs"):
+        pages = join_slash_pairs(pages)
+    with column_gap(source.get("column_gap", COLUMN_GAP)):
+        return _parse(pages, source)
+
+
+def _parse(pages: list[list[Word]], source: dict) -> list[dict]:
+    return parse_pages(only_pages(pages, source.get("pages"), source.get("max_x"), source.get("skip_words", ())), source["columns"], source.get("header"),
                        source.get("wrapped_names", False), source.get("titles", ()), source.get("text_values", ()), source.get("furniture", ()), source.get("name_amount", False), source.get("free_sections", False),
-                       source.get("invalid_values", ()), source.get("name_below", False), source.get("skip_lines", ()), source.get("wrap_lines", WRAP_LINES), source.get("nameless_rows", False), source.get("section_x"), source.get("wrap_below", False))
+                       source.get("invalid_values", ()), source.get("name_below", False), source.get("skip_lines", ()), source.get("wrap_lines", WRAP_LINES), source.get("nameless_rows", False), source.get("section_x"), source.get("wrap_below", False), source.get("line_gap", LINE_GAP))
