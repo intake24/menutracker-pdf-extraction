@@ -555,3 +555,9 @@ def test_column_gap_widens_how_far_a_centred_cell_may_sit_from_its_column():
     assert got[-1]["energykCal_Per 100g/ml"] == "7"
     with pytest.raises(ValueError, match="numeric columns|under no column"):   # restored afterwards
         parse_pages([page], COLUMNS)
+
+
+def test_a_wide_line_gap_never_interleaves_two_stacked_text_lines():
+    page = [Word(5, 100, 60, 108, "Spring"), Word(63, 100, 90, 108, "Rolls"), Word(5, 105.5, 40, 113.5, "with"), Word(43, 105.5, 70, 113.5, "herbs")] + line(130, "Plain", FULL)
+    with pytest.raises(ValueError, match="overlap"):
+        parse_pages([page], COLUMNS, line_gap=6)

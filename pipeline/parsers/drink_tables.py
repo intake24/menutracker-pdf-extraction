@@ -122,8 +122,8 @@ def parse_page(words: list[dict], rules: list[float], source: dict, page_no: int
         floor = heads[k - 1] if k else -1
         header_texts = {"PRODUCT", "ALLERGENS", "SIZE", *source.get("extra_headers", ()), *(x for e in source.get("extra_headers", ()) for x in e.split())}
         titles = [i for i in range(floor + 1, h) if _is_title(lines[i], body_size, source.get("title_min_size")) and not all(w["text"] in header_texts for w in lines[i])]   # "Vitamin" of "Vitamin Content" is a header word, however large
-        if not titles:   # a title no larger than the body text (April 2026, page 22): bold capitals within two lines above the group labels
-            titles = [i for i in range(max(floor + 1, h - 2), h) if "Bold" in lines[i][0]["fontname"] and _text(lines[i]).isupper() and lines[i][0]["text"] != "PRODUCT"][:1]
+        if not titles and k == 0:   # (first table only, and never a line with figures) a title no larger than the body text (April 2026, page 22): bold capitals within two lines above the group labels
+            titles = [i for i in range(max(floor + 1, h - 2), h) if "Bold" in lines[i][0]["fontname"] and _text(lines[i]).isupper() and lines[i][0]["text"] != "PRODUCT" and not any(NUMBER.match(w["text"]) for w in lines[i])][:1]
         if not titles and k == 0:
             raise ValueError(f"page {page_no}: a table with group labels but no title above them")
         starts.append(titles[0] if titles else h)

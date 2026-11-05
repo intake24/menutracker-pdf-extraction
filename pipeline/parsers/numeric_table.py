@@ -71,7 +71,13 @@ def _lines(words: list[Word], gap: float = LINE_GAP) -> list[list[Word]]:
                 break
         else:
             lines.append([w])
-    return [sorted(line, key=lambda w: w.x0) for line in lines]
+    out = [sorted(line, key=lambda w: w.x0) for line in lines]
+    if gap > LINE_GAP:   # a wide `line_gap` must not merge two stacked text lines: their words would overlap sideways
+        for line in out:
+            for a, b in zip(line, line[1:]):
+                if b.x0 < a.x1 - 1 and a.layer == b.layer:
+                    raise ValueError(f"line_gap {gap} merged two lines whose words overlap: {a.text!r} and {b.text!r}")
+    return out
 
 
 def _is_ruler(line: list[Word]) -> bool:
@@ -384,8 +390,8 @@ def join_slash_pairs(pages: list[list[Word]]) -> list[list[Word]]:
                 continue
             fig = lambda o: re.match(r"^\d+(\.\d+)?$", o.text)
             same = lambda a, b: a.layer == b.layer and abs((a.y0 + a.y1) / 2 - (b.y0 + b.y1) / 2) < 3
-            sl = next((k for k, o in enumerate(words) if k != i and o.text == "/" and same(o, w) and 0 <= o.x0 - w.x1 < 8), None) if fig(w) else None
-            nx = next((k for k, o in enumerate(words) if sl is not None and k != i and fig(o) and same(o, w) and 0 <= o.x0 - words[sl].x1 < 8), None)
+            sl = next((k for k, o in enumerate(words) if k > i and o.text == "/" and same(o, w) and 0 <= o.x0 - w.x1 < 8), None) if fig(w) else None
+            nx = next((k for k, o in enumerate(words) if sl is not None and k > sl and fig(o) and same(o, w) and 0 <= o.x0 - words[sl].x1 < 8), None)
             if nx is None:
                 merged.append(w)
             else:

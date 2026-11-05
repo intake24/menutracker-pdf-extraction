@@ -158,3 +158,15 @@ def test_a_vitamin_content_header_printed_as_large_as_a_title_is_not_a_table_tit
         + head(250) + row(306, "Mocha")
     rows = dt.parse_page(page, [60, 118, 160, 218, 260, 318], SOURCE, 28)   # the "Vitamin Content" of the April 2026 guide, page 28
     assert [r["Product_Name"] for r in rows] == ["Latte", "Tea", "Mocha"] and {r["Category"] for r in rows} == {"TITLE"}
+
+
+def test_the_capital_title_fallback_is_only_for_the_first_table_and_never_takes_a_line_with_figures():
+    def row(top, name, size="Regular"):
+        return [w(size, 240, top)] * bool(size) + [w(str(i), 300 + 25 * i, top, size=9.5) for i in range(18)] + [w(name, 60, top, bold=True)]
+    head = lambda top: [w("Per", 300, top, bold=True, size=11), w("100g", 330, top, bold=True, size=11), w("Per", 700, top, bold=True, size=11), w("serving", 730, top, bold=True, size=11)]
+    page = [w("TITLE", 100, 20, bold=True, size=11)] + head(50) + row(106, "Latte") + row(120, "ESPRESSO", size="") + head(150) + row(206, "Tea")
+    try:
+        rows = dt.parse_page(page, [60, 118, 160, 218], SOURCE, 9)
+    except ValueError:
+        return   # stopping is fine
+    assert {r["Category"] for r in rows} == {"TITLE"}   # a data row must never become the second table's title
