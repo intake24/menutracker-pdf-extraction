@@ -812,6 +812,8 @@
         'COOKED INGREDIENT VALUES PER 100G / SUGARS g': sugars_Per 100g/ml
         'VALUES PER SLICE / ENERGY kcal per Portion': energykCal_Per Portion
         'VALUES PER SLICE / ENERGY kcal per Total': energykCal_Per Product As Sold
+        'VALUES PER SLICE / ENERGY kJ per Portion': energykJ_Per Portion
+        'VALUES PER SLICE / ENERGY kJ per Total': energykJ_Per Product As Sold
         'VALUES PER SLICE / TOTAL PRODUCT WEIGHT g': Total_Weight
         'VALUES PER SLICE / PORTION SIZE g': Serving_Size|g
         'VALUES PER SLICE / PORTION SIZE Slice': Portion_Size@Slice
@@ -827,6 +829,8 @@
         'VALUES PER SLICE / NO. OF PORTIONS Piece': Number_of_Portions
         'VALUES PER PORTION / ENERGY kcal per Portion': energykCal_Per Portion
         'VALUES PER PORTION / ENERGY kcal per Total': energykCal_Per Product As Sold
+        'VALUES PER PORTION / ENERGY kJ per Portion': energykJ_Per Portion
+        'VALUES PER PORTION / ENERGY kJ per Total': energykJ_Per Product As Sold
         'VALUES PER PORTION / TOTAL PRODUCT WEIGHT g': Total_Weight
         'VALUES PER PORTION / PORTION SIZE g': Serving_Size|g
         'VALUES PER PORTION / PORTION SIZE Slice': Portion_Size@Slice
@@ -838,6 +842,7 @@
         'VALUES PER PORTION / TOTAL PORTIONS Box of': Total_Portions
         'VALUES PER PORTION / TOTAL PORTIONS Per Box': Total_Portions
         'VALUES PER PORTION / TOTAL IN BOX Pieces': Total_Pieces
+        'VALUES PER PORTION / TOTAL IN BOX Per Box': Total_Pieces
         'VALUES PER PORTION / TOTAL IN BOX Slice': Total_Pieces
         'VALUES PER PORTION / TOTAL IN BOX Box of': Total_Pieces
         'VALUES PER PORTION / NO. OF PORTIONS Per box': Number_of_Portions
@@ -892,29 +897,27 @@
         It is a doughnut shop's allergen and nutrition guide; each page is one table of products grouped under grey headings.
         The product name is the bold text beside the picture; some have an italic line under it in brackets.
       # March 2026 batch: no allergen columns, so only the nutrition pages are read (a join with `matrix: []`). The guide's
-      # nutrition pages: doughnuts 4-14, 24, 26, 33 (drinks per 100 ml), 35-41, 44-45, 50-54.
+      # nutrition pages of the April 2026 guide (the pages that print "Nutrition Per 100g"): 4, 6, 8, 10, 19, 21, 28, 30, 32, 34, 35, 36, 39, 40, 45, 46, 47, 48, 49 (28 is per 100 ml).
       joins:
         - { matrix: [], nutrition: [4] }
         - { matrix: [], nutrition: [6] }
         - { matrix: [], nutrition: [8] }
         - { matrix: [], nutrition: [10] }
-        - { matrix: [], nutrition: [12] }
-        - { matrix: [], nutrition: [14] }
-        - { matrix: [], nutrition: [24] }
-        - { matrix: [], nutrition: [26] }
-        - { matrix: [], nutrition: [33] }
+        - { matrix: [], nutrition: [19] }
+        - { matrix: [], nutrition: [21] }
+        - { matrix: [], nutrition: [28] }
+        - { matrix: [], nutrition: [30] }
+        - { matrix: [], nutrition: [32] }
+        - { matrix: [], nutrition: [34] }
         - { matrix: [], nutrition: [35] }
-        - { matrix: [], nutrition: [37] }
+        - { matrix: [], nutrition: [36] }
         - { matrix: [], nutrition: [39] }
         - { matrix: [], nutrition: [40] }
-        - { matrix: [], nutrition: [41] }
-        - { matrix: [], nutrition: [44] }
         - { matrix: [], nutrition: [45] }
-        - { matrix: [], nutrition: [50] }
-        - { matrix: [], nutrition: [51] }
-        - { matrix: [], nutrition: [52] }
-        - { matrix: [], nutrition: [53] }
-        - { matrix: [], nutrition: [54] }
+        - { matrix: [], nutrition: [46] }
+        - { matrix: [], nutrition: [47] }
+        - { matrix: [], nutrition: [48] }
+        - { matrix: [], nutrition: [49] }
       tick_labels:
         Wheat: wheat
         Rye: rye
@@ -1634,7 +1637,21 @@
       category: food
       approved: true
       dpi: 200
-      pages: [36, 37] 
+      pages: [36] # an image page: the text layer prints no figures, so no `text_check`; `reread` checks the model's read
+      instructions: >-
+        It is a children's and non-gluten menu page of a restaurant: dishes with a name in capitals, a diet word (Vegan, Vegetarian) sometimes, the calories in words ("34 kcal") and a description.
+        section = the heading printed above a group (for example "TO START", "MAINS", "DESSERTS"). name = the dish name as printed (without the diet word and the kcal figure). kcal = the digits before
+        "kcal" for that dish. A description can carry its own kcal figure for a variant ("Make this Vegan with MozzaRisella. 900 kcal"): that is its own row, name = the text of that sentence without the figure,
+        notes = "Variant of <the dish it is printed under>". Every "kcal" figure on the page is exactly one row. Ignore allergen marks and prices.
+      fields: { kcal: energykCal_Per Portion, notes: notes }
+
+    - pdf: b6039d513237130ab53a1ddc01afb713d1aa7dde.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: true
+      dpi: 200
+      pages: [37]
       text_check: { field: kcal, pattern: '(\d[\d,]*)\s?kcal', strip: ',', ignore: [2000] }
       instructions: >-
         It is a children's and non-gluten menu page of a restaurant: dishes with a name in capitals, a diet word (Vegan, Vegetarian) sometimes, the calories in words ("34 kcal") and a description.
@@ -1706,7 +1723,21 @@
       category: food
       approved: true
       dpi: 200
-      pages: [35, 36] 
+      pages: [35] # an image page: the text layer prints no figures, so no `text_check`; `reread` checks the model's read
+      instructions: >-
+        It is a children's and non-gluten menu page of a restaurant: dishes with a name in capitals, a diet word (Vegan, Vegetarian) sometimes, the calories in words ("34 kcal") and a description.
+        section = the heading printed above a group (for example "TO START", "MAINS", "DESSERTS"). name = the dish name as printed (without the diet word and the kcal figure). kcal = the digits before
+        "kcal" for that dish. A description can carry its own kcal figure for a variant ("Make this Vegan with MozzaRisella. 900 kcal"): that is its own row, name = the text of that sentence without the figure,
+        notes = "Variant of <the dish it is printed under>". Every "kcal" figure on the page is exactly one row. Ignore allergen marks and prices.
+      fields: { kcal: energykCal_Per Portion, notes: notes }
+
+    - pdf: c476e315ae38db7a9722b0d4ecfc58c1c3f1c7f4.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: true
+      dpi: 200
+      pages: [36]
       text_check: { field: kcal, pattern: '(\d[\d,]*)\s?kcal', strip: ',', ignore: [2000] }
       instructions: >-
         It is a children's and non-gluten menu page of a restaurant: dishes with a name in capitals, a diet word (Vegan, Vegetarian) sometimes, the calories in words ("34 kcal") and a description.
@@ -1801,7 +1832,7 @@
       category: food
       approved: true
       dpi: 200
-      pages: [1, 2]
+      pages: [1] # page 2 is a pattern-only back page
       text_check: *cb_check
       instructions: *cb_instructions
       fields: *cb_fields
