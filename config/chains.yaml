@@ -64,6 +64,14 @@
       wrapped_names: true
       columns: *pizza_express_columns
       approved: true
+    - pdf: QSR-Nutrition-PDF---May-26.ashx.pdf
+      parser: numeric_table
+      region: UK # QSR Brixton (listed under Pizza Express in the June 2026 PDF list)
+      category: food
+      header: Energy
+      wrapped_names: true
+      columns: *pizza_express_columns
+      approved: true
 
 16_Beefeater:
   chain: Beefeater
@@ -531,6 +539,17 @@
         ("PICK'N'MIX"). name = the bold item name exactly as printed (it may contain " - "); size = empty;
         portion = the Portion/Pack Size cell ("100g").
       fields: *vue_fields
+    - pdf: M20493-Nutritional-Info-ICECREAM.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: true
+      instructions: >-
+        It is a nutrition table of cinema ice cream; all figures are per portion. section = the orange heading above the rows ("ICE CREAM SCOOPED PRODUCTS", "TOPPINGS FOR ICE CREAMS/SUNDAE'S", "AVALANCHE ICE CREAM").
+        Each item is a bold name; under the scooped products the line below it starts with "1 Scoop Tub": name = the bold name, size = that text as printed, portion = the Portion/Pack Size cell ("85g").
+        For an item that has one line with a weight or a count in the Portion/Pack Size cell ("20g", "Per 1", "1 Serving"), name = the bold name (a name can wrap onto two lines: join them), size = empty,
+        portion = that cell. A blank figure cell stays empty and "Trace" stays "Trace".
+      fields: *vue_fields
 59_Odeon:
   chain: Odeon
   allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
@@ -946,7 +965,7 @@
       category: food
       approved: true
       dpi: 200
-      pages: ['20-31']
+      pages: ['12-15'] # the nutrition pages; 1-11 are allergens and ingredients
       instructions: >-
         It is a nutrition page of a restaurant menu with one or more tables under a grey header row. section = the heading line above a group of rows ("Sides", "Dips & Bits
         Station", "Pizza", "Desserts"). In a table of pizzas (the header says "Weight of Pizza (g)" and "Number of Slices per Pizza") the pizza name is a line of its own above its rows
@@ -1332,6 +1351,17 @@
         Blackcurrant or Orange") is one name, whole. Do not return prices, text without a kcal figure, the drinks list
         without kcal, allergen keys or badges. Before you answer, count the brackets with "kcal" on the page and check that you return exactly that many rows.
       fields: &ck_fields { kcal: energykCal_Per Portion, notes: notes }
+    - pdf: cookhouse_and_pub_kids_menu_default.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: true
+      golden: cookhouse_and_pub_kids_menu_default__2026-06 # the May 2025 PDF has the same name
+      dpi: 250
+      pages: [1, 2]
+      text_check: *ck_check
+      instructions: *ck_instructions
+      fields: *ck_fields
 73_TopGolf:
   chain: TopGolf
   allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
@@ -1424,13 +1454,13 @@
       region: UK
       category: food
       approved: true
-      pages: ['3-14']
+      pages: ['3-16']
       max_x: 392 # the Dietary, Contains and May Contain columns (allergens are not read) start at x 395
       header: Kcal
       wrapped_names: true
       name_fixes: { 'Spiced Apple': 'Spiced Apple Margarita (Glass)' } # the name wraps onto a line under its figures
-      titles: ['Medium Burrito / Bowl', 'Large Burrito / Bowl', 'Medium Salad', 'Large Salad', 'Tres Tacos', 'Nachos Queso', 'Quesadilla', 'Protein Pots', 'Sides', 'Kids Burrito/Naked Burrito', 'Breakfast Roll', 'Breakfast Quesadilla', 'MeDiuM Burrito / Bowl', 'large Burrito / Bowl', 'MeDiuM salaD', 'large salaD', 'tres tacos', 'nacHos Queso', 'QuesaDilla', 'protein pots', 'siDes', 'KiDs Burrito/naKeD Burrito', 'BreaKfast roll', 'BreaKfast QuesaDilla', 'DrinKs']
-      furniture: [Energy, Menu Item, 'Fat Sat fat Carbs Sugars Fibre Protein Salt', '(g) (g) (g) (g) (g) (g) (g)']
+      titles: ['Medium Burrito / Bowl', 'Large Burrito / Bowl', 'Medium Salad', 'Large Salad', 'Tres Tacos', 'Nachos Queso', 'Quesadilla', 'Protein Pots', 'Sides', 'Kids Burrito/Naked Burrito', 'Breakfast Roll', 'Breakfast Quesadilla', 'MeDiuM Burrito / Bowl', 'large Burrito / Bowl', 'MeDiuM salaD', 'large salaD', 'tres tacos', 'nacHos Queso', 'QuesaDilla', 'protein pots', 'siDes', 'KiDs Burrito/naKeD Burrito', 'BreaKfast roll', 'BreaKfast QuesaDilla', 'DrinKs', 'LARGE BALANCE BOWL', 'LARGE PROTEIN BOWL', 'Breakfast Quesadilla']
+      furniture: [Energy, Menu Item, 'Fat Sat fat Carbs Sugars Fibre Protein Salt', '(g) (g) (g) (g) (g) (g) (g)', 'Menu Fat Sat fat Carbs Sugars Fibre Protein Salt', 'item (g) (g) (g) (g) (g) (g) (g)']
       skip_lines: ['Hot DrinKs', 'Contains May', 'Menu Item Dietary', 'Allergens Contain', 'Kcal', 'Espresso Single / Double 2.0 V,VE', 'Americano 22.0 V,VE', 'English Breakfast Tea 15.0 V,VE', 'Peppermint Tea - V,VE', 'Cappuccino 116.0 V Milk', 'Iced Coffee 71.0 Milk', 'Latte 136.0 V Milk', 'Mocha 200.0 V Milk'] # the Hot Drinks table (kcal only, read by the next source)
       columns:
         - energykCal_Per Portion
@@ -1448,9 +1478,9 @@
       category: drinks
       approved: true
       dpi: 200
-      pages: [14]
+      pages: [16]
       instructions: >-
-        Page 14 has several tables. Return only the rows of the table headed "Hot Drinks": one row per drink (Espresso Single / Double, Americano, English Breakfast Tea,
+        Page 16 has several tables. Return only the rows of the table headed "Hot Drinks": one row per drink (Espresso Single / Double, Americano, English Breakfast Tea,
         Peppermint Tea, Cappuccino, Iced Coffee, Latte, Mocha). section = "Hot Drinks", name = the drink as printed, size = empty, portion = empty, kcal = the figure in the
         Energy Kcal column exactly as printed ("-" when the cell shows a dash). Ignore the dietary and allergen columns and every other table on the page.
       fields: { kcal: energykCal_Per Portion }
@@ -1460,6 +1490,23 @@
   allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
   sources:
     - pdf: TRG–Allergen–Menu-Spring–26.pdf
+      parser: numeric_table
+      region: UK
+      category: food
+      approved: true
+      max_x: 615 # the ALLERGENS column (letter codes) starts at x 622, right of the Salt column
+      wrapped_names: true
+      skip_lines: [ITEM] # the first column's header is not a section
+      columns:
+        - energykCal_Per Portion
+        - protein_Per Portion
+        - fat_Per Portion
+        - saturates_Per Portion
+        - carbohydrates_Per Portion
+        - sugars_Per Portion
+        - fibre_Per Portion
+        - salt_Per Portion
+    - pdf: TRG–Deliveroo-Allergen–Spring–Menu–26.pdf
       parser: numeric_table
       region: UK
       category: food
@@ -1604,7 +1651,7 @@
       category: food
       approved: true
       dpi: 200
-      pages: ['2-19']
+      pages: ['2-18']
       text_check: &tesco_check { field: kcal, pattern: '(\d+(?:/\d+)?)\s?kcal', ignore: [2000, '–', '-'], page_ignore: { '8': ['75', '50/75', '50 / 75'] } }
       instructions: &tesco_instructions >-
         It is a landscape allergen matrix of a cafe menu: a row per item with the item name on the left, "kcal per serving" next to it and allergen marks (Y or M) to the right. section = the page heading
@@ -1619,7 +1666,7 @@
       category: food
       approved: true
       dpi: 200
-      pages: ['2-17']
+      pages: ['2-16']
       text_check: *tesco_check
       instructions: *tesco_instructions
       fields: *tesco_fields
@@ -1636,7 +1683,7 @@
       category: food
       approved: true
       dpi: 200
-      pages: ['4', '6-9', '11-17', '19-21', '23-24']
+      pages: ['4-7', '9-15', '17-20', '22-23', '25', '27-28'] # dividers (MENU, COLD LUNCH, SPECIFIC) are 1-3, 8, 16, 21, 24, 26
       instructions: &soho_instructions >-
         It is a landscape ingredient and nutrition guide of a coffee shop: one product per row. Columns: Product (with a short name on the left), Vegetarian?, Vegan?, Ingredients (long text),
         then Energy (kJ), Energy (kcal), Fat (g), Of which saturates (g), Carbohydrates (g), Of which sugars (g), Fibre (g), Protein (g), Salt (g). section = the group heading printed in the product column
@@ -1649,6 +1696,6 @@
       category: drinks
       approved: true
       dpi: 200
-      pages: ['4-6', '8-15', '17-18', '20-22', '24-26', '28-29', '31', '33', '35-36', '38-41']
+      pages: ['4', '6-13', '15-16', '18-25', '27-28', '30', '32', '34-35', '37-40'] # dividers are 1-3, 5, 14, 17, 26, 29, 31, 33, 36
       instructions: *soho_instructions
       fields: *soho_fields
