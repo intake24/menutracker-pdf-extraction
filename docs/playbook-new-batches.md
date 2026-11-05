@@ -146,6 +146,10 @@ Checks that caught real problems: a stricter size rule found three-sizes-for-two
 
 Known limits: the PDF-bound tests read the May PDFs (see the end-of-round report of March 2026); PDFs whose only nutrition is calories written as words (Tesco, Ask Italian pages 40 to 41) and long ingredient guides with non-bold names (Soho Coffee) are read by the model with a `text_check` or a second read.
 
+## 5d. Lessons of the June 2026 batch
+
+New `numeric_table` options: `join_less_than`, `join_slash_pairs`, `line_gap` (with an overlap guard), `column_gap`. New `guide_rows` option: `menus`; sizes with a number in front. `drink_tables`: a title line split from group labels, small bold titles (first table only), header words never titles. Procedure notes: print the first lines of every page and set `pages` before any model call; a model-read page without a column header needs the column order in the instruction; run `reread` on every model-read source without a `text_check` and treat label-only disagreements as noise; one unapproved source stops its chain, so delete a source with no PDF instead of parking it; write golden rows after the last change that re-reads pages. Guides with many table layouts in one PDF (Wasabi) need a per-page header survey first. Details: `end-of-round-report-2026-06.md` section 5.
+
 ## 6. The model route (`claude -p`, `claude-sonnet-5-5`)
 
 - One page image per call, schema-constrained, cached by image + prompt + schema + model (`work/llm/`).
