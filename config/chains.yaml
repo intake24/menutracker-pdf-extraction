@@ -507,6 +507,8 @@
         as "Kids/Snackit", "Regular", "Large": for those rows name = the bold name above them, size = the left cell,
         portion = empty. For an item that has a single row with a weight or count in the left cell, name = the bold
         name, size = empty, portion = that cell.
+        The figure columns are always, left to right: kilojoules, calories, protein, carbohydrate, of which sugars, fat, of which saturates, fibre, sodium, salt. Some pages (for example page 5) print no column
+        header: read their figures in this same order.
       fields: &vue_fields
         kj: energykJ_Per Portion
         kcal: energykCal_Per Portion
@@ -535,6 +537,7 @@
       region: UK
       category: food
       approved: true
+      dpi: 130 # a second read at another resolution than the first (150) after the first misread Haribo Gold Bears saturates (0.5 for 0.1)
       instructions: >-
         It is a nutrition table of sweets; all figures are per portion. section = the orange heading above the rows
         ("PICK'N'MIX"). name = the bold item name exactly as printed (it may contain " - "); size = empty;
@@ -812,8 +815,8 @@
         'COOKED INGREDIENT VALUES PER 100G / SUGARS g': sugars_Per 100g/ml
         'VALUES PER SLICE / ENERGY kcal per Portion': energykCal_Per Portion
         'VALUES PER SLICE / ENERGY kcal per Total': energykCal_Per Product As Sold
-        'VALUES PER SLICE / ENERGY kJ per Portion': energykJ_Per Portion
-        'VALUES PER SLICE / ENERGY kJ per Total': energykJ_Per Product As Sold
+        'VALUES PER SLICE / ENERGY kJ per Portion': energykCal_Per Portion # printed "kcal per Portion": the model misread the unit of the header on page 27 (checked on the image); this guide prints no kJ per portion
+        'VALUES PER SLICE / ENERGY kJ per Total': energykCal_Per Product As Sold # printed "kcal per Total", same misread
         'VALUES PER SLICE / TOTAL PRODUCT WEIGHT g': Total_Weight
         'VALUES PER SLICE / PORTION SIZE g': Serving_Size|g
         'VALUES PER SLICE / PORTION SIZE Slice': Portion_Size@Slice
@@ -829,8 +832,8 @@
         'VALUES PER SLICE / NO. OF PORTIONS Piece': Number_of_Portions
         'VALUES PER PORTION / ENERGY kcal per Portion': energykCal_Per Portion
         'VALUES PER PORTION / ENERGY kcal per Total': energykCal_Per Product As Sold
-        'VALUES PER PORTION / ENERGY kJ per Portion': energykJ_Per Portion
-        'VALUES PER PORTION / ENERGY kJ per Total': energykJ_Per Product As Sold
+        'VALUES PER PORTION / ENERGY kJ per Portion': energykCal_Per Portion # printed "kcal per Portion": the model misread the unit of the header on page 27 (checked on the image); this guide prints no kJ per portion
+        'VALUES PER PORTION / ENERGY kJ per Total': energykCal_Per Product As Sold # printed "kcal per Total", same misread
         'VALUES PER PORTION / TOTAL PRODUCT WEIGHT g': Total_Weight
         'VALUES PER PORTION / PORTION SIZE g': Serving_Size|g
         'VALUES PER PORTION / PORTION SIZE Slice': Portion_Size@Slice
@@ -1794,7 +1797,7 @@
         It is a landscape ingredient and nutrition guide of a coffee shop: one product per row. Columns: Product (with a short name on the left), Vegetarian?, Vegan?, Ingredients (long text),
         then Energy (kJ), Energy (kcal), Fat (g), Of which saturates (g), Carbohydrates (g), Of which sugars (g), Fibre (g), Protein (g), Salt (g). section = the group heading printed in the product column
         or above the rows (for example "Pastries", "Iced Tea"), or the menu named in the page head if there is none. name = the Product exactly as printed (it wraps over several lines: join them; a bracket
-        such as "(whole milk)" belongs to the name). Ignore the ingredients and the ticks. The nine figures are exactly as printed, as strings; leave a blank cell empty. Return every product of the page.
+        such as "(whole milk)" belongs to the name). The words "ALLERGEN UPDATE" (a tag printed under some oat-milk names) are not part of the name: leave them out. Ignore the ingredients and the ticks. The nine figures are exactly as printed, as strings; leave a blank cell empty. Return every product of the page.
       fields: &soho_fields { kj: energykJ_Per Portion, kcal: energykCal_Per Portion, fat: fat_Per Portion, saturates: saturates_Per Portion, carbohydrate: carbohydrates_Per Portion, sugars: sugars_Per Portion, fibre: fibre_Per Portion, protein: protein_Per Portion, salt: salt_Per Portion }
     - pdf: 2026-Nutritional-Matrix-Drinks-V3-Summer-Copy1.pdf
       parser: vision_table

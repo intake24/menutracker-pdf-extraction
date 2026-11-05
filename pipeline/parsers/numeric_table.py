@@ -59,7 +59,7 @@ def column_gap(gap: float):
         COLUMN_GAP = old
 
 
-def _lines(words: list[Word], gap: float = LINE_GAP) -> list[list[Word]]:
+def _lines(words: list[Word], gap: float = LINE_GAP, check_overlap: bool = False) -> list[list[Word]]:
     """Group words into lines by vertical centre; words of different layers (rows printed over each other) never
     share a line."""
     lines: list[list[Word]] = []
@@ -72,7 +72,7 @@ def _lines(words: list[Word], gap: float = LINE_GAP) -> list[list[Word]]:
         else:
             lines.append([w])
     out = [sorted(line, key=lambda w: w.x0) for line in lines]
-    if gap > LINE_GAP:   # a wide `line_gap` must not merge two stacked text lines: their words would overlap sideways
+    if check_overlap and gap > LINE_GAP:   # (numeric_table only; grouped_table has rotated labels) a wide `line_gap` must not merge two stacked text lines: their words would overlap sideways
         for line in out:
             for a, b in zip(line, line[1:]):
                 if b.x0 < a.x1 - 1 and a.layer == b.layer:
@@ -240,7 +240,7 @@ def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None 
     rows = []
     parent = section = ""   # parent: a page title that persists ("Breakfast (selected restaurants only)")
     for page_no, words in enumerate(pages, start=1):
-        lines = [l for l in _lines(words, line_gap) if not _is_ruler(l) and " ".join(w.text for w in l) not in skip_lines]   # skip_lines: description text printed beside a name
+        lines = [l for l in _lines(words, line_gap, True) if not _is_ruler(l) and " ".join(w.text for w in l) not in skip_lines]   # skip_lines: description text printed beside a name
         if name_below:
             lines = _names_from_below(lines, number)
         if wrap_below:
