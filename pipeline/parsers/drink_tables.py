@@ -86,6 +86,14 @@ def parse_page(words: list[dict], rules: list[float], source: dict, page_no: int
     furniture = tuple(source.get("furniture", ()))
     words = [w for w in words if w["size"] >= MIN_SIZE]
     lines = [line for line in _lines(words) if not _text(line).startswith(furniture)]
+    split = []   # "PRODUCT ALLERGENS Per 100g Per serving" on one line (the April 2026 guide, page 15): the group labels start the table, the header words follow
+    for line in lines:
+        cut = next((i for i, w in enumerate(line) if w["text"] == "Per" and "Bold" in w["fontname"]), 0)
+        if cut and all(w["text"] in ("PRODUCT", "ALLERGENS", "SIZE") for w in line[:cut]):
+            split += [line[cut:], line[:cut]]
+        else:
+            split.append(line)
+    lines = split
     heads = [i for i, line in enumerate(lines) if _text(line).startswith("Per ") and "Bold" in line[0]["fontname"]]   # the group labels start a table
     sizes = [round(w["size"], 1) for w in words if "Bold" not in w["fontname"]]
     body_size = max(set(sizes), key=sizes.count) if sizes else 9.5
@@ -112,7 +120,10 @@ def parse_page(words: list[dict], rules: list[float], source: dict, page_no: int
     starts = []   # a table starts at its title; a table with none (a second table under one title) starts at its group labels
     for k, h in enumerate(heads):
         floor = heads[k - 1] if k else -1
-        titles = [i for i in range(floor + 1, h) if _is_title(lines[i], body_size, source.get("title_min_size"))]
+        header_texts = {"PRODUCT", "ALLERGENS", "SIZE", *source.get("extra_headers", ()), *(x for e in source.get("extra_headers", ()) for x in e.split())}
+        titles = [i for i in range(floor + 1, h) if _is_title(lines[i], body_size, source.get("title_min_size")) and not all(w["text"] in header_texts for w in lines[i])]   # "Vitamin" of "Vitamin Content" is a header word, however large
+        if not titles:   # a title no larger than the body text (April 2026, page 22): bold capitals within two lines above the group labels
+            titles = [i for i in range(max(floor + 1, h - 2), h) if "Bold" in lines[i][0]["fontname"] and _text(lines[i]).isupper() and lines[i][0]["text"] != "PRODUCT"][:1]
         if not titles and k == 0:
             raise ValueError(f"page {page_no}: a table with group labels but no title above them")
         starts.append(titles[0] if titles else h)
@@ -179,7 +190,7 @@ def _table(above: list[list[dict]], body: list[list[dict]], rules: list[float], 
     if not rows:
         raise ValueError(f"page {page_no}, {title}: the table has no data rows")
     if titles_chars is not None and source.get("figure_titles"):
-        read = _figure_titles(titles_chars, _centre(labels[0]), min(r["y"] for r in rows))
+        read = _figure_titles(titles_chars, labels[0]["top"], min(r["y"] for r in rows))   # from the top of the group labels: the longest rotated title (Protein) can reach up beside them
         if read != list(source["figure_titles"]) * len(group_names):
             raise ValueError(f"page {page_no}, {title}: the figure titles read {read}, the config expects {list(source['figure_titles']) * len(group_names)}")
     anchors = _anchors([w["x1"] for r in rows for w in r["figures"]])

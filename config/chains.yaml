@@ -979,11 +979,11 @@
       approved: true
       skip_allergens: true # March 2026 batch: no allergen columns (docs/goal-batch-2026-03.md)
       heading_notes: true # "Porridge is made with Whole Milk as standard." under a heading is the note of its rows
-      rule_width: 450 # page 11 draws stripes 405 pt wide behind some declarations; the row rules are 487 pt
-      pages: ['10-26'] # pages 4-9 of the January 2026 guide are an allergen summary and how-to text
-      name_size: 5.8 # names and tags are 6 pt, the ingredient declaration 5.3 pt
-      title_size: 7 # section titles are 7.9 pt
-      nutrition_x0: 432
+      rule_width: 670 # the May 2026 guide is 888 pt wide (1.49 x the January 2026 guide): row rules are 731 pt, stripes behind some declarations 604 pt
+      pages: ['10-25'] # pages 1-9 of the May 2026 guide are an allergen summary and how-to text
+      name_size: 8.7 # names and tags are 9 pt, the ingredient declaration 8.1 pt
+      title_size: 10.4 # section titles are 10.9 pt
+      nutrition_x0: 640 # the labels start at 643-668 ("Portion weight (g)" at 643)
       header_word: PRODUCT
       markers: { '': 'No' }
       furniture:
@@ -1030,14 +1030,14 @@
     # lists all allergens of its drinks, so an allergen not listed is "No".
     - pdf: C1-Core-Beverage-Allergen-Nutritional-Information-April-26-v1.pdf
       parser: drink_tables
-      unlabelled_pages: { 17: ['Per 100ml', 'Per product'] } # page 17 (Cold Foam - Iced Americano) prints its figures with no "Per 100ml / Per product" labels: assumed to be the same two groups as every other page
+      unlabelled_pages: { 18: ['Per 100ml', 'Per product'] } # page 18 (Cold Foam - Iced Americano) prints its figures with no "Per 100ml / Per product" labels: assumed to be the same two groups as every other page
       invalid_values: ['####'] # per-product kJ cells too narrow for their figure in the 2026 guide; kept as printed and flagged
       region: UK
       category: drinks
       approved: true
-      pages: ['3-28']
+      pages: ['3-32']
       markers: { '': 'No' }
-      furniture: [Core Beverage Allergen, 'Issued:']
+      furniture: [Core Beverage Allergen, 'Issued:', 'We take care to list all allergens'] # the April 2026 guide prints the allergen disclaimer in every page's footer
       sizes:
         [
           Single,
@@ -1075,15 +1075,46 @@
         Per 15ml: { base: Per Portion, serving: 15 ml, split: true }
         Per 22.5ml: { base: Per Portion, serving: 22.5 ml, split: true }
     - pdf: C1-Birthday-Food-Drinks-Nutritional-Allergen-Info-April-2026-Issue-Date-08.04.26.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: true
+      dpi: 200
+      pages: [3, 4] # the two food pages (one product each); the geometry differs per page (744 and 1066 pt wide), so the model reads them
+      instructions: >-
+        It is a product page of a coffee shop's ingredient guide: one product (a bold name, sometimes with "NEW" in front, then a diet tag such as (V)), its ingredient declaration, and a nutrition column with two figure
+        columns: "per 100g" and "per portion (g)", rows KJ, Kcal, Fat, Sat, Carbs, Sugar, Fibre, Protein, Salt and a last line "Portion weight (g)". The page may also carry an allergen matrix with stars above the product: ignore it.
+        section = the heading printed above the product (for example "PASTRIES", "BIRTHDAY CAKE"), or empty. name = the product name as printed, without the diet tag and without the word "NEW". portion = the "Portion weight (g)" value
+        followed by "g". The figures are exactly as printed, as strings: kj_100 and kj_portion are the KJ row's two cells, and so on for each row. Return one row per product on the page.
+      fields:
+        kj_100: energykJ_Per 100g/ml
+        kcal_100: energykCal_Per 100g/ml
+        fat_100: fat_Per 100g/ml
+        saturates_100: saturates_Per 100g/ml
+        carbohydrate_100: carbohydrates_Per 100g/ml
+        sugars_100: sugars_Per 100g/ml
+        fibre_100: fibre_Per 100g/ml
+        protein_100: protein_Per 100g/ml
+        salt_100: salt_Per 100g/ml
+        kj_portion: energykJ_Per Portion
+        kcal_portion: energykCal_Per Portion
+        fat_portion: fat_Per Portion
+        saturates_portion: saturates_Per Portion
+        carbohydrate_portion: carbohydrates_Per Portion
+        sugars_portion: sugars_Per Portion
+        fibre_portion: fibre_Per Portion
+        protein_portion: protein_Per Portion
+        salt_portion: salt_Per Portion
+    - pdf: C1-Birthday-Food-Drinks-Nutritional-Allergen-Info-April-2026-Issue-Date-08.04.26.pdf
       parser: drink_tables
       invalid_values: ['####'] # per-product kJ cells too narrow for their figure in the 2026 guide; kept as printed and flagged
       region: UK
       category: drinks
       approved: true
-      pages: ['4-6']
+      pages: [6] # page 5 is a sample Latte table with an EXAMPLE watermark across it (not read); pages 3-4 are food (the next source); 1-2 are how-to text
       title_min_size: 10.5 # product names are bold 10 pt, titles bold 11 pt; the body text is 7 pt
       markers: { '': 'No' }
-      furniture: [Core Beverage Allergen, 'Issued:', 'V:', 'Winter Drinks Allergen', '4 of 6', '5 of 6', '6 of 6', 'allergen free', 'We take care']
+      furniture: [Core Beverage Allergen, 'Issued:', 'Version:', 'Autumn Drinks Allergen', 'Seasonal Drinks Allergen', 'Within this guide', 'allergen free', 'We take care']
       sizes:
         [
           Single,

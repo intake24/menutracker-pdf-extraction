@@ -127,3 +127,34 @@ def test_title_min_size_keeps_a_bold_product_name_from_being_taken_for_a_table_t
              w("Per", 700, 190, bold=True, size=11), w("product", 730, 190, bold=True, size=11)] + row(220, "Mocha")
     rows = dt.parse_page(page, [60, 118, 150, 232], {**SOURCE, "title_min_size": 10.5}, 3)
     assert [r["Product_Name"] for r in rows] == ["Latte", "Tea", "Mocha"]
+
+
+def test_group_labels_printed_on_the_line_of_the_product_and_allergen_headers_still_start_a_table():
+    def row(top, name):
+        return [w("Regular", 240, top)] + [w(str(i), 300 + 25 * i, top, size=7) for i in range(18)] + [w(name, 60, top, bold=True, size=10)]
+    page = [w("TITLE", 100, 20, bold=True, size=11), w("PRODUCT", 60, 50, bold=True), w("ALLERGENS", 150, 50, bold=True),
+            w("Per", 300, 50, bold=True, size=11), w("100g", 330, 50, bold=True, size=11),
+            w("Per", 700, 50, bold=True, size=11), w("serving", 730, 50, bold=True, size=11)] + row(106, "Latte")   # April 2026 new drinks (page 15)
+    rows = dt.parse_page(page, [60, 118, 150], SOURCE, 15)
+    assert [r["Product_Name"] for r in rows] == ["Latte"] and rows[0]["Size"] == "Regular"
+
+
+def test_a_bold_capital_title_as_small_as_the_body_text_is_found_just_above_its_group_labels():
+    def row(top, name):
+        return [w("Regular", 240, top)] + [w(str(i), 300 + 25 * i, top, size=9.5) for i in range(18)] + [w(name, 60, top, bold=True)]
+    page = [w("NEW", 100, 20, bold=True), w("TEA", 130, 20, bold=True), w("A subtitle", 100, 35, size=11),
+            w("Per", 300, 50, bold=True, size=11), w("100g", 330, 50, bold=True, size=11),
+            w("Per", 700, 50, bold=True, size=11), w("serving", 730, 50, bold=True, size=11)] + row(106, "Latte")   # April 2026 page 22: title 10 pt bold, the body figures 10 pt
+    [r] = dt.parse_page(page, [60, 118], SOURCE, 22)
+    assert r["Category"] == "NEW TEA" and r["Product_Name"] == "Latte"
+
+
+def test_a_vitamin_content_header_printed_as_large_as_a_title_is_not_a_table_title():
+    def row(top, name):
+        return [w("Regular", 240, top)] + [w(str(i), 300 + 25 * i, top, size=9.5) for i in range(18)] + [w(name, 60, top, bold=True, size=9.5)]
+    head = lambda top: [w("Per", 300, top, bold=True, size=11), w("100ml", 330, top, bold=True, size=11), w("Per", 700, top, bold=True, size=11), w("product", 730, top, bold=True, size=11)]
+    page = [w("TITLE", 100, 20, bold=True, size=11)] + head(50) + row(106, "Latte") \
+        + head(150) + [w("Vitamin", 150, 163, bold=True, size=11), w("PRODUCT", 60, 166, bold=True, size=11), w("Content", 150, 178, bold=True, size=11)] + row(206, "Tea") \
+        + head(250) + row(306, "Mocha")
+    rows = dt.parse_page(page, [60, 118, 160, 218, 260, 318], SOURCE, 28)   # the "Vitamin Content" of the April 2026 guide, page 28
+    assert [r["Product_Name"] for r in rows] == ["Latte", "Tea", "Mocha"] and {r["Category"] for r in rows} == {"TITLE"}
