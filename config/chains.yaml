@@ -411,8 +411,8 @@
       region: UK
       category: food
       approved: true
-      # Page 2 only (gluten free, plant-based, cheeky little, delight pizzas and Absolute Banger). The page
-      # holds six small tables with different row labels, so each table is cropped and read from its image. No allergen information.
+      # Page 2 only (gluten free, plant-based, cheeky little, Italiano range, delight pizzas and Absolute Banger; the
+      # Italiano table is new in the April 2026 guide). The page holds six small tables with different row labels, so each table is cropped and read from its image. No allergen information.
       pages: [2]
       dpi: 150
       variant_columns: true
@@ -420,7 +420,7 @@
       # The print on this page is too small for the model: at 150 dpi it misread about a quarter of the figures (758 for 708).
       # So only the labels (section, pizza, cheese, crust, size) come from the model; every figure comes from the text layer.
       figures_from_text:
-        line_gap: 4.5 # two rows of the Plant-Based table print their name and per slice figures 3 pt apart
+        line_gap: 3.5 # rows of the Plant-Based and Italiano tables print their per slice figures 3 pt below the per pizza ones (4.5 merges neighbouring rows of the new table)
         size_x0: 192
         size_order: [Large, Medium, Small, Personal]
         columns:
@@ -444,7 +444,7 @@
           - protein_Per Slice
           - salt_Per Slice
           - sodium_Per Slice
-      crop_dpi: { 2-5: 230 } # the big Absolute Banger table: its print is too small at 150
+      crop_dpi: { 2-4: 230, 2-6: 230 } # the two big tables (Italiano range, Absolute Banger): their print is too small at 150
       crops:
         {
           2:
@@ -452,8 +452,9 @@
               [80, 138],
               [138, 212],
               [212, 298],
-              [298, 360],
-              [360, 560],
+              [298, 512],
+              [512, 572],
+              [572, 770],
             ],
         }
       instructions: >-
