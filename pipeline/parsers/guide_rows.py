@@ -14,6 +14,7 @@ Source options (config/chains.yaml):
   heading_size     smallest type size (pt) of a section bar's text
   default_base     the base of figures under a bar with no label ("Per Portion"); no_allergen_marks: marks in the summary column that mean none ("-")
   bar_bases        text of the bar's dashed label ("per portion") -> dictionary base ("Per Portion"); an unknown label raises
+  menus            {page: menu name} for pages whose running head has no menu part (only "Version: ...")
   menu_word        the page's menu is the last "|"-separated part of the running head
   furniture        texts of the page head; markers {"": "No"}: the guide summarises every allergen, so an unlisted one is absent
 A row with no name, a figure line with a wrong number of figures, a Y/N cell that is not Y or N, text that is not a name, a declaration,
@@ -75,8 +76,9 @@ def parse_page(words: list[dict], rules: list[tuple[float, float, float]], sourc
     seps = [y for y in wide if body_top <= y < footer]
     head = _lines([w for w in words if w["top"] < 40])
     menu = re.sub(r"\s*Version:.*$", "", _text([w for l in head for w in l]).split("|")[-1]).strip() if head else ""   # the head ends with the guide's version
+    menu = menu or str(source.get("menus", {}).get(page_no, ""))   # `menus`: the pages of the June 2026 beverage guide whose head carries only the version
     if not menu:
-        raise ValueError(f"page {page_no}: no running head found")
+        raise ValueError(f"page {page_no}: no running head found (name the menu in `menus`)")
     out = []
     # section bars first: lines of large type (a bar's label can be drawn above the rule that bounds the row it belongs to)
     big = [w for w in words if w["size"] >= source.get("heading_size", 6.8) and body_top <= _centre(w) < footer and w["top"] > body_top - 1]
@@ -134,7 +136,9 @@ def parse_page(words: list[dict], rules: list[tuple[float, float, float]], sourc
         allergen_words = [w for w in inside if w["x0"] >= all_x0 and not NUMBER.match(w["text"])]
         figure_ids = {id(w) for nums in figures_by_line for w in nums}
         size_x0 = source.get("size_x0")
-        size_words = [w for w in inside if size_x0 is not None and size_x0 <= w["x0"] < fig_x0 and not NUMBER.match(w["text"]) and "Bold" not in w["fontname"]]
+        in_size = [w for w in inside if size_x0 is not None and size_x0 <= w["x0"] < fig_x0 and "Bold" not in w["fontname"]]
+        # a number in front of a size word on the same line belongs to the size ("1 pump", "2 pumps" of the June 2026 syrup table)
+        size_words = [w for w in in_size if not NUMBER.match(w["text"]) or any(not NUMBER.match(o["text"]) and abs(_centre(o) - _centre(w)) < 2 and o["x0"] > w["x0"] for o in in_size)]
         declaration = [w for w in inside if id(w) not in figure_ids and w not in name_words and w not in diet_words and w not in allergen_words and w not in size_words]
         stray = [w for w in declaration if w["x0"] < name_x1 or w["x0"] >= all_x0 or "Bold" in w["fontname"] and w["x1"] <= name_x1]
         if stray:
@@ -173,7 +177,8 @@ def parse_page(words: list[dict], rules: list[tuple[float, float, float]], sourc
         size_lines = _lines(size_words)
         sizes_found = [w for l in size_lines for w in l]
         lines = sorted(figures_by_line, key=lambda nums: _centre(nums[0]))
-        if len({w["text"] for w in sizes_found}) != len(sizes_found):
+        size_texts = [" ".join(w["text"] for w in sorted(l, key=lambda w: w["x0"])) for l in size_lines]
+        if len(set(size_texts)) != len(size_texts):
             raise ValueError(f"page {page_no}, {name}: a size appears twice in one row: two products may be read as one (a rule is missing)")
         if len(size_lines) > len(lines):   # a size can wrap onto two printed lines ("per" / "sprinkle"): join lines one line height apart
             merged = [size_lines[0]]

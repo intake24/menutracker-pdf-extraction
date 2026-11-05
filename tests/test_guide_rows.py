@@ -8,7 +8,8 @@ from pipeline.parsers import modifier_matrix as mm
 
 ROOT = Path(__file__).resolve().parent.parent
 SOURCES = yaml.safe_load((ROOT / "config" / "chains.yaml").read_text())["7_Starbucks"]["sources"]
-FOOD, BEV = SOURCES[:2]
+FOOD = next(s for s in SOURCES if s["parser"] == "guide_rows" and s["category"] == "food")
+BEV = next(s for s in SOURCES if s["parser"] == "guide_rows" and s["category"] == "drinks")   # the first of each: the Spring 2026 guides
 MOD = next(iter(s for s in SOURCES if s['parser'] == 'modifier_matrix'), None)   # absent from the March 2026 config
 needs_mod = pytest.mark.skipif(MOD is None, reason='the March 2026 guide has no modifier matrix; its source was removed from the config')
 FOOD_PDF, BEV_PDF = ROOT / "inputs" / FOOD["pdf"], ROOT / "inputs" / BEV["pdf"]
@@ -227,3 +228,22 @@ def test_a_kcal_figure_under_a_column_that_already_has_one_stops_the_run():
     extra = [w("2", 556, 150), w("kcal", 572, 150)]     # a second figure, with the word kcal, under the calories column
     with pytest.raises(ValueError, match="figures"):   # stopped by the figure count first; the column check backs it up
         gr.parse_page(base + figures + extra, rules, src, 4)
+
+
+def test_a_page_whose_running_head_has_no_menu_takes_it_from_menus_or_stops_the_run():
+    src = {**FOOD, "diet_columns": [], "skip_allergens": False}
+    rules = [(0, 0, 800), (110, 20, 780), (200, 136, 523), (300, 20, 780), (525, 0, 800)]
+    figures = [w(str(i), 530 + 23 * i, 150) for i in range(9)]
+    row = [w("Cake", 24, 150, bold=True)] + [w("Sugar", 140, 150), w("flour.", 160, 150)] + figures + [w("MILK", 735, 150, bold=True)]
+    words = [w("Product", 24, 100, bold=True), w("Version: 16/04/26", 600, 10)] + row   # the June 2026 beverage guide: no breadcrumb on pages 13-15, 61, 66, 67
+    with pytest.raises(ValueError, match="no running head"):
+        gr.parse_page(words, rules, src, 13)
+    got = gr.parse_page(words, rules, {**src, "menus": {13: "Seasonal"}}, 13)
+    assert got[0]["Category"] == "Seasonal"
+
+
+def test_a_size_with_a_number_in_front_is_read_whole_and_each_line_has_its_own_size():
+    src, rules, page = _sized_page([])
+    page = [x for x in page if x["x0"] != 420] + [w("1", 410, 150), w("pump", 420, 150), w("2", 410, 170), w("pumps", 420, 170)]   # the June 2026 syrup table: "1 pump", "2 pumps"
+    rows = gr.parse_page(page, rules, src, 4)
+    assert [r["Size"] for r in rows] == ["1 pump", "2 pumps"]

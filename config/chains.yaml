@@ -557,13 +557,14 @@
         - protein_Per Portion
         - salt_Per Portion
         - sodium_Per Portion
-    - pdf: allergens-matrix-islington-february-2026-food-nutritional-edition-v2-04022026.pdf
+    - pdf: nutritional-information-june-2026-pdf-v26-28_05_2026-belfast-version.pdf
       parser: numeric_table
-      region: UK # the Islington cinema's own menu
+      region: NI # Belfast
       category: food
-      approved: true
+      approved: true # copy of the UK source: a person confirms the columns for this region
       # No allergen information in this PDF (the pre-packed product matrix is a separate PDF), so no `markers`.
       header: Energy
+      name_below: true # some rows print the name on the line under their figures
       text_flow: true # page 1 has rows printed over each other
       free_sections: true # sub-section titles ("Toppings (Condiments)") sit between rows
       invalid_values: ['#N/A'] # a hidden row under "Guacamole" has Excel errors instead of figures
@@ -579,11 +580,11 @@
         - protein_Per Portion
         - salt_Per Portion
         - sodium_Per Portion
-    - pdf: nutritional-information-june-2026-pdf-v26-28_05_2026-belfast-version.pdf
+    - pdf: nutritional-information-june-2026-pdf-v26-28_05_2026-roi-version.pdf
       parser: numeric_table
-      region: NI # Belfast
+      region: ROI # Belfast
       category: food
-      approved: true # copy of the UK source: a person confirms the columns for this region
+      approved: true # copy of the Belfast source for the Republic of Ireland
       # No allergen information in this PDF (the pre-packed product matrix is a separate PDF), so no `markers`.
       header: Energy
       name_below: true # some rows print the name on the line under their figures
@@ -648,6 +649,46 @@
       region: NI # Belfast, v87
       category: food
       approved: true
+      # Pre-packed product matrix: ingredients with allergens in bold (the bold is not in the text layer, so allergens are NOT
+      # derived: the PDF has no allergen column, and the allergen columns stay absent), storage and use text, serving size,
+      # nutrition per 100g and per serving, one product per row. Figures printed with their unit ("22g", "498 kcal") lose
+      # the column's own unit; "N/A" is kept as printed; a dash is kept as printed.
+      text_columns:
+        - { column: Product_Name, x0: 46 }
+        - { column: Pack_Size, x0: 118 }
+        - { column: Ingredients, x0: 136 }
+        - { column: Storage, x0: 246 }
+        - { column: Instructions, x0: 269 }
+        - { column: Serving, x0: 322 }
+      serving_column: Serving
+      pearlscan: { servingsize: ~, servingsizeunit: ~ } # Pearl Scan filled serving sizes the PDF does not print (250 ml for a 500 ml bottle) and left counts blank
+      numeric_columns:
+        - { column: energykJ_Per 100g/ml, x: 373 }
+        - { column: energykCal_Per 100g/ml, x: 395 }
+        - { column: fat_Per 100g/ml, x: 418 }
+        - { column: saturates_Per 100g/ml, x: 441 }
+        - { column: carbohydrates_Per 100g/ml, x: 464 }
+        - { column: sugars_Per 100g/ml, x: 486 }
+        - { column: fibre_Per 100g/ml, x: 509 }
+        - { column: protein_Per 100g/ml, x: 533 }
+        - { column: salt_Per 100g/ml, x: 556 }
+        - { column: energykJ_Per Portion, x: 580 }
+        - { column: energykCal_Per Portion, x: 603 }
+        - { column: fat_Per Portion, x: 624 }
+        - { column: saturates_Per Portion, x: 647 }
+        - { column: carbohydrates_Per Portion, x: 671 }
+        - { column: sugars_Per Portion, x: 694 }
+        - { column: fibre_Per Portion, x: 715 }
+        - { column: protein_Per Portion, x: 740 }
+        - { column: salt_Per Portion, x: 763 }
+
+    - pdf: pre-packed-product-matrix-june-2026-edition-v22-10_06_2026-roi-version.pdf
+      parser: product_matrix
+      line_gap: 2 # rows of the 2026 matrix are printed 3 pt apart
+      invalid_values: ['#VALUE!', '#N/A', '#DIV/0!'] # Excel errors printed in a few figure cells; kept as printed and flagged
+      region: ROI # Belfast, v87
+      category: food
+      approved: true # copy of the Belfast source for the Republic of Ireland
       # Pre-packed product matrix: ingredients with allergens in bold (the bold is not in the text layer, so allergens are NOT
       # derived: the PDF has no allergen column, and the allergen columns stay absent), storage and use text, serving size,
       # nutrition per 100g and per serving, one product per row. Figures printed with their unit ("22g", "498 kcal") lose
@@ -1092,7 +1133,38 @@
       region: UK
       category: food
       approved: true
-      pages: [4, 5, 6, 7, 8, 9, 11, 13, 14, 16, 17] # dividers: 3, 10, 12, 15, 18
+      pages: [4, 5, 6, 7, 8, 9, 11, 13, 14, 16, 17]
+      name_x1: 135
+      ingredients_x0: 130
+      figures_x0: 525
+      allergens_x0: 728
+      markers: { '': 'No' }
+      default_base: Per Portion # the bars of pages 17 and 19 carry no "per portion" label; the figures are read as per portion (Pearl Scan does too)
+      no_allergen_marks: ['-']
+      allergen_words: { BUTTERMILK: Milk }
+      diet_columns: [Suitable_for_Vegetarian, Suitable_for_Vegan]
+      bar_bases: { per portion: Per Portion }
+      nutrients:
+        [
+          energykJ,
+          energykCal,
+          fat,
+          saturates,
+          carbohydrates,
+          sugars,
+          fibre,
+          protein,
+          salt,
+        ]
+    # Beverage guide (text layer): the name and the ingredient declaration are printed once, then one figure line per size (Tall, Grande, Venti), ten
+    # figures (the last is caffeine) and a summary column of allergens. Pages 63 and 64 (Modifiers) are a different table and are not read here.
+    - pdf: SUM26_UK_AllergenBook_CORE_FOOD_v02.pdf
+      parser: guide_rows
+      skip_allergens: true # the March 2026 batch has no allergen columns (docs/goal-batch-2026-03.md)
+      region: UK
+      category: food
+      approved: true
+      pages: [4, 5, 7, 8, 9, 10, 11, 13, 14, 16, 17, 19, 20]
       name_x1: 135
       ingredients_x0: 130
       figures_x0: 525
@@ -1123,7 +1195,35 @@
       region: UK
       category: drinks
       approved: true
-      pages: [5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 28, 29, 30, 32, 33, 34, 35, 37, 39, 40, 41, 42, 43, 44, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 60, 61, 62, 64, 65, 66, 67, 68, 69] # dividers: 4, 13, 20, 27, 31, 36, 38, 45, 59, 63, 70
+      pages: [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 30, 31, 32, 34, 35, 36, 37, 39, 41, 42, 43, 44, 45, 46, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 63, 64, 65, 66, 67, 69, 70, 71, 72, 73, 74]
+      menus: { 13: Seasonal, 14: Seasonal, 15: Seasonal, 61: Frappuccino® Blended Beverage, 66: 'Syrups, Drizzles & Cream Cold Foams', 67: 'Syrups, Drizzles & Cream Cold Foams' }
+      name_x1: 92
+      ingredients_x0: 94
+      figures_x0: 495
+      size_x0: 470
+      name_fixes: {
+          Hazelnut Flavour Sugar Free Syrup: Sugar Free Hazelnut Flavour Syrup,
+        } # Pearl Scan reordered the words of this name
+      allergens_x0: { 10: 728, 9: 705 } # the summary column starts further left on the nine-figure tables (syrup pumps, page 60)
+      markers: { '': 'No' }
+      default_base: Per Portion
+      no_allergen_marks: ['-']
+      allergen_words: { BUTTERMILK: Milk }
+      bar_bases: { per portion: Per Portion }
+      nutrients: # ten figure columns (the last is caffeine); the syrup pump table on page 60 has nine
+        10: [energykJ, energykCal, fat, saturates, carbohydrates, sugars, fibre, protein, salt, caffeine]
+        9: [energykJ, energykCal, fat, saturates, carbohydrates, sugars, fibre, protein, salt]
+    # Modifiers (pages 63 and 64): calories and a tick (a drawn shape) under each allergen. The legend says a tick means the allergen is present; the guide
+    # summarises the allergens of its beverages, so an unticked allergen is "No". The ticks of Wheat to Kamut are not read as gluten (none is ticked here).
+
+    - pdf: SUM26_UK_AllergenBook_CORE_BEVERAGE_v02.pdf
+      parser: guide_rows
+      skip_allergens: true # the March 2026 batch has no allergen columns (docs/goal-batch-2026-03.md)
+      region: UK
+      category: drinks
+      approved: true
+      pages: [5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 20, 21, 22, 23, 24, 26, 27, 28, 30, 31, 32, 33, 35, 37, 38, 39, 40, 41, 42, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 59, 60, 61, 62, 63, 65, 66, 67, 68, 69, 70]
+      menus: { 57: Frappuccino® Blended Beverage, 62: 'Syrups, Drizzles & Cream Cold Foams', 63: 'Syrups, Drizzles & Cream Cold Foams' }
       name_x1: 92
       ingredients_x0: 94
       figures_x0: 495
@@ -1177,7 +1277,7 @@
       approved: true
       golden: cookhouse_and_pub_main_menu_priceless__2026-06 # the March 2026 PDF has the same name
       dpi: 250 # at 200 the model missed one figure of page 2 (790)
-      pages: [2, 3, 4, 5, 6, 7]
+      pages: [2, 3, 4, 5]
       text_check: &ck_check {
           field: kcal,
           pattern: '(\d[\d,]*)\s?kcal(?!\s*per (?:serve|portion))',
@@ -1201,16 +1301,6 @@
         Blackcurrant or Orange") is one name, whole. Do not return prices, text without a kcal figure, the drinks list
         without kcal, allergen keys or badges. Before you answer, count the brackets with "kcal" on the page and check that you return exactly that many rows.
       fields: &ck_fields { kcal: energykCal_Per Portion, notes: notes }
-    - pdf: cookhouse_and_pub_mothers_day_menu_carvery.pdf
-      parser: vision_table
-      region: UK
-      category: food
-      approved: false # no June 2026 PDF
-      dpi: 200
-      text_check: { field: kcal, pattern: '(\d[\d,]*)\s?kcal(?!\s*per serve)', strip: ',', ignore: [1800, 2000] } # per slice, spoon and portion figures are rows here
-      instructions: *ck_instructions
-      fields: *ck_fields
-
 73_TopGolf:
   chain: TopGolf
   allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
