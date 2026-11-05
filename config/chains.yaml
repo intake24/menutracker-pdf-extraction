@@ -420,7 +420,7 @@
       # The print on this page is too small for the model: at 150 dpi it misread about a quarter of the figures (758 for 708).
       # So only the labels (section, pizza, cheese, crust, size) come from the model; every figure comes from the text layer.
       figures_from_text:
-        line_gap: 3.5 # rows of the Plant-Based and Italiano tables print their per slice figures 3 pt below the per pizza ones (4.5 merges neighbouring rows of the new table)
+        line_gap: 3.5 # rows of the Plant-Based and Italiano tables print their per slice figures 3 pt below the per pizza ones (at 3 and 4.5 one row of the new Italiano table stays split in two lines of ten figures)
         size_x0: 192
         size_order: [Large, Medium, Small, Personal]
         columns:
