@@ -40,7 +40,7 @@ def test_oat_is_listed_without_gluten_and_a_drink_with_no_allergen_text_has_none
 
 
 def test_wrapped_names_and_names_without_a_rule_keep_all_their_words(rows):
-    assert pick(rows, "Caramel Milkshake - Whole Milk", page=20)["milk"] == "Yes"
+    assert pick(rows, "Caramel Milkshake - Whole Milk", "Regular", page=23)["milk"] == "Yes"
     smoothie = pick(rows, "Strawberry, Cherry, Mango, Banana, Raspberry & Blackcurrant", "Regular")
     assert smoothie["energykCal_Per Portion"] == "179"
     assert pick(rows, "Passionfruit & Lemon Iced Tea", "Regular")["energykCal_Per Portion"] == "56"
@@ -54,7 +54,7 @@ def test_sizes_in_ounces_are_also_the_serving_size_and_syrup_portions_are_rows_o
 
 
 def test_vitamin_content_belongs_to_its_row(rows):
-    assert pick(rows, "Pink Limeade with added Vitamin C", "Regular")["vitaminC_Per Portion"] == "20.64"
+    assert pick(rows, "Mango & Passionfruit with added vintamin B12", "Regular")["vitaminB12_Per Portion"] == "2.21"   # (the June 2026 guide has no vitamin C drink)
     assert pick(rows, "Mango & Passionfruit with added vintamin B12", "Large")["vitaminB12_Per Portion"] == "2.944"
 
 

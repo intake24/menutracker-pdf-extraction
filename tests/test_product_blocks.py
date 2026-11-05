@@ -8,6 +8,7 @@ from pipeline.parsers import product_blocks as pb
 ROOT = Path(__file__).resolve().parent.parent
 SOURCE = yaml.safe_load((ROOT / "config" / "chains.yaml").read_text())["47_Coffee1"]["sources"][0]
 PDF = ROOT / "inputs" / SOURCE["pdf"]
+SYN = {**SOURCE, "name_size": 5.8, "title_size": 7, "rule_width": 450, "nutrition_x0": 432}   # the synthetic pages below are drawn at the scale of the January 2026 guide; the config is for the 888 pt wide May 2026 guide
 
 
 @pytest.fixture(scope="module")
@@ -42,7 +43,7 @@ def test_sections_come_from_the_page_heading_and_from_titles_between_rows(rows):
 def test_nutrition_in_both_columns_and_the_portion_weight(rows):
     r = one(rows, "Almond Croissant")
     assert (r["energykCal_Per 100g/ml"], r["energykCal_Per Portion"], r["Serving_Size"], r["Serving_Size_Unit"]) == ("399", "338", "83", "g")
-    assert one(rows, "Oat & Raisin Cookie")["energykJ_Per 100g/ml"] == "1,702"   # printed with a thousands comma, kept
+    assert r["energykJ_Per 100g/ml"] == "1670" and r["energykJ_Per Portion"] == "1412"   # (the May 2026 guide prints no thousands comma)
 
 
 def test_allergens_are_the_bold_capitals_and_the_may_contain_sentence(rows):
@@ -65,8 +66,8 @@ def test_a_row_with_several_declarations_takes_the_allergens_of_all_of_them(rows
 
 def test_a_bold_capital_word_that_is_not_an_allergen_word_stops_the_run():
     with pytest.raises(ValueError, match="FRUMP"):
-        pb._allergens([w("FRUMP", 1, bold=True)], SOURCE, 3, "Thing")
-    got = pb._allergens([w("Salt", 0), w("MILK", 1, bold=True), w("May", 2), w("contain", 3), w("NUTS", 4)], SOURCE, 3, "Thing")
+        pb._allergens([w("FRUMP", 1, bold=True)], SYN, 3, "Thing")
+    got = pb._allergens([w("Salt", 0), w("MILK", 1, bold=True), w("May", 2), w("contain", 3), w("NUTS", 4)], SYN, 3, "Thing")
     assert (got["milk"], got["treeNuts"], got["wheat"]) == ("Yes", "May contain", "No")
 
 
@@ -84,12 +85,12 @@ def test_gluten_free_oats_set_oats_but_not_gluten(rows):
 
 
 def test_the_may_contain_phrase_needs_the_words_themselves():
-    got = pb._allergens([w("Mayonnaise", 0), w("(contains", 1), w("EGG", 2, bold=True), w("),", 3), w("MILK", 4, bold=True)], SOURCE, 3, "Thing")
+    got = pb._allergens([w("Mayonnaise", 0), w("(contains", 1), w("EGG", 2, bold=True), w("),", 3), w("MILK", 4, bold=True)], SYN, 3, "Thing")
     assert (got["egg"], got["milk"]) == ("Yes", "Yes")
 
 
 def test_a_word_with_a_run_of_capitals_inside_it_is_split_not_skipped():
-    got = pb._allergens([w("May", 0), w("containMILK,", 1), w("EGG", 2), w("and", 3), w("NUTS.", 4)], SOURCE, 3, "Thing")
+    got = pb._allergens([w("May", 0), w("containMILK,", 1), w("EGG", 2), w("and", 3), w("NUTS.", 4)], SYN, 3, "Thing")
     assert (got["milk"], got["egg"], got["treeNuts"]) == ("May contain", "May contain", "May contain")
 
 
@@ -99,31 +100,31 @@ def test_an_unknown_nutrition_label_stops_the_run():
     inside = [nut("KJ", 440, 100), nut("100", 470, 100), nut("90", 510, 100), nut("Sugars", 440, 110), nut("1", 470, 110), nut("1", 510, 110),
               nut("Salt", 440, 120), nut("0.1", 470, 120), nut("0.1", 510, 120)]
     with pytest.raises(ValueError, match="Sugars"):
-        pb._block(inside, SOURCE, 3)
+        pb._block(inside, SYN, 3)
 
 
 def test_a_sentence_under_the_page_heading_is_the_note_of_its_rows():
     def word(text, x0, top, size=5.8, font="Gothic"):
         return {"text": text, "x0": x0, "x1": x0 + 10 * len(text), "top": top, "bottom": top + 6, "size": size, "fontname": font}
-    nx0 = SOURCE["nutrition_x0"]
+    nx0 = SYN["nutrition_x0"]
     words = [word("PORRIDGE", 10, 5, 7.9), word("Made", 10, 17), word("with", 50, 17), word("milk.", 90, 17),
              word("PRODUCT", 10, 33), word("Oat", 10, 50), word("Porridge", 10, 60, 5.3),
              word("KJ", nx0, 50), word("100", nx0 + 30, 50), word("200", nx0 + 60, 50),
              word("Salt", nx0, 70), word("0.5", nx0 + 30, 70), word("0.6", nx0 + 60, 70)]
     with pytest.raises(ValueError, match="not a heading"):   # a source that has not asked for heading notes still stops
-        pb.parse_page(words, [30, 42, 100], {**SOURCE, "heading_notes": False}, 1)
-    [row] = pb.parse_page(words, [30, 42, 100], {**SOURCE, "heading_notes": True}, 1)
+        pb.parse_page(words, [30, 42, 100], {**SYN, "heading_notes": False}, 1)
+    [row] = pb.parse_page(words, [30, 42, 100], {**SYN, "heading_notes": True}, 1)
     assert (row["Category"], row["notes"], row["Product_Name"]) == ("PORRIDGE", "Made with milk.", "Oat")
 
 
 def test_skip_allergens_ignores_capital_words_that_are_not_allergen_words():
     def word(text, x0, top, size=5.8, font="Gothic"):
         return {"text": text, "x0": x0, "x1": x0 + 10 * len(text), "top": top, "bottom": top + 6, "size": size, "fontname": font}
-    nx0 = SOURCE["nutrition_x0"]
+    nx0 = SYN["nutrition_x0"]
     words = [word("PORRIDGE", 10, 5, 7.9), word("PRODUCT", 10, 33), word("Oat", 10, 50), word("PLEASE", 10, 60, 5.3, "Gothic-Bold"),
              word("KJ", nx0, 50), word("100", nx0 + 30, 50), word("200", nx0 + 60, 50),
              word("Salt", nx0, 70), word("0.5", nx0 + 30, 70), word("0.6", nx0 + 60, 70)]
     with pytest.raises(ValueError, match="PLEASE"):
-        pb.parse_page(words, [30, 42, 100], {**SOURCE, "skip_allergens": False}, 1)
-    [row] = pb.parse_page(words, [30, 42, 100], {**SOURCE, "skip_allergens": True}, 1)
+        pb.parse_page(words, [30, 42, 100], {**SYN, "skip_allergens": False}, 1)
+    [row] = pb.parse_page(words, [30, 42, 100], {**SYN, "skip_allergens": True}, 1)
     assert row["Product_Name"] == "Oat" and "milk" not in row
