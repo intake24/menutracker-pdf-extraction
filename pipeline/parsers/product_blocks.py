@@ -20,6 +20,7 @@ Source options (config/chains.yaml):
   diet_tags      the tags printed under a name, e.g. ["V", "Vg", "GF"]; "(V)" and "(Vg/GF)" go to `Diet` as printed
   may_phrases    phrases that start the list of what may be present (default ["May contain"]); capitals before the first one are allergens
   allergen_words extra allergen words (capitals) -> text for the allergen reader ("EGGS": "Egg"); "" for a word that only completes another ("SEEDS")
+  blank_cells    true: a nutrition label printed with no figures at all (both cells empty, Lotus Biscuits "Fibre") stays blank; a line with one figure still stops the run
   markers        {"": "No"} when the guide says every allergen is in capitals, so an unmarked allergen is absent
 A product with no name, no ingredients or a block with a missing value raises.
 """
@@ -130,6 +131,9 @@ def _block(words: list[dict], source: dict, page_no: int) -> dict | None:
         if values and label not in labels and label not in ("Portion", "per"):
             raise ValueError(f"page {page_no}: the nutrition label {label!r} is not in `nutrients`")
         if label in labels:
+            if len(values) == 0 and source.get("blank_cells"):   # `blank_cells`: a label printed with both cells empty stays blank
+                rows[label] = ["", ""]
+                continue
             if len(values) != 2:
                 raise ValueError(f"page {page_no}: the nutrition line {' '.join(w['text'] for w in line)!r} does not have two values")
             rows[label] = values
@@ -205,7 +209,8 @@ def parse_page(words: list[dict], rules: list[float], source: dict, page_no: int
         for label, nutrient in labels.items():
             if label in block["rows"]:
                 for base, value in zip(source["bases"], block["rows"][label]):
-                    row[f"{nutrient}_{base}"] = value
+                    if value != "":   # a blank cell (`blank_cells`) writes nothing
+                        row[f"{nutrient}_{base}"] = value
         if block["weight"]:
             row |= {"Serving_Size": block["weight"], "Serving_Size_Unit": "g"}
         out.append(row if source.get("skip_allergens") else row | _allergens(declaration, source, page_no, name))

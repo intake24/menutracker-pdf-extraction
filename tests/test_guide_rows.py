@@ -247,3 +247,11 @@ def test_a_size_with_a_number_in_front_is_read_whole_and_each_line_has_its_own_s
     page = [x for x in page if x["x0"] != 420] + [w("1", 410, 150), w("pump", 420, 150), w("2", 410, 170), w("pumps", 420, 170)]   # the June 2026 syrup table: "1 pump", "2 pumps"
     rows = gr.parse_page(page, rules, src, 4)
     assert [r["Size"] for r in rows] == ["1 pump", "2 pumps"]
+
+
+def test_a_declaration_word_just_above_the_figures_does_not_split_the_figure_line():
+    """Starbucks Summer 2026 beverages p9: a declaration word printed 3.0 pt above the Tall row let one figure join its line and the others not."""
+    src = {**FOOD, "diet_columns": [], "skip_allergens": True}
+    figs = [w("1", 530, 153.0)] + [w(str(i + 1), 530 + 23 * i, 153.05) for i in range(1, 9)]
+    got = _page(src, [w("Cake", 24, 150, bold=True), w("sugar,", 140, 150)] + figs)
+    assert len(got) == 1 and (got[0]["energykJ_Per Portion"], got[0]["salt_Per Portion"]) == ("1", "9")

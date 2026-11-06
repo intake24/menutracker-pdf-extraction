@@ -119,11 +119,11 @@ def parse_page(words: list[dict], rules: list[tuple[float, float, float]], sourc
         if section is None:   # no bar above on this page: the section of the page before, if it has the same running head
             section, base = (carry or {}).get(menu, ("", None))
         figures_by_line = []
-        for line in _lines(inside):
-            nums = [w for w in line if NUMBER.match(w["text"]) and fig_x0 <= w["x0"] < all_x0]
+        # the figure cells are grouped on their own: a word of the declaration printed 3 pt above them must not split one figure line in two
+        for nums in _lines([w for w in inside if NUMBER.match(w["text"]) and fig_x0 <= w["x0"] < all_x0]):
             if nums:
                 if len(nums) > need:
-                    raise ValueError(f"page {page_no}: a line has {len(nums)} figures, at most {need} expected: {_text(line)[:60]!r}")
+                    raise ValueError(f"page {page_no}: a line has {len(nums)} figures, at most {need} expected: {_text(nums)[:60]!r}")
                 figures_by_line.append(nums)
         if figures_by_line:
             for w in inside:
@@ -190,7 +190,7 @@ def parse_page(words: list[dict], rules: list[tuple[float, float, float]], sourc
                     merged.append(l)
             size_lines = merged
         if size_words and len(size_lines) != len(lines):
-            raise ValueError(f"page {page_no}, {name}: {len(sizes_found)} sizes for {len(lines)} figure lines")
+            raise ValueError(f"page {page_no}, {name}: {len(sizes_found)} sizes for {len(lines)} figure lines (figure lines: {'; '.join(str(round(_centre(n[0]))) + ' ' + ' '.join(w['text'] for w in n[:4]) for n in lines)})")
         for k, nums in enumerate(lines):
             row = {"Product_Name": name, "Category": " - ".join(x for x in (menu, section) if x), "source_page": page_no} | cells
             if size_words:

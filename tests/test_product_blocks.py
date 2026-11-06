@@ -128,3 +128,19 @@ def test_skip_allergens_ignores_capital_words_that_are_not_allergen_words():
         pb.parse_page(words, [30, 42, 100], {**SYN, "skip_allergens": False}, 1)
     [row] = pb.parse_page(words, [30, 42, 100], {**SYN, "skip_allergens": True}, 1)
     assert row["Product_Name"] == "Oat" and "milk" not in row
+
+
+def test_blank_cells_lets_a_label_with_no_figures_stay_blank_and_still_stops_on_one_figure():
+    """Coffee #1 July 2026: Lotus Biscuits print the label "Fibre" with both cells empty."""
+    def nut(text, x, top):
+        return {"text": text, "x0": x, "x1": x + 12, "top": top, "bottom": top + 6, "size": 6, "fontname": "Gothic"}
+    kj = [nut("KJ", 440, 100), nut("100", 470, 100), nut("90", 510, 100)]
+    salt = [nut("Salt", 440, 130), nut("0.1", 470, 130), nut("0.1", 510, 130)]
+    blank = kj + [nut("Fibre", 440, 110)] + salt
+    with pytest.raises(ValueError, match="does not have two values"):
+        pb._block(blank, {**SYN, "blank_cells": False}, 3)
+    got = pb._block(blank, {**SYN, "blank_cells": True}, 3)
+    assert got["rows"]["Fibre"] == ["", ""] and got["rows"]["KJ"] == ["100", "90"]
+    one = kj + [nut("Fibre", 440, 110), nut("1.7", 470, 110)] + salt
+    with pytest.raises(ValueError, match="does not have two values"):
+        pb._block(one, {**SYN, "blank_cells": True}, 3)

@@ -607,11 +607,11 @@
       region: UK
       category: food
       approved: true
-      golden: nutritional-information__2026-06 # the March 2026 PDF has the same name
+      golden: nutritional-information__2026-09 # the March and June 2026 PDFs have the same name
       # Pages with a table (February 2026 issue): pizzas 6-33, stuffed crust 34-38, sides and desserts 39-61, create-your-own 62-63,
       # bases and sauces 66, choux nuts 70. The other pages (cover, contents, welfare, allergen lists for the
       # create-your-own ingredients, drinks, Ben & Jerry's) carry no nutrition table; their allergens are not read yet.
-      pages: ['6-59', '62-63', '70-72'] # 2026 PDF: pizzas 6-33, stuffed crust 34-38, sides and desserts 39-59, create-your-own 62-63, pizzas of the Spice range 70-72 (60-61 and 66: no nutrition: Ben & Jerry's, see the pack)
+      pages: ['7-64', '68-69', '76-78'] # August 2026 issue (AUG26-1): pizzas 7-42, sides 43-59, desserts 60-64, cooked ingredients (create-your-own) 68-69, new pizzas 76-78; 65-67 and 73-75 print "see individual pack" (no table), 70-72 and 79-81 are allergen lists
       dpi: 150
       skip_allergens: true # the March 2026 batch has no allergen columns
       share_per_100g: true # one VALUES PER 100G table serves every portion row of a product (the model fills it on one row only); copied cells are flagged
@@ -740,7 +740,7 @@
     # No text layer: the page images are read by the model (parser vision_pairs). Each product has an allergen page (YES/NO
     # diet cells, ticks) and a nutrition page; rows are paired in page order. Ingredient-declaration pages are not extracted.
     # Key (page 2): a tick means the product contains the allergen; it does not say what a blank means (blank = not stated).
-    - pdf: UK_Core_Allergen_Nutrition_Book_220426.pdf
+    - pdf: UK_Drinks_Allergen_Nutrition_Book_310726.pdf
       parser: vision_pairs
       region: UK
       category: food
@@ -752,27 +752,28 @@
         It is a doughnut shop's allergen and nutrition guide; each page is one table of products grouped under grey headings.
         The product name is the bold text beside the picture; some have an italic line under it in brackets.
       # March 2026 batch: no allergen columns, so only the nutrition pages are read (a join with `matrix: []`). The guide's
-      # nutrition pages of the April 2026 guide (the pages that print "Nutrition Per 100g"): 4, 6, 8, 10, 19, 21, 28, 30, 32, 34, 35, 36, 39, 40, 45, 46, 47, 48, 49 (28 is per 100 ml).
+      # nutrition pages of the 31 July 2026 book (the pages that print "Nutrition Per 100"): 4, 6, 8, 10, 20, 22, 29, 32, 35, 37, 39, 40, 41, 44, 45, 50, 51, 52, 53, 54 (29 and 32 are per 100 ml).
       joins:
         - { matrix: [], nutrition: [4] }
         - { matrix: [], nutrition: [6] }
         - { matrix: [], nutrition: [8] }
         - { matrix: [], nutrition: [10] }
-        - { matrix: [], nutrition: [19] }
-        - { matrix: [], nutrition: [21] }
-        - { matrix: [], nutrition: [28] }
-        - { matrix: [], nutrition: [30] }
+        - { matrix: [], nutrition: [20] }
+        - { matrix: [], nutrition: [22] }
+        - { matrix: [], nutrition: [29] }
         - { matrix: [], nutrition: [32] }
-        - { matrix: [], nutrition: [34] }
         - { matrix: [], nutrition: [35] }
-        - { matrix: [], nutrition: [36] }
+        - { matrix: [], nutrition: [37] }
         - { matrix: [], nutrition: [39] }
         - { matrix: [], nutrition: [40] }
+        - { matrix: [], nutrition: [41] }
+        - { matrix: [], nutrition: [44] }
         - { matrix: [], nutrition: [45] }
-        - { matrix: [], nutrition: [46] }
-        - { matrix: [], nutrition: [47] }
-        - { matrix: [], nutrition: [48] }
-        - { matrix: [], nutrition: [49] }
+        - { matrix: [], nutrition: [50] }
+        - { matrix: [], nutrition: [51] }
+        - { matrix: [], nutrition: [52] }
+        - { matrix: [], nutrition: [53] }
+        - { matrix: [], nutrition: [54] }
       tick_labels:
         Wheat: wheat
         Rye: rye
@@ -850,11 +851,12 @@
     # Food guide (text layer): one block per product. Allergens are the bold capital words of the ingredient declaration and the capital
     # words after "May contain" (the guide: allergens are in bold capitals in the declaration, those that may be present at the end), so an
     # allergen not named is "No". Diet tags (V), (Vg), (GF) are kept in Diet as printed.
-    - pdf: C1-Core-Food-May-2026-Issue-Date-05.05.pdf
+    - pdf: C1-Core-Food-July-2026-Issue-Date-2307.pdf
       parser: product_blocks
       region: UK
       category: food
       approved: true
+      blank_cells: true # Lotus Biscuits print "Fibre" with both cells empty (July 2026)
       skip_allergens: true # March 2026 batch: no allergen columns (docs/goal-batch-2026-03.md)
       heading_notes: true # "Porridge is made with Whole Milk as standard." under a heading is the note of its rows
       rule_width: 670 # the May 2026 guide is 888 pt wide (1.49 x the January 2026 guide): row rules are 731 pt, stripes behind some declarations 604 pt
@@ -906,168 +908,13 @@
     # Beverage guide (text layer; the column titles over the figures are rotated, so the nine figures of a group are in the printed order KJ, Kcal,
     # Fat, Sat, Carb, Sugar, Fibre, Protein, Salt). Product name and allergens are printed once beside the size rows. The guide says it
     # lists all allergens of its drinks, so an allergen not listed is "No".
-    - pdf: C1-Core-Beverage-Allergen-Nutritional-Information-April-26-v1.pdf
-      parser: drink_tables
-      unlabelled_pages: { 18: ['Per 100ml', 'Per product'] } # page 18 (Cold Foam - Iced Americano) prints its figures with no "Per 100ml / Per product" labels: assumed to be the same two groups as every other page
-      invalid_values: ['####'] # per-product kJ cells too narrow for their figure in the 2026 guide; kept as printed and flagged
-      region: UK
-      category: drinks
-      approved: true
-      pages: ['3-32']
-      markers: { '': 'No' }
-      furniture: [Core Beverage Allergen, 'Issued:', 'We take care to list all allergens'] # the April 2026 guide prints the allergen disclaimer in every page's footer
-      sizes:
-        [
-          Single,
-          Double,
-          Regular,
-          Large,
-          Small,
-          Medium,
-          Mini,
-          12oz,
-          16oz,
-          8oz,
-          20oz,
-        ]
-      extra_headers: [Vitamin Content]
-      allergen_text: { OAT: Oats (Gluten Free) } # page 1: the oat and coconut milks contain gluten free oats; OAT is listed because of avenin
-      figure_titles: [KJ, Kcal, Fat, Sat, Carb, Sugar, Fibre, Protein, Salt]
-      nutrients:
-        [
-          energykJ,
-          energykCal,
-          fat,
-          saturates,
-          carbohydrates,
-          sugars,
-          fibre,
-          protein,
-          salt,
-        ]
-      groups:
-        Per 100ml: { base: Per 100g/ml }
-        Per 100g: { base: Per 100g/ml }
-        Per product: { base: Per Portion }
-        Per serving: { base: Per Portion }
-        Per 15ml: { base: Per Portion, serving: 15 ml, split: true }
-        Per 22.5ml: { base: Per Portion, serving: 22.5 ml, split: true }
-    - pdf: C1-Birthday-Food-Drinks-Nutritional-Allergen-Info-April-2026-Issue-Date-08.04.26.pdf
-      parser: vision_table
-      region: UK
-      category: food
-      approved: true
-      dpi: 200
-      pages: [3, 4] # the two food pages (one product each); the geometry differs per page (744 and 1066 pt wide), so the model reads them
-      instructions: >-
-        It is a product page of a coffee shop's ingredient guide: one product (a bold name, sometimes with "NEW" in front, then a diet tag such as (V)), its ingredient declaration, and a nutrition column with two figure
-        columns: "per 100g" and "per portion (g)", rows KJ, Kcal, Fat, Sat, Carbs, Sugar, Fibre, Protein, Salt and a last line "Portion weight (g)". The page may also carry an allergen matrix with stars above the product: ignore it.
-        section = the heading printed above the product (for example "PASTRIES", "BIRTHDAY CAKE"), or empty. name = the product name as printed, without the diet tag and without the word "NEW". portion = the "Portion weight (g)" value
-        followed by "g". The figures are exactly as printed, as strings: kj_100 and kj_portion are the KJ row's two cells, and so on for each row. Return one row per product on the page.
-      fields:
-        kj_100: energykJ_Per 100g/ml
-        kcal_100: energykCal_Per 100g/ml
-        fat_100: fat_Per 100g/ml
-        saturates_100: saturates_Per 100g/ml
-        carbohydrate_100: carbohydrates_Per 100g/ml
-        sugars_100: sugars_Per 100g/ml
-        fibre_100: fibre_Per 100g/ml
-        protein_100: protein_Per 100g/ml
-        salt_100: salt_Per 100g/ml
-        kj_portion: energykJ_Per Portion
-        kcal_portion: energykCal_Per Portion
-        fat_portion: fat_Per Portion
-        saturates_portion: saturates_Per Portion
-        carbohydrate_portion: carbohydrates_Per Portion
-        sugars_portion: sugars_Per Portion
-        fibre_portion: fibre_Per Portion
-        protein_portion: protein_Per Portion
-        salt_portion: salt_Per Portion
-    - pdf: C1-Birthday-Food-Drinks-Nutritional-Allergen-Info-April-2026-Issue-Date-08.04.26.pdf
-      parser: drink_tables
-      invalid_values: ['####'] # per-product kJ cells too narrow for their figure in the 2026 guide; kept as printed and flagged
-      region: UK
-      category: drinks
-      approved: true
-      pages: [6] # page 5 is a sample Latte table with an EXAMPLE watermark across it (not read); pages 3-4 are food (the next source); 1-2 are how-to text
-      title_min_size: 10.5 # product names are bold 10 pt, titles bold 11 pt; the body text is 7 pt
-      markers: { '': 'No' }
-      furniture: [Core Beverage Allergen, 'Issued:', 'Version:', 'Autumn Drinks Allergen', 'Seasonal Drinks Allergen', 'Within this guide', 'allergen free', 'We take care']
-      sizes:
-        [
-          Single,
-          Double,
-          Regular,
-          Large,
-          Small,
-          Medium,
-          Mini,
-          12oz,
-          16oz,
-          8oz,
-          20oz,
-        ]
-      extra_headers: [Vitamin Content]
-      allergen_text: { OAT: Oats (Gluten Free) } # page 1: the oat and coconut milks contain gluten free oats; OAT is listed because of avenin
-      figure_titles: [KJ, Kcal, Fat, Sat, Carb, Sugar, Fibre, Protein, Salt]
-      nutrients:
-        [
-          energykJ,
-          energykCal,
-          fat,
-          saturates,
-          carbohydrates,
-          sugars,
-          fibre,
-          protein,
-          salt,
-        ]
-      groups:
-        Per 100ml: { base: Per 100g/ml }
-        Per 100g: { base: Per 100g/ml }
-        Per product: { base: Per Portion }
-        Per serving: { base: Per Portion }
-        Per 15ml: { base: Per Portion, serving: 15 ml, split: true }
-        Per 22.5ml: { base: Per Portion, serving: 22.5 ml, split: true }
-
 7_Starbucks:
   chain: Starbucks
   allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
   sources:
     # Food guide (text layer): name, Y/N for vegetarian and vegan, ingredient declaration, nine figures, and a summary column of allergens. The guide
     # says allergens are summarised in the last column, so an allergen not named there is "No". Divider pages hold no table.
-    - pdf: SPR26_UK_AllergenBook_CORE_FOOD_v03.pdf
-      parser: guide_rows
-      skip_allergens: true # the March 2026 batch has no allergen columns (docs/goal-batch-2026-03.md)
-      region: UK
-      category: food
-      approved: true
-      pages: [4, 5, 6, 7, 8, 9, 11, 13, 14, 16, 17]
-      name_x1: 135
-      ingredients_x0: 130
-      figures_x0: 525
-      allergens_x0: 728
-      markers: { '': 'No' }
-      default_base: Per Portion # the bars of pages 17 and 19 carry no "per portion" label; the figures are read as per portion (Pearl Scan does too)
-      no_allergen_marks: ['-']
-      allergen_words: { BUTTERMILK: Milk }
-      diet_columns: [Suitable_for_Vegetarian, Suitable_for_Vegan]
-      bar_bases: { per portion: Per Portion }
-      nutrients:
-        [
-          energykJ,
-          energykCal,
-          fat,
-          saturates,
-          carbohydrates,
-          sugars,
-          fibre,
-          protein,
-          salt,
-        ]
-    # Beverage guide (text layer): the name and the ingredient declaration are printed once, then one figure line per size (Tall, Grande, Venti), ten
-    # figures (the last is caffeine) and a summary column of allergens. Pages 63 and 64 (Modifiers) are a different table and are not read here.
-    - pdf: SUM26_UK_AllergenBook_CORE_FOOD_v02.pdf
+    - pdf: SUM2_2026_UK_AllergenBook_CORE_FOOD_v04.pdf
       parser: guide_rows
       skip_allergens: true # the March 2026 batch has no allergen columns (docs/goal-batch-2026-03.md)
       region: UK
@@ -1098,41 +945,14 @@
         ]
     # Beverage guide (text layer): the name and the ingredient declaration are printed once, then one figure line per size (Tall, Grande, Venti), ten
     # figures (the last is caffeine) and a summary column of allergens. Pages 63 and 64 (Modifiers) are a different table and are not read here.
-    - pdf: SPR26_UK_AllergenBook_CORE_BEVERAGE_v07.pdf
+    - pdf: SUM2_26_UK_AllergenBook_CORE_BEVERAGE_v05.pdf
       parser: guide_rows
       skip_allergens: true # the March 2026 batch has no allergen columns (docs/goal-batch-2026-03.md)
       region: UK
       category: drinks
       approved: true
-      pages: [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 30, 31, 32, 34, 35, 36, 37, 39, 41, 42, 43, 44, 45, 46, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 63, 64, 65, 66, 67, 69, 70, 71, 72, 73, 74]
-      menus: { 13: Seasonal, 14: Seasonal, 15: Seasonal, 61: Frappuccino® Blended Beverage, 66: 'Syrups, Drizzles & Cream Cold Foams', 67: 'Syrups, Drizzles & Cream Cold Foams' }
-      name_x1: 92
-      ingredients_x0: 94
-      figures_x0: 495
-      size_x0: 470
-      name_fixes: {
-          Hazelnut Flavour Sugar Free Syrup: Sugar Free Hazelnut Flavour Syrup,
-        } # Pearl Scan reordered the words of this name
-      allergens_x0: { 10: 728, 9: 705 } # the summary column starts further left on the nine-figure tables (syrup pumps, page 60)
-      markers: { '': 'No' }
-      default_base: Per Portion
-      no_allergen_marks: ['-']
-      allergen_words: { BUTTERMILK: Milk }
-      bar_bases: { per portion: Per Portion }
-      nutrients: # ten figure columns (the last is caffeine); the syrup pump table on page 60 has nine
-        10: [energykJ, energykCal, fat, saturates, carbohydrates, sugars, fibre, protein, salt, caffeine]
-        9: [energykJ, energykCal, fat, saturates, carbohydrates, sugars, fibre, protein, salt]
-    # Modifiers (pages 63 and 64): calories and a tick (a drawn shape) under each allergen. The legend says a tick means the allergen is present; the guide
-    # summarises the allergens of its beverages, so an unticked allergen is "No". The ticks of Wheat to Kamut are not read as gluten (none is ticked here).
-
-    - pdf: SUM26_UK_AllergenBook_CORE_BEVERAGE_v02.pdf
-      parser: guide_rows
-      skip_allergens: true # the March 2026 batch has no allergen columns (docs/goal-batch-2026-03.md)
-      region: UK
-      category: drinks
-      approved: true
-      pages: [5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 20, 21, 22, 23, 24, 26, 27, 28, 30, 31, 32, 33, 35, 37, 38, 39, 40, 41, 42, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 59, 60, 61, 62, 63, 65, 66, 67, 68, 69, 70]
-      menus: { 57: Frappuccino® Blended Beverage, 62: 'Syrups, Drizzles & Cream Cold Foams', 63: 'Syrups, Drizzles & Cream Cold Foams' }
+      pages: [5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 20, 21, 22, 23, 24, 26, 27, 28, 30, 31, 32, 34, 36, 37, 38, 39, 40, 41, 43, 44, 45, 46, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 63, 64, 65, 66, 67, 69, 70, 71, 72, 73, 74] # 3 August 2026 book (75 pages): dividers 1-4, 12, 19, 25, 29, 33, 35, 42, 47, 62, 68 and the last page 75 hold no table
+      menus: { 61: Frappuccino® Blended Beverage, 66: 'Syrups, Drizzles & Cream Cold Foams', 67: 'Syrups, Drizzles & Cream Cold Foams' } # pages printed without a running head (the Coconut Drink allergen update banner)
       name_x1: 92
       ingredients_x0: 94
       figures_x0: 495
