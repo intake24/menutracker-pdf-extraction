@@ -495,20 +495,21 @@
   allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
   sources:
     # The text layer of these PDFs is corrupt (the embedded font drops characters: 197 prints as 19), so the page
-    # images are read by the model (parser vision_table). No allergen information in these PDFs. (The March 2026 batch has no ice-cream PDF.)
-    - pdf: M20560-Nutritional-Info-FOOD.pdf
+    # images are read by the model (parser vision_table). No allergen information in these PDFs. (The September 2026 batch has only the drinks and sweets PDFs: no food or ice-cream PDF.)
+    - pdf: m20645-nutritional-info-drinks.pdf
       parser: vision_table
       region: UK
-      category: food
+      category: drinks
       approved: true
       instructions: >-
-        It is a nutrition table of cinema food; all figures are per portion. section = the orange heading above the
-        rows. Some items are a bold name line followed by several rows whose left cell (Portion/Pack Size) is a size such
-        as "Kids/Snackit", "Regular", "Large": for those rows name = the bold name above them, size = the left cell,
-        portion = empty. For an item that has a single row with a weight or count in the left cell, name = the bold
-        name, size = empty, portion = that cell.
-        The figure columns are always, left to right: kilojoules, calories, protein, carbohydrate, of which sugars, fat, of which saturates, fibre, sodium, salt. Some pages (for example page 5) print no column
-        header: read their figures in this same order.
+        It is a nutrition table of cinema drinks; all figures are per portion. section = the orange heading above the
+        rows ("DISPENSED SOFT DRINKS"). Each drink is a bold name line (it can wrap onto two lines: join them) followed by
+        several rows whose left cell (Portion/Pack Size) is a size such as "Large", "Regular", "Junior", "Kids": for those
+        rows name = the bold name above them, size = the left cell, portion = empty. For an item that has a single row
+        with a volume or count in the left cell, name = the bold name, size = empty, portion = that cell.
+        Many items (the PACKAGED DRINKS pages, and some others) have two figure lines: the first is level with the bold name and its Portion/Pack Size cell is empty, the second is the next line and its
+        Portion/Pack Size cell holds a volume ("500", "250", "200", "330", "275"). Return both lines as two rows with the same name: first row portion = empty, second row portion = that volume exactly as printed.
+        Never leave the volume out and never drop either line. Copy names exactly as printed, including the apostrophe in F’Real (a typographic apostrophe) and letters and digits in names such as J2O.
       fields: &vue_fields
         kj: energykJ_Per Portion
         kcal: energykCal_Per Portion
@@ -520,19 +521,7 @@
         fibre: fibre_Per Portion
         sodium: sodium_Per Portion
         salt: salt_Per Portion
-    - pdf: M20493-Nutritional-Info-DRINKS.pdf
-      parser: vision_table
-      region: UK
-      category: drinks
-      approved: true
-      instructions: >-
-        It is a nutrition table of cinema drinks; all figures are per portion. section = the orange heading above the
-        rows ("DISPENSED SOFT DRINKS"). Each drink is a bold name line (it can wrap onto two lines: join them) followed by
-        several rows whose left cell (Portion/Pack Size) is a size such as "Large", "Regular", "Junior", "Kids": for those
-        rows name = the bold name above them, size = the left cell, portion = empty. For an item that has a single row
-        with a volume or count in the left cell, name = the bold name, size = empty, portion = that cell.
-      fields: *vue_fields
-    - pdf: M20493-Nutritional-Info-SWEETS.pdf
+    - pdf: m20685-nutritional-info-sweets.pdf
       parser: vision_table
       region: UK
       category: food
@@ -542,17 +531,6 @@
         It is a nutrition table of sweets; all figures are per portion. section = the orange heading above the rows
         ("PICK'N'MIX"). name = the bold item name exactly as printed (it may contain " - "); size = empty;
         portion = the Portion/Pack Size cell ("100g").
-      fields: *vue_fields
-    - pdf: M20493-Nutritional-Info-ICECREAM.pdf
-      parser: vision_table
-      region: UK
-      category: food
-      approved: true
-      instructions: >-
-        It is a nutrition table of cinema ice cream; all figures are per portion. section = the orange heading above the rows ("ICE CREAM SCOOPED PRODUCTS", "TOPPINGS FOR ICE CREAMS/SUNDAE'S", "AVALANCHE ICE CREAM").
-        Each item is a bold name; under the scooped products the line below it starts with "1 Scoop Tub": name = the bold name, size = that text as printed, portion = the Portion/Pack Size cell ("85g").
-        For an item that has one line with a weight or a count in the Portion/Pack Size cell ("20g", "Per 1", "1 Serving"), name = the bold name (a name can wrap onto two lines: join them), size = empty,
-        portion = that cell. A blank figure cell stays empty and "Trace" stays "Trace".
       fields: *vue_fields
 59_Odeon:
   chain: Odeon
@@ -584,7 +562,7 @@
       parser: product_matrix
       line_gap: 2 # rows of the 2026 matrix are printed 3 pt apart
       invalid_values: ['#VALUE!', '#N/A', '#DIV/0!'] # Excel errors printed in a few figure cells; kept as printed and flagged
-      region: UK # v88, 28 April 2025
+      region: UK # July 2026 issue (v23)
       category: food
       approved: true
       # Pre-packed product matrix: ingredients with allergens in bold (the bold is not in the text layer, so allergens are NOT
@@ -592,33 +570,33 @@
       # nutrition per 100g and per serving, one product per row. Figures printed with their unit ("22g", "498 kcal") lose
       # the column's own unit; "N/A" is kept as printed; a dash is kept as printed.
       text_columns:
-        - { column: Product_Name, x0: 38 }
-        - { column: Pack_Size, x0: 112 }
-        - { column: Ingredients, x0: 134 }
-        - { column: Storage, x0: 249 }
-        - { column: Instructions, x0: 271 }
-        - { column: Serving, x0: 325 }
+        - { column: Product_Name, x0: 40 }
+        - { column: Pack_Size, x0: 118 }
+        - { column: Ingredients, x0: 140 }
+        - { column: Storage, x0: 284 }
+        - { column: Instructions, x0: 316 }
+        - { column: Serving, x0: 365 }
       serving_column: Serving
       pearlscan: { servingsize: ~, servingsizeunit: ~ } # Pearl Scan filled serving sizes the PDF does not print (250 ml for a 500 ml bottle) and left counts blank
       numeric_columns:
-        - { column: energykJ_Per 100g/ml, x: 374 }
-        - { column: energykCal_Per 100g/ml, x: 397 }
-        - { column: fat_Per 100g/ml, x: 419 }
-        - { column: saturates_Per 100g/ml, x: 442 }
-        - { column: carbohydrates_Per 100g/ml, x: 465 }
-        - { column: sugars_Per 100g/ml, x: 488 }
-        - { column: fibre_Per 100g/ml, x: 510 }
-        - { column: protein_Per 100g/ml, x: 534 }
-        - { column: salt_Per 100g/ml, x: 558 }
-        - { column: energykJ_Per Portion, x: 581 }
-        - { column: energykCal_Per Portion, x: 603 }
-        - { column: fat_Per Portion, x: 626 }
-        - { column: saturates_Per Portion, x: 649 }
-        - { column: carbohydrates_Per Portion, x: 672 }
-        - { column: sugars_Per Portion, x: 695 }
-        - { column: fibre_Per Portion, x: 716 }
-        - { column: protein_Per Portion, x: 741 }
-        - { column: salt_Per Portion, x: 764 }
+        - { column: energykJ_Per 100g/ml, x: 434 }
+        - { column: energykCal_Per 100g/ml, x: 474 }
+        - { column: fat_Per 100g/ml, x: 488 }
+        - { column: saturates_Per 100g/ml, x: 503 }
+        - { column: carbohydrates_Per 100g/ml, x: 524 }
+        - { column: sugars_Per 100g/ml, x: 542.5 }
+        - { column: fibre_Per 100g/ml, x: 557 }
+        - { column: protein_Per 100g/ml, x: 571 }
+        - { column: salt_Per 100g/ml, x: 585.5 }
+        - { column: energykJ_Per Portion, x: 621.5 }
+        - { column: energykCal_Per Portion, x: 661.5 }
+        - { column: fat_Per Portion, x: 676.5 }
+        - { column: saturates_Per Portion, x: 691.5 }
+        - { column: carbohydrates_Per Portion, x: 711.5 }
+        - { column: sugars_Per Portion, x: 730.5 }
+        - { column: fibre_Per Portion, x: 744.5 }
+        - { column: protein_Per Portion, x: 758.5 }
+        - { column: salt_Per Portion, x: 773 }
 26_PapaJohns:
   chain: Papa Johns
   allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
