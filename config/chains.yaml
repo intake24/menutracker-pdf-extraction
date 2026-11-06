@@ -819,13 +819,13 @@
     # March 2026 batch: the December 2025 booklet prints plain nutrition tables on pages 20-31 (the old portion_tables parser and the allergen mark_table
     # source do not fit this layout), so the pages are read by the model. Per portion: weight, kcal, protein, carbohydrate, sugar, fat, saturates, salt;
     # the pizza tables are per slice and add the number of slices.
-    - pdf: DIne-In_12_05_2026_Allergens_Nutrition_Ingredients.pdf
+    - pdf: DINE-IN_AIN_Booklet_C3_2026_FINAL_V1.pdf
       parser: vision_table
       region: UK
       category: food
       approved: true
       dpi: 200
-      pages: ['12-15'] # the nutrition pages; 1-11 are allergens and ingredients
+      pages: ['10-13'] # the nutrition pages of the July 2026 booklet; 1-9 are allergens and ingredients
       instructions: >-
         It is a nutrition page of a restaurant menu with one or more tables under a grey header row. section = the heading line above a group of rows ("Sides", "Dips & Bits
         Station", "Pizza", "Desserts"). In a table of pizzas (the header says "Weight of Pizza (g)" and "Number of Slices per Pizza") the pizza name is a line of its own above its rows
@@ -1049,24 +1049,35 @@
       text_check: { <<: *ck_check, page_ignore: { '2': [77] } } # page 2 prints "(77 / 74kcal)" for two juices: the 77 has no "kcal" after it
       instructions: *ck_instructions
       fields: *ck_fields
+    - pdf: cookhouse_and_pub_breakfast_menu.pdf
+      parser: vision_table
+      region: UK
+      category: breakfast # new in September 2026: a two-page breakfast menu, page 1 is the cover and page 2 holds the dishes with their kcal
+      approved: true
+      dpi: 250
+      pages: [2]
+      text_check: *ck_check
+      instructions: *ck_instructions
+      fields: *ck_fields
+
 73_TopGolf:
   chain: TopGolf
   allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
   sources:
     # Limited-time menu (12 pages; pages 11 and 12 print no figures) read by the model. A dish is a name in capitals, a price, "(839 kcal.)" and a description. Only kcal is
     # printed. The figures of the text layer are checked against the rows (`text_check`).
-    - pdf: chigwell_menu_feb2026.pdf
+    - pdf: legacy_menu.pdf
       parser: vision_table
       region: UK
       category: food
-      approved: false # no June 2026 PDF
+      approved: true
       dpi: 200
-      pages: [1, 3, 4, 5, 6, 7, 9, 10] # pages 2, 11 and 12 print no kcal figures in the February 2026 menu
+      pages: [1, 2, 3, 4, 5, 6, 7, 9, 10] # September 2026 `legacy_menu.pdf` (12 pages): page 8 is read by the next source (sub-headings); 11 and 12 (wine, spirits) print no kcal figures
       text_check: &tg_check {
           field: kcal,
           pattern: '(\d[\d,]*)\s?k?cal\b',
           strip: ',',
-          page_ignore: { '7': [142] },
+          page_ignore: {},
         } # page 7's text layer holds a Fruit Tea that is not on the page (hidden text) # "(952 cal. / 1044 kcal.)": both figures are printed
       instructions: &tg_instructions >-
         It is a menu page with sections (a heading such as "BURGERS" or "SHAKES"; section = the heading as printed; "LIMITED TIME ONLY" is not a section). A dish is a name in
@@ -1079,11 +1090,11 @@
         allergen keys or text without a kcal figure. Before
         you answer, count the brackets with "kcal" on the page and check that you return exactly that many rows.
       fields: { kcal: energykCal_Per Portion, notes: notes }
-    - pdf: chigwell_menu_feb2026.pdf
+    - pdf: legacy_menu.pdf
       parser: vision_table
       region: UK
       category: food
-      approved: false # no June 2026 PDF
+      approved: true
       dpi: 200
       pages: [8]
       text_check: *tg_check
@@ -1749,3 +1760,71 @@
       max_x: {29: 642.9} # between the last figure and the first Y/N cell of each page
       titles: ['optional sauce & dressing', 'Sauce & dressing']
       columns: [energykCal_Per 100g/ml, energykJ_Per 100g/ml, energykCal_Per Portion, energykCal_Per Large Portion, protein_Per 100g/ml, carbohydrates_Per 100g/ml, sugars_Per 100g/ml, fat_Per 100g/ml, saturates_Per 100g/ml, salt_Per 100g/ml, Serving_Size, Number_of_Portions]
+
+24_Zizzi: # id and key from Menu Tracker's menutracker.ipynb ("24. Zizzi"), September 2026
+  chain: Zizzi
+  allergens: false # nutrition only (docs/goal-batch-2026-03.md)
+  sources:
+    # Nutrition guide, 24 pages (UK V2, 16.06.26): per 100g and per portion on every table, eight figures each (energy kJ and kcal, fat, saturates, carbohydrate, sugar, protein, salt; no fibre).
+    - pdf: a7bddad7ab274475b481e054916a0f8208c4d24e.pdf
+      parser: numeric_table
+      region: UK
+      category: food
+      approved: true
+      header: Energy
+      wrapped_names: true
+      wrap_below: true # a long name continues on the line under its figures
+      wrap_below_lines: 2.5 # ...sometimes over two lines (ROI: Six Layer Lasagne even better with more beef ragu...)
+      header_section: false # group titles are not readable (see above): no menu_section
+      # The group titles (STARTERS, SALADS, PIZZA ...) are printed over the repeated word APERITIVO and come out interleaved or lost, so the guide's groups are NOT read: menu_section stays blank (limitation, see the report).
+      furniture: [APERITIVO, Menu Item Name, DISHES, PIZZA, SOFT DRINKS, SUPERIORE, '& TEA', DRINK, 'COCKTAILS', 'BUBBLES', 'GUESTS']
+      column_gap: 14 # centred one-digit cells (a salt of 1) sit up to 13 pt from their column's right edge
+      columns:
+        - energykJ_Per 100g/ml
+        - energykCal_Per 100g/ml
+        - fat_Per 100g/ml
+        - saturates_Per 100g/ml
+        - carbohydrates_Per 100g/ml
+        - sugars_Per 100g/ml
+        - protein_Per 100g/ml
+        - salt_Per 100g/ml
+        - energykJ_Per Portion
+        - energykCal_Per Portion
+        - fat_Per Portion
+        - saturates_Per Portion
+        - carbohydrates_Per Portion
+        - sugars_Per Portion
+        - protein_Per Portion
+        - salt_Per Portion
+    # The same guide for the Republic of Ireland and Belfast (28 pages, "ROI.BEL V1", 23.03.26).
+    - pdf: 486ec2f55581090d2098eaa1dece81923ce2ffd6.pdf
+      parser: numeric_table
+      region: ROI
+      category: food
+      approved: true
+      header: Energy
+      wrapped_names: true
+      wrap_below: true # a long name continues on the line under its figures
+      wrap_below_lines: 2.5 # ...sometimes over two lines (ROI: Six Layer Lasagne even better with more beef ragu...)
+      header_section: false # group titles are not readable (see above): no menu_section
+      # The group titles (STARTERS, SALADS, PIZZA ...) are printed over the repeated word APERITIVO and come out interleaved or lost, so the guide's groups are NOT read: menu_section stays blank (limitation, see the report).
+      furniture: [APERITIVO, Menu Item Name, DISHES, PIZZA, SOFT DRINKS, SUPERIORE, '& TEA', DRINK, 'COCKTAILS', 'BUBBLES', 'GUESTS']
+      column_gap: 14 # centred one-digit cells (a salt of 1) sit up to 13 pt from their column's right edge
+      columns:
+        - energykJ_Per 100g/ml
+        - energykCal_Per 100g/ml
+        - fat_Per 100g/ml
+        - saturates_Per 100g/ml
+        - carbohydrates_Per 100g/ml
+        - sugars_Per 100g/ml
+        - protein_Per 100g/ml
+        - salt_Per 100g/ml
+        - energykJ_Per Portion
+        - energykCal_Per Portion
+        - fat_Per Portion
+        - saturates_Per Portion
+        - carbohydrates_Per Portion
+        - sugars_Per Portion
+        - protein_Per Portion
+        - salt_Per Portion
+

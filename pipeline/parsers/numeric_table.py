@@ -20,6 +20,7 @@ Source options (config/chains.yaml):
   column_gap     how far (pt, default 9) a cell's right edge may sit from its column's right edge; widen it where cells are centred (Ask, 2026)
   line_gap       words whose vertical centres are this close (pt, default 3) are one line; raise it where a name's font sits higher than its figures (Pho: 4.7 pt)
   header_section false: the header block text is not a section name (Wasabi: the block holds the column titles, the section is the printed page title, listed under `titles`)
+  wrap_below_lines  with `wrap_below`: how many line heights under its figures a name may continue (default 1.5; 2.5 lets it run over two lines, Zizzi ROI)
   name_tail_x    a name word at or right of this x is a second name column and is read after the rest of the name (Wasabi mixed bento: "Rice")
   join_less_than a "<" printed apart from its figure ("< 0.5") becomes one cell "<0.5" (the space is dropped, nothing else changes)
   join_slash_pairs  two figures with a slash between them ("101 / 110") become one cell as printed; list it under `invalid_values` (a `re:` pattern) to keep it and flag the row
@@ -217,7 +218,7 @@ def _row(line: list[Word], lead: list[Word], anchors: list[float], columns: list
     return row
 
 
-def _merge_wrapped_below(lines: list[list[Word]], number: re.Pattern, tail_x: float | None = None) -> list[list[Word]]:
+def _merge_wrapped_below(lines: list[list[Word]], number: re.Pattern, tail_x: float | None = None, below_lines: float = WRAP_LINES) -> list[list[Word]]:
     """`wrap_below`: a line of name text with no figures, printed right under a data row and left of its figures, is the rest of that row's name."""
     out: list[list[Word]] = []
     for line in lines:
@@ -225,7 +226,7 @@ def _merge_wrapped_below(lines: list[list[Word]], number: re.Pattern, tail_x: fl
         figures = _split(prev, number)[1] if prev else []   # the trailing figure cells (a number inside the name, such as 2026, is not one)
         if (prev and len(figures) >= MIN_NUMBERS and (line[0].text.startswith("(") or not any(number.match(w.text) for w in line))   # a bracketed note may hold a figure: "(Fried - 2 pieces)"
                 and max(w.x1 for w in line) < figures[0].x0 - COLUMN_GAP
-                and line[0].y0 - prev[0].y0 <= WRAP_LINES * (prev[0].y1 - prev[0].y0)):
+                and line[0].y0 - prev[0].y0 <= below_lines * (prev[0].y1 - prev[0].y0)):
             name_words = [w for w in prev if w.x1 < figures[0].x0 - COLUMN_GAP]
             if not name_words:   # the row's name is printed on a line above its figures (`nameless_rows`): the note follows that name, and only a name-only line above can take it
                 above = out[-2] if len(out) >= 2 else None
@@ -245,7 +246,7 @@ def _merge_wrapped_below(lines: list[list[Word]], number: re.Pattern, tail_x: fl
 
 
 def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None = None,
-                wrapped_names: bool = False, titles: list[str] = (), text_values: list[str] = (), furniture: list[str] = (), name_amount: bool = False, free_sections: bool = False, invalid_values: list[str] = (), name_below: bool = False, skip_lines: list[str] = (), wrap_lines: float = WRAP_LINES, nameless_rows: bool = False, section_x: float | None = None, wrap_below: bool = False, line_gap: float = LINE_GAP, header_section: bool = True, name_tail_x: float | None = None) -> list[dict]:
+                wrapped_names: bool = False, titles: list[str] = (), text_values: list[str] = (), furniture: list[str] = (), name_amount: bool = False, free_sections: bool = False, invalid_values: list[str] = (), name_below: bool = False, skip_lines: list[str] = (), wrap_lines: float = WRAP_LINES, nameless_rows: bool = False, section_x: float | None = None, wrap_below: bool = False, line_gap: float = LINE_GAP, header_section: bool = True, name_tail_x: float | None = None, wrap_below_lines: float = WRAP_LINES) -> list[dict]:
     def extend(words):   # a word starting with "re:" is a pattern, anything else is matched as it stands
         alt = "|".join(w[3:] if w.startswith("re:") else re.escape(w) for w in words)
         return re.compile(NUMBER.pattern + "|^(?:" + alt + ")$") if words else NUMBER
@@ -259,7 +260,7 @@ def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None 
         if name_below:
             lines = _names_from_below(lines, number)
         if wrap_below:
-            lines = _merge_wrapped_below(lines, number, name_tail_x)
+            lines = _merge_wrapped_below(lines, number, name_tail_x, wrap_below_lines)
         split = [_split(line, number) for line in lines]
         found = [(i, cells) for i, (name, cells) in enumerate(split) if name and len(cells) >= MIN_NUMBERS]
         if not found:
@@ -432,4 +433,4 @@ def parse(pdf: Path, source: dict) -> list[dict]:
 def _parse(pages: list[list[Word]], source: dict) -> list[dict]:
     return parse_pages(only_pages(pages, source.get("pages"), source.get("max_x"), source.get("skip_words", ())), source["columns"], source.get("header"),
                        source.get("wrapped_names", False), source.get("titles", ()), source.get("text_values", ()), source.get("furniture", ()), source.get("name_amount", False), source.get("free_sections", False),
-                       source.get("invalid_values", ()), source.get("name_below", False), source.get("skip_lines", ()), source.get("wrap_lines", WRAP_LINES), source.get("nameless_rows", False), source.get("section_x"), source.get("wrap_below", False), source.get("line_gap", LINE_GAP), source.get("header_section", True), source.get("name_tail_x"))
+                       source.get("invalid_values", ()), source.get("name_below", False), source.get("skip_lines", ()), source.get("wrap_lines", WRAP_LINES), source.get("nameless_rows", False), source.get("section_x"), source.get("wrap_below", False), source.get("line_gap", LINE_GAP), source.get("header_section", True), source.get("name_tail_x"), source.get("wrap_below_lines", WRAP_LINES))

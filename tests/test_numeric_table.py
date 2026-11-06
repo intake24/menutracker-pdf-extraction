@@ -631,3 +631,13 @@ def test_wrap_below_adds_a_note_under_the_figures_to_a_name_printed_above_them()
             + [Word(5, 80, 90, 88, "(Canary"), Word(92, 80, 130, 88, "Wharf"), Word(132, 80, 160, 88, "only)")])
     plain, row = parse_pages([page], COLUMNS, header="Energy", wrapped_names=True, wrap_below=True, nameless_rows=True, wrap_lines=2.5)
     assert (plain["Product_Name"], row["Product_Name"]) == ("Plain", "Large Breakfast (Canary Wharf only)")
+
+
+def test_wrap_below_lines_lets_a_name_continue_over_two_lines_under_its_figures():
+    """Zizzi ROI guide: "Six Layer Lasagne even better with" / "more beef ragu, more mozzarella &" / "more bechamel"."""
+    page = (header(10, "") + line(40, "Lasagne even better with", FULL)
+            + [Word(5, 50, 90, 58, "more"), Word(92, 50, 130, 58, "beef")] + [Word(5, 60, 90, 68, "more"), Word(92, 60, 130, 68, "bechamel")])
+    (default,) = parse_pages([page[:-2] + []], COLUMNS, header="Energy", wrapped_names=True, wrap_below=True)
+    assert default["Product_Name"] == "Lasagne even better with more beef"
+    (row,) = parse_pages([page], COLUMNS, header="Energy", wrapped_names=True, wrap_below=True, wrap_below_lines=2.5)
+    assert row["Product_Name"] == "Lasagne even better with more beef more bechamel"
