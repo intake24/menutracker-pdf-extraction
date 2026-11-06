@@ -641,3 +641,11 @@ def test_wrap_below_lines_lets_a_name_continue_over_two_lines_under_its_figures(
     assert default["Product_Name"] == "Lasagne even better with more beef"
     (row,) = parse_pages([page], COLUMNS, header="Energy", wrapped_names=True, wrap_below=True, wrap_below_lines=2.5)
     assert row["Product_Name"] == "Lasagne even better with more beef more bechamel"
+
+
+def test_a_name_line_under_a_nameless_rows_figures_is_not_glued_to_that_row_as_a_note():
+    """Reviewer finding: the next product's first name line sits under this row's figures; only a bracketed note close to the row may be appended."""
+    page = (header(10, "") + line(40, "Plain", FULL) + [Word(5, 60, 80, 68, "Row"), Word(82, 60, 140, 68, "One")] + line(70, "", FULL)[1:]
+            + [Word(5, 80, 90, 88, "Next"), Word(92, 80, 130, 88, "Product")] + [Word(5, 90, 90, 98, "second"), Word(92, 90, 130, 98, "line")] + line(100, "", FULL)[1:])
+    rows = parse_pages([page], COLUMNS, header="Energy", wrapped_names=True, wrap_below=True, nameless_rows=True, wrap_lines=2.5)
+    assert [r["Product_Name"] for r in rows][1] == "Row One"

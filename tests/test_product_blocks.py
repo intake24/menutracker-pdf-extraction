@@ -144,3 +144,15 @@ def test_blank_cells_lets_a_label_with_no_figures_stay_blank_and_still_stops_on_
     one = kj + [nut("Fibre", 440, 110), nut("1.7", 470, 110)] + salt
     with pytest.raises(ValueError, match="does not have two values"):
         pb._block(one, {**SYN, "blank_cells": True}, 3)
+
+
+def test_blank_cells_does_not_blank_a_label_that_prints_a_word_instead_of_a_figure():
+    """Reviewer finding: "Fibre -" or "Fibre n/a" has no numeric token but is printed content, so it must still stop the run."""
+    def nut(text, x, top):
+        return {"text": text, "x0": x, "x1": x + 12, "top": top, "bottom": top + 6, "size": 6, "fontname": "Gothic"}
+    kj = [nut("KJ", 440, 100), nut("100", 470, 100), nut("90", 510, 100)]
+    salt = [nut("Salt", 440, 130), nut("0.1", 470, 130), nut("0.1", 510, 130)]
+    for word in ("-", "n/a"):
+        page = kj + [nut("Fibre", 440, 110), nut(word, 470, 110), nut(word, 510, 110)] + salt
+        with pytest.raises(ValueError, match="does not have two values"):
+            pb._block(page, {**SYN, "blank_cells": True}, 3)

@@ -131,7 +131,7 @@ def _block(words: list[dict], source: dict, page_no: int) -> dict | None:
         if values and label not in labels and label not in ("Portion", "per"):
             raise ValueError(f"page {page_no}: the nutrition label {label!r} is not in `nutrients`")
         if label in labels:
-            if len(values) == 0 and source.get("blank_cells"):   # `blank_cells`: a label printed with both cells empty stays blank
+            if len(values) == 0 and len(line) == 1 and source.get("blank_cells"):   # only the label alone on its line: "Fibre -" or "Fibre n/a" is printed content and still raises   # `blank_cells`: a label printed with both cells empty stays blank
                 rows[label] = ["", ""]
                 continue
             if len(values) != 2:

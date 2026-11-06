@@ -170,7 +170,7 @@
   chain: Five Guys
   allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
   sources:
-    - pdf: FGUK_FOH_allergen_ingredient_nutrition_ice-coffee_pistachio_digital_A4_20260324.pdf
+    - pdf: FGUK_FOH_allergen_ingredient_nutrition_Myprotein_shake_DIGITAL_20260805.pdf
       parser: numeric_table
       region: UK # "UK LOCATIONS ONLY"
       category: food
@@ -267,7 +267,7 @@
       parser: numeric_table
       region: UK
       category: food
-      approved: true
+      approved: false # no September 2026 PDF
       # No allergen information in these PDFs, so no `markers` and the CSV has no allergen columns.
       # The first row of page 4 has the header's unit line inside its cells: "(g)14.3", "KCal356", "kJ1496". Kept as printed and flagged.
       invalid_values: ['re:^\(g\)\d+(\.\d+)?$', KCal356, kJ1496]
@@ -308,7 +308,7 @@
       parser: grouped_table
       region: UK
       category: food
-      approved: true
+      approved: false # no September 2026 PDF
       # No allergen information in this PDF. Pages 3-16: pizza name, rotated cheese label, crust, then one row per size.
       # KNOWN GAP: page 2 (95 rows: gluten free, plant-based, cheeky little, Italiano trial-store, delight pizzas, Absolute Banger) is
       # not extracted yet: its six small tables label rows differently and one model read of the whole page returned no rows.
@@ -351,7 +351,7 @@
       parser: grouped_table
       region: UK
       category: food
-      approved: true
+      approved: false # no September 2026 PDF
       # Page 17: bases (crust label, then one row per size; figures per pizza, per slice).
       pages: [17]
       size_x0: 180
@@ -385,7 +385,7 @@
       parser: grouped_table
       region: UK
       category: food
-      approved: true
+      approved: false # no September 2026 PDF
       # Pages 18-20: sauce, cheese and toppings: one row per size with the single serve figures (the 2026 PDF has no per 100g row).
       pages: [18, 19, 20]
       size_x0: 192
@@ -410,7 +410,7 @@
       parser: vision_products
       region: UK
       category: food
-      approved: true
+      approved: false # no September 2026 PDF
       # Page 2 only (gluten free, plant-based, cheeky little, Italiano range, delight pizzas and Absolute Banger; the
       # Italiano table is new in the April 2026 guide). The page holds six small tables with different row labels, so each table is cropped and read from its image. No allergen information.
       pages: [2]
@@ -1247,7 +1247,7 @@
       parser: numeric_table
       region: UK
       category: food
-      approved: true
+      approved: false # no September 2026 PDF
       max_x: 615 # the ALLERGENS column (letter codes) starts at x 622, right of the Salt column
       wrapped_names: true
       skip_lines: [ITEM] # the first column's header is not a section
@@ -1264,7 +1264,7 @@
       parser: numeric_table
       region: UK
       category: food
-      approved: true
+      approved: false # no September 2026 PDF
       max_x: 615 # the ALLERGENS column (letter codes) starts at x 622, right of the Salt column
       wrapped_names: true
       skip_lines: [ITEM] # the first column's header is not a section
@@ -1328,7 +1328,7 @@
       parser: numeric_table
       region: UK
       category: food
-      approved: true
+      approved: false # no September 2026 PDF
       pages: [35] # the Summer specials table
       section_x: 150 # the Menu Section column is left of the Dish Description column
       header: Energy
@@ -1357,7 +1357,7 @@
       parser: numeric_table
       region: UK
       category: food
-      approved: true
+      approved: false # no September 2026 PDF
       pages: ['40-50'] # the core menu tables
       section_x: 150 # the Menu Section column is left of the Dish Description column
       header: Energy
@@ -1385,7 +1385,7 @@
       parser: vision_table
       region: UK
       category: food
-      approved: true
+      approved: false # no September 2026 PDF
       dpi: 200
       pages: [36] # an image page: the text layer prints no figures, so no `text_check`; `reread` checks the model's read
       instructions: >-
@@ -1399,7 +1399,7 @@
       parser: vision_table
       region: UK
       category: food
-      approved: true
+      approved: false # no September 2026 PDF
       dpi: 200
       pages: [37]
       text_check: { field: kcal, pattern: '(\d[\d,]*)\s?kcal', strip: ',', ignore: [2000] }
@@ -1414,7 +1414,7 @@
       parser: numeric_table
       region: UK
       category: food
-      approved: true
+      approved: false # no September 2026 PDF
       pages: [34] # the Summer specials table
       section_x: 150 # the Menu Section column is left of the Dish Description column
       header: Energy
@@ -1443,7 +1443,7 @@
       parser: numeric_table
       region: UK
       category: food
-      approved: true
+      approved: false # no September 2026 PDF
       pages: ['39-49'] # the core menu tables
       section_x: 150 # the Menu Section column is left of the Dish Description column
       header: Energy
@@ -1471,7 +1471,7 @@
       parser: vision_table
       region: UK
       category: food
-      approved: true
+      approved: false # no September 2026 PDF
       dpi: 200
       pages: [35] # an image page: the text layer prints no figures, so no `text_check`; `reread` checks the model's read
       instructions: >-
@@ -1485,7 +1485,7 @@
       parser: vision_table
       region: UK
       category: food
-      approved: true
+      approved: false # no September 2026 PDF
       dpi: 200
       pages: [36]
       text_check: { field: kcal, pattern: '(\d[\d,]*)\s?kcal', strip: ',', ignore: [2000] }
@@ -1555,7 +1555,7 @@
       parser: vision_table
       region: UK
       category: food
-      approved: true
+      approved: false # no September 2026 PDF
       dpi: 200
       pages: [1, 2]
       text_check: &cb_check { field: kcal, pattern: '(\d[\d,]*)\s?kcal', strip: ',', ignore: [2000] } # the footer: adults need around 2000 kcal a day
@@ -1570,7 +1570,7 @@
       parser: vision_table
       region: UK
       category: food
-      approved: true
+      approved: false # no September 2026 PDF
       dpi: 200
       pages: [1] # page 2 is a pattern-only back page
       text_check: *cb_check
@@ -1580,7 +1580,7 @@
       parser: vision_table
       region: UK
       category: food
-      approved: true
+      approved: false # no September 2026 PDF
       dpi: 200
       pages: [1]
       text_check: *cb_check
@@ -1590,7 +1590,7 @@
       parser: vision_table
       region: UK
       category: food
-      approved: true
+      approved: false # no September 2026 PDF
       dpi: 200
       pages: [1]
       text_check: *cb_check
@@ -1608,7 +1608,7 @@
       parser: numeric_table
       region: UK
       category: food
-      approved: true
+      approved: false # no September 2026 PDF
       header: Calories
       pages: ['2-8']
       wrapped_names: true

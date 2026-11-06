@@ -230,7 +230,9 @@ def _merge_wrapped_below(lines: list[list[Word]], number: re.Pattern, tail_x: fl
             name_words = [w for w in prev if w.x1 < figures[0].x0 - COLUMN_GAP]
             if not name_words:   # the row's name is printed on a line above its figures (`nameless_rows`): the note follows that name, and only a name-only line above can take it
                 above = out[-2] if len(out) >= 2 else None
-                if not above or any(number.match(w.text) for w in above):
+                # only a bracketed note ("(Canary Wharf only)") directly under a name-only line within 2.5 line heights of the figures is that name's note; anything else stays its own line
+                if (not above or any(number.match(w.text) for w in above) or not line[0].text.startswith("(")
+                        or prev[0].y0 - above[0].y0 > 2.5 * (above[0].y1 - above[0].y0)):
                     out.append(line)
                     continue
                 end = max(w.x1 for w in above)

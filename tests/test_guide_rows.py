@@ -264,3 +264,15 @@ def test_a_registered_mark_printed_after_a_name_in_a_plain_font_belongs_to_the_n
     rows_ = [w("Marmite", 24, 150, bold=True), w("®", 73, 150), w("Y", 96, 152), w("N", 111, 152), w("flour", 130, 150)] + figs
     got = gr.parse_page([w("Product", 24, 100, bold=True), w("| Food | Menu", 24, 10)] + rows_, [(0, 0, 800), (110, 20, 780), (200, 136, 523), (525, 0, 800)], src, 4)
     assert len(got) == 1 and got[0]["Product_Name"] == "Marmite®"
+
+
+def test_a_lone_registered_mark_is_not_a_name_and_a_bold_name_with_a_real_space_before_the_mark_is_kept_as_printed():
+    src = {**FOOD, "diet_columns": ["Suitable_for_Vegetarian", "Suitable_for_Vegan"], "skip_allergens": True, "ingredients_x0": 120, "name_x1": 102}
+    rules = [(0, 0, 800), (110, 20, 780), (200, 136, 523), (525, 0, 800)]
+    head = [w("Product", 24, 100, bold=True), w("| Food | Menu", 24, 10)]
+    only_mark = [w("®", 73, 150), w("Y", 96, 152), w("N", 111, 152), w("flour", 130, 150)] + _figs(150)
+    with pytest.raises(ValueError):
+        gr.parse_page(head + only_mark, rules, src, 4)
+    bold_space = [w("Foo", 24, 150, bold=True), w("®", 50, 150, bold=True), w("Bar", 62, 150, bold=True), w("Y", 96, 152), w("N", 111, 152), w("flour", 130, 150)] + _figs(150)
+    (row,) = gr.parse_page(head + bold_space, rules, src, 4)
+    assert row["Product_Name"] == "Foo ® Bar"
