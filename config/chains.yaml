@@ -976,21 +976,29 @@
   chain: Brewhouse
   allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
   sources:
-    # March 2026 batch: the four one-page menus of the April 2025 batch are gone; the only PDF is a landscape allergen and nutrition matrix
-    # (3 pages) whose single nutrition column is energy in kJ. The allergen marks (Y, M) are not read. The model reads the dish names.
-    - pdf: Copy-of-brewhouse_kitchen_core_menu_ss_26_allergen_matrix_2026_05_06_14_54_15_IZEO7NA.pdf
-      parser: vision_table
+    # September 2026: the matrix is one A4 page of 125 rows in tiny print (the March to June issue had three landscape pages and only the energy in kJ), with nine nutrition columns
+    # at the far right (Energy kJ and kcal, Fat, Saturates, Carbohydrates, Sugar, Fibre, Protein, Salt; their titles are rotated, so the order is from the rotated words). The text layer is
+    # intact, so the page is read as text (numeric_table), not by the model. The allergen marks (Y, M) and the dietary marks (V, VE) are not read and are dropped as words; the Menu
+    # category column (left of x 110) is the Category, the Recipe column the name. kJ prints a thousands comma ("1,846"): the export normalises it and flags it.
+    - pdf: 6a72028c8e8f2b17788ba3c6_brewhouse_kitchen_core_menu_allergen_matrix_2026_08_04.pdf
+      parser: numeric_table
       region: UK
       category: food
       approved: true
-      dpi: 200
-      instructions: >-
-        It is a landscape allergen and nutrition matrix of a pub menu: one row per dish, with the columns Menu category, Recipe, Dietary restriction, many
-        allergen columns marked Y or M, and at the far right "Nutrition Energy (kj)". section = the Menu category printed on the row (it can be printed once for
-        several rows: repeat it for each). name = the Recipe exactly as printed. kj = the figure in the Energy (kj) column exactly as printed (with its thousands
-        comma, if any); empty when the cell is blank. diet = the text in the Dietary restriction column (V or VE), empty if none. Do not return allergen marks.
-        Every row of the table is one row of your answer, also rows whose Energy cell is blank.
-      fields: { kj: energykJ_Per Portion, diet: Diet }
+      section_x: 110
+      skip_words: ['Y', 'M', 'V', 'VE']
+      invalid_values: ['re:\d+,\d+']
+      column_gap: 6
+      columns:
+        - energykJ_Per Portion
+        - energykCal_Per Portion
+        - fat_Per Portion
+        - saturates_Per Portion
+        - carbohydrates_Per Portion
+        - sugars_Per Portion
+        - fibre_Per Portion
+        - protein_Per Portion
+        - salt_Per Portion
 
 49_CookhousePub:
   chain: CookhousePub
@@ -1006,7 +1014,7 @@
       approved: true
       golden: cookhouse_and_pub_main_menu_priceless__2026-06 # the March 2026 PDF has the same name
       dpi: 250 # at 200 the model missed one figure of page 2 (790)
-      pages: [2, 3, 4, 5]
+      pages: [2, 3, 4, 5, 6] # September 2026: the menu has six pages
       text_check: &ck_check {
           field: kcal,
           pattern: '(\d[\d,]*)\s?kcal(?!\s*per (?:serve|portion))',
@@ -1452,13 +1460,13 @@
   allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
   sources:
     # Allergen matrices of the Tesco cafes (drinks, breakfast, mains, kids, snacks, sides): the only nutrition is "kcal per serving", sometimes as a pair "275/355 kcal" (small / medium).
-    - pdf: Spring+2026+GB+Allergen+Matrix+V1.pdf
+    - pdf: Summer+2026+GB+Allergen+Matrix+V5.pdf
       parser: vision_table
       region: UK
       category: food
       approved: true
       dpi: 200
-      pages: ['2-18']
+      pages: ['2-20'] # Summer 2026 V5: 20 pages
       text_check: &tesco_check { field: kcal, pattern: '(\d+(?:/\d+)?)\s?kcal', ignore: [2000, '–', '-'], page_ignore: { '8': ['75', '50/75', '50 / 75'] } }
       instructions: &tesco_instructions >-
         It is a landscape allergen matrix of a cafe menu: a row per item with the item name on the left, "kcal per serving" next to it and allergen marks (Y or M) to the right. section = the page heading
@@ -1467,13 +1475,13 @@
         when two figures are printed ("275/355"); notes = the size header printed above the kcal column on the page ("Small/Medium") when the figure is a pair, else empty. Items with a blank kcal cell or the word
         "kcal" only are not rows. Ignore every allergen mark. Return every item of the page.
       fields: &tesco_fields { kcal: energykCal_Per Portion, notes: notes }
-    - pdf: Spring+2026+NI+Allergen+Matrix+V2.pdf
+    - pdf: Summer+2026+NI+Allergen+Matrix+V3.pdf
       parser: vision_table
       region: NI
       category: food
       approved: true
       dpi: 200
-      pages: ['2-16']
+      pages: ['2-17'] # Summer 2026 V3: 17 pages
       text_check: *tesco_check
       instructions: *tesco_instructions
       fields: *tesco_fields
@@ -1484,7 +1492,7 @@
   sources:
     # Ingredient and nutrition guides (food and drinks): one product per row with vegetarian / vegan ticks, a long ingredient declaration and the nine nutrition figures
     # "per portion basis". The names are not in a bold font and the declarations are long, so the model reads the name and the figures.
-    - pdf: 2026-Nutritional-Matrix-Food-V6-Summer-Copy-3.pdf
+    - pdf: 2026-Nutritional-Matrix-Food-V7.pdf
       parser: vision_table
       region: UK
       category: food
@@ -1497,16 +1505,6 @@
         or above the rows (for example "Pastries", "Iced Tea"), or the menu named in the page head if there is none. name = the Product exactly as printed (it wraps over several lines: join them; a bracket
         such as "(whole milk)" belongs to the name). The words "ALLERGEN UPDATE" (a tag printed under some oat-milk names) are not part of the name: leave them out. Ignore the ingredients and the ticks. The nine figures are exactly as printed, as strings; leave a blank cell empty. Return every product of the page.
       fields: &soho_fields { kj: energykJ_Per Portion, kcal: energykCal_Per Portion, fat: fat_Per Portion, saturates: saturates_Per Portion, carbohydrate: carbohydrates_Per Portion, sugars: sugars_Per Portion, fibre: fibre_Per Portion, protein: protein_Per Portion, salt: salt_Per Portion }
-    - pdf: 2026-Nutritional-Matrix-Drinks-V3-Summer-Copy1.pdf
-      parser: vision_table
-      region: UK
-      category: drinks
-      approved: true
-      dpi: 200
-      pages: ['4', '6-13', '15-16', '18-25', '27-28', '30', '32', '34-35', '37-40'] # dividers are 1-3, 5, 14, 17, 26, 29, 31, 33, 36
-      instructions: *soho_instructions
-      fields: *soho_fields
-
 20_ChefBrewer: # id and key from Menu Tracker's menutracker.ipynb ("20. Chef & Brewer Pub Co.")
   chain: Chef & Brewer
   allergens: false # no allergen columns (docs/goal-batch-2026-03.md)
