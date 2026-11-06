@@ -612,7 +612,7 @@
       # bases and sauces 66, choux nuts 70. The other pages (cover, contents, welfare, allergen lists for the
       # create-your-own ingredients, drinks, Ben & Jerry's) carry no nutrition table; their allergens are not read yet.
       pages: ['7-64', '68-69', '76-78'] # August 2026 issue (AUG26-1): pizzas 7-42, sides 43-59, desserts 60-64, cooked ingredients (create-your-own) 68-69, new pizzas 76-78; 65-67 and 73-75 print "see individual pack" (no table), 70-72 and 79-81 are allergen lists
-      dpi: 150
+      dpi: 200 # September 2026: the 150 dpi first read misread cells on pages 9, 10 and 76; the 200 dpi read matches the page text
       skip_allergens: true # the March 2026 batch has no allergen columns
       share_per_100g: true # one VALUES PER 100G table serves every portion row of a product (the model fills it on one row only); copied cells are flagged
       # Each sheet lists the ingredient allergens per dough or base and what "may contain"; "None" is printed when empty,
@@ -1107,7 +1107,7 @@
           field: kcal,
           pattern: '(\d[\d,]*)\s?k?cal\b',
           strip: ',',
-          page_ignore: {},
+          page_ignore: { '1': [1498], '7': [142] }, # page 7's text layer holds a Fruit Tea that is not on the page (hidden text);  # page 1 prints "(1498 / 2699 kcal.)": the first figure has no unit after it
         } # page 7's text layer holds a Fruit Tea that is not on the page (hidden text) # "(952 cal. / 1044 kcal.)": both figures are printed
       instructions: &tg_instructions >-
         It is a menu page with sections (a heading such as "BURGERS" or "SHAKES"; section = the heading as printed; "LIMITED TIME ONLY" is not a section). A dish is a name in
@@ -1875,7 +1875,7 @@
         as "526 kcal" or "(526 kcal)". section = the board's heading (WRAPS, BURGERS, BOX MEALS, FRIED CHICKEN, CHICKEN WINGS, FRIED CHICKEN, Boneless, NUGGETS, STRIPS, Sharing Deals, SIDES ... as printed;
         a heading above a group of items applies to them; if the board has none use the board's title). name = the bold name exactly as printed. Where a heading has several sizes or counts each with its own
         figure (5PC 1005 kcal, 8PC 1608 kcal ...) one row per figure, name = "<heading> - <the count as printed>" (for example "CHICKEN WINGS - 5PC"). Where a figure comes with "Mild or Spicy" it is one row
-        and notes = "Mild or Spicy". kcal = the digits of the figure only. An item with NO calorie figure is not a row. A line of figures in a footer ("FRIES - 297KCAL  DRINK - 1KCAL PER 330ML CAN (PEPSI MAX)")
+        and notes = "Mild or Spicy". kcal = the digits of the figure only. A pair of figures printed with no labels ("297 kcal / 414 kcal") is two rows named "<item> - 1st figure" and "<item> - 2nd figure" (the board does not say which size each is), notes empty. A size or volume that is part of a section heading ("ICE CREAM 125ML") stays in the section: never add it to the item name. An item with NO calorie figure is not a row. A line of figures in a footer ("FRIES - 297KCAL  DRINK - 1KCAL PER 330ML CAN (PEPSI MAX)")
         gives one row per item named by it ("FRIES", "DRINK"), notes = "Footer of the board" (add "per 330ml can" when printed). Do not return prices, descriptions or slogans. Before you answer, count the
         calorie figures on the image and check that you return exactly that many rows.
       fields: &cc_fields { kcal: energykCal_Per Portion, notes: notes }
