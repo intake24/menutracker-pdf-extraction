@@ -6,7 +6,7 @@ import yaml
 from pipeline.parsers import drink_tables as dt
 
 ROOT = Path(__file__).resolve().parent.parent
-SOURCE = next(s for s in yaml.safe_load((ROOT / "config" / "chains.yaml").read_text())["47_Coffee1"]["sources"] if s["parser"] == "drink_tables")
+SOURCE = yaml.safe_load((ROOT / "tests" / "fixtures" / "coffee1_drink_tables_source.yaml").read_text())   # the source left config/chains.yaml in September 2026 (no beverage PDF)
 PDF = ROOT / "inputs" / SOURCE["pdf"]
 
 
