@@ -1042,7 +1042,7 @@
       region: UK
       category: food
       approved: true
-      golden: cookhouse_and_pub_main_menu_priceless__2026-06 # the March 2026 PDF has the same name
+      golden: cookhouse_and_pub_main_menu_priceless__2026-09 # the March and June 2026 PDFs have the same name
       dpi: 250 # at 200 the model missed one figure of page 2 (790)
       pages: [2, 3, 4, 5, 6] # September 2026: the menu has six pages
       text_check: &ck_check {
@@ -1073,7 +1073,7 @@
       region: UK
       category: food
       approved: true
-      golden: cookhouse_and_pub_kids_menu_default__2026-06 # the May 2025 PDF has the same name
+      golden: cookhouse_and_pub_kids_menu_default__2026-09 # the May 2025, March and June 2026 PDFs have the same name
       dpi: 250
       pages: [1, 2]
       text_check: { <<: *ck_check, page_ignore: { '2': [77] } } # page 2 prints "(77 / 74kcal)" for two juices: the 77 has no "kcal" after it
@@ -1858,3 +1858,56 @@
         - protein_Per Portion
         - salt_Per Portion
 
+88_ChickenCottage: # id and key from Menu Tracker's menutracker.ipynb ("88. Chicken Cottage"), September 2026
+  chain: ChickenCottage
+  allergens: false
+  sources:
+    # The chain publishes menu-board images with calories only (BOXES, BURGERS, FRIED, GRILLED, SIDES .jpg). The pipeline reads PDFs, so each image was converted to a one-page PDF named
+    # ChickenCottage_<NAME>.pdf next to it in inputs/ (derived copies; the originals stay). They have no text layer: every page is read by the model and read a second time.
+    - pdf: ChickenCottage_BOXES.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: true
+      dpi: 144
+      instructions: &cc_instructions >-
+        It is a restaurant menu board photographed or exported as one image (one page). Items are a bold name (it can wrap over two lines: join them), an optional description and a calorie figure printed
+        as "526 kcal" or "(526 kcal)". section = the board's heading (WRAPS, BURGERS, BOX MEALS, FRIED CHICKEN, CHICKEN WINGS, FRIED CHICKEN, Boneless, NUGGETS, STRIPS, Sharing Deals, SIDES ... as printed;
+        a heading above a group of items applies to them; if the board has none use the board's title). name = the bold name exactly as printed. Where a heading has several sizes or counts each with its own
+        figure (5PC 1005 kcal, 8PC 1608 kcal ...) one row per figure, name = "<heading> - <the count as printed>" (for example "CHICKEN WINGS - 5PC"). Where a figure comes with "Mild or Spicy" it is one row
+        and notes = "Mild or Spicy". kcal = the digits of the figure only. An item with NO calorie figure is not a row. A line of figures in a footer ("FRIES - 297KCAL  DRINK - 1KCAL PER 330ML CAN (PEPSI MAX)")
+        gives one row per item named by it ("FRIES", "DRINK"), notes = "Footer of the board" (add "per 330ml can" when printed). Do not return prices, descriptions or slogans. Before you answer, count the
+        calorie figures on the image and check that you return exactly that many rows.
+      fields: &cc_fields { kcal: energykCal_Per Portion, notes: notes }
+    - pdf: ChickenCottage_BURGERS.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: true
+      dpi: 144
+      instructions: *cc_instructions
+      fields: *cc_fields
+    - pdf: ChickenCottage_FRIED.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: true
+      dpi: 144
+      instructions: *cc_instructions
+      fields: *cc_fields
+    - pdf: ChickenCottage_GRILLED.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: true
+      dpi: 144
+      instructions: *cc_instructions
+      fields: *cc_fields
+    - pdf: ChickenCottage_SIDES.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: true
+      dpi: 144
+      instructions: *cc_instructions
+      fields: *cc_fields
