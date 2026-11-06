@@ -29,6 +29,7 @@ from pipeline.allergens import parse_allergens
 from pipeline.parsers import product_blocks as pb
 
 LINE_GAP = 3
+TRADE_MARKS = {"®", "™"}
 COLUMN_GAP = 6
 NUMBER = re.compile(r"^<?\d+(\.\d+)?(?:g|mg)?$")   # a figure, as printed ("<0.5g" has its unit)
 
@@ -131,8 +132,8 @@ def parse_page(words: list[dict], rules: list[tuple[float, float, float]], sourc
                     raise ValueError(f"page {page_no}: the word {w['text']!r} in the figure columns of a product row is not a figure")
         if not figures_by_line:
             raise ValueError(f"page {page_no}: text in a row with no figures that is not a section bar: {_text(inside)[:60]!r}")
-        name_words = [w for w in inside if w["x1"] <= name_x1 and "Bold" in w["fontname"]]
-        diet_words = [w for w in inside if w["x1"] <= name_x1 + 60 and "Bold" not in w["fontname"] and w["x0"] < source.get("ingredients_x0", 130)] if source.get("diet_columns") else []
+        name_words = [w for w in inside if w["x1"] <= name_x1 and ("Bold" in w["fontname"] or w["text"] in TRADE_MARKS)]   # a ® or ™ printed in the regular font after a bold name is part of the name
+        diet_words = [w for w in inside if w["x1"] <= name_x1 + 60 and "Bold" not in w["fontname"] and w["text"] not in TRADE_MARKS and w["x0"] < source.get("ingredients_x0", 130)] if source.get("diet_columns") else []
         allergen_words = [w for w in inside if w["x0"] >= all_x0 and not NUMBER.match(w["text"])]
         figure_ids = {id(w) for nums in figures_by_line for w in nums}
         size_x0 = source.get("size_x0")
@@ -145,7 +146,7 @@ def parse_page(words: list[dict], rules: list[tuple[float, float, float]], sourc
             raise ValueError(f"page {page_no}: text left of the declaration that is not a name: {_text(stray)[:60]!r}")
         if not name_words:
             raise ValueError(f"page {page_no}: a product row at y={lo:.0f} has no name")
-        name = _text(name_words)
+        name = re.sub(r" ([®™])", r"\1", _text(name_words))   # "Marmite ®" is printed "Marmite®"
         base = base or source.get("default_base")
         if base is None:
             raise ValueError(f"page {page_no}, {name}: figures with no 'per portion' bar above them")

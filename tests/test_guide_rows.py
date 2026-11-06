@@ -255,3 +255,12 @@ def test_a_declaration_word_just_above_the_figures_does_not_split_the_figure_lin
     figs = [w("1", 530, 153.0)] + [w(str(i + 1), 530 + 23 * i, 153.05) for i in range(1, 9)]
     got = _page(src, [w("Cake", 24, 150, bold=True), w("sugar,", 140, 150)] + figs)
     assert len(got) == 1 and (got[0]["energykJ_Per Portion"], got[0]["salt_Per Portion"]) == ("1", "9")
+
+
+def test_a_registered_mark_printed_after_a_name_in_a_plain_font_belongs_to_the_name_and_is_not_a_diet_cell():
+    """Starbucks Castillo book: "Marmite®" has its ® in the regular font, left of the Y/N cells."""
+    src = {**FOOD, "diet_columns": ["Suitable_for_Vegetarian", "Suitable_for_Vegan"], "skip_allergens": True, "ingredients_x0": 120, "name_x1": 102}
+    figs = _figs(150)
+    rows_ = [w("Marmite", 24, 150, bold=True), w("®", 73, 150), w("Y", 96, 152), w("N", 111, 152), w("flour", 130, 150)] + figs
+    got = gr.parse_page([w("Product", 24, 100, bold=True), w("| Food | Menu", 24, 10)] + rows_, [(0, 0, 800), (110, 20, 780), (200, 136, 523), (525, 0, 800)], src, 4)
+    assert len(got) == 1 and got[0]["Product_Name"] == "Marmite®"

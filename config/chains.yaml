@@ -943,6 +943,36 @@
           protein,
           salt,
         ]
+    # Castillo book (September 2026): the Ready-to-Eat range of selected Starbucks stores, same layout as the food guide.
+    - pdf: UK_SUM_AllergenBook_CASTILLO_v03.pdf
+      parser: guide_rows
+      skip_allergens: true # the March 2026 batch has no allergen columns (docs/goal-batch-2026-03.md)
+      region: UK
+      category: food
+      approved: true
+      pages: [6, 7, 8, 9, 10, 12, 13, 15, 17, 18, 20, 21] # new Ready-to-Eat range sold in selected stores (22 pages, 15/05/26): dividers 1-5, 11, 14, 16, 19 and 22 hold no table
+      name_x1: 102
+      ingredients_x0: 120
+      figures_x0: 560
+      allergens_x0: 740
+      markers: { '': 'No' }
+      default_base: Per Portion # the bars of pages 17 and 19 carry no "per portion" label; the figures are read as per portion (Pearl Scan does too)
+      no_allergen_marks: ['-']
+      allergen_words: { BUTTERMILK: Milk }
+      diet_columns: [Suitable_for_Vegetarian, Suitable_for_Vegan]
+      bar_bases: { per portion: Per Portion }
+      nutrients:
+        [
+          energykJ,
+          energykCal,
+          fat,
+          saturates,
+          carbohydrates,
+          sugars,
+          fibre,
+          protein,
+          salt,
+        ]
     # Beverage guide (text layer): the name and the ingredient declaration are printed once, then one figure line per size (Tall, Grande, Venti), ten
     # figures (the last is caffeine) and a summary column of allergens. Pages 63 and 64 (Modifiers) are a different table and are not read here.
     - pdf: SUM2_26_UK_AllergenBook_CORE_BEVERAGE_v05.pdf
