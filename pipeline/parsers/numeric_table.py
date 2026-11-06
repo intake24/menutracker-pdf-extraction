@@ -227,6 +227,14 @@ def _merge_wrapped_below(lines: list[list[Word]], number: re.Pattern, tail_x: fl
                 and max(w.x1 for w in line) < figures[0].x0 - COLUMN_GAP
                 and line[0].y0 - prev[0].y0 <= WRAP_LINES * (prev[0].y1 - prev[0].y0)):
             name_words = [w for w in prev if w.x1 < figures[0].x0 - COLUMN_GAP]
+            if not name_words:   # the row's name is printed on a line above its figures (`nameless_rows`): the note follows that name, and only a name-only line above can take it
+                above = out[-2] if len(out) >= 2 else None
+                if not above or any(number.match(w.text) for w in above):
+                    out.append(line)
+                    continue
+                end = max(w.x1 for w in above)
+                out[-2] = above + [Word(end + 0.02 * (k + 1), above[0].y0, end + 0.02 * (k + 1) + 0.01, above[0].y1, w.text, w.layer) for k, w in enumerate(line)]
+                continue
             head = [w for w in name_words if tail_x is None or w.x0 < tail_x]   # a `name_tail_x` column comes after the rest of the name
             end = max(w.x1 for w in head) if head else min(w.x0 for w in name_words) - 1   # the last word of the name
             moved = [Word(end + 0.02 * (k + 1), figures[0].y0, end + 0.02 * (k + 1) + 0.01, figures[0].y1, w.text, w.layer) for k, w in enumerate(line)]   # only the order matters; on the figures' line, so later distance checks measure from the row

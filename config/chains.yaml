@@ -201,13 +201,13 @@
         - fibre_Per 100g/ml
         - protein_Per 100g/ml
         - salt_Per 100g/ml
-      approved: true
+      approved: false # September 2026: the only PDF (FGUK_..._Myprotein_shake_DIGITAL_20260805.pdf) is a one-page allergen and ingredient chart with no nutrition figures
 
 46_Cineworld:
   chain: Cineworld
   allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
   sources:
-    - pdf: 26-06-11 Cineworld Allergen and Nutritional Information.pdf
+    - pdf: 26-08-13_20Cineworld_20Allergen_20and_20Nutritional_20Information.pdf
       parser: allergen_matrix
       region: UK
       category: food
@@ -558,7 +558,7 @@
   chain: Odeon
   allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
   sources:
-    - pdf: nutritional-information-june-2026-pdf-v26-28_05_2026-uk-version.pdf
+    - pdf: nutritional-information-july-2026-pdf-v28-09_07_2026-uk-version.pdf
       parser: numeric_table
       region: UK
       category: food
@@ -580,53 +580,7 @@
         - protein_Per Portion
         - salt_Per Portion
         - sodium_Per Portion
-    - pdf: nutritional-information-june-2026-pdf-v26-28_05_2026-belfast-version.pdf
-      parser: numeric_table
-      region: NI # Belfast
-      category: food
-      approved: true # copy of the UK source: a person confirms the columns for this region
-      # No allergen information in this PDF (the pre-packed product matrix is a separate PDF), so no `markers`.
-      header: Energy
-      name_below: true # some rows print the name on the line under their figures
-      text_flow: true # page 1 has rows printed over each other
-      free_sections: true # sub-section titles ("Toppings (Condiments)") sit between rows
-      invalid_values: ['#N/A'] # a hidden row under "Guacamole" has Excel errors instead of figures
-      name_amount: true # "Bacon Bits - 18g", "Regular Lemonade - 22oz Freestyle": the amount is the serving size
-      columns:
-        - energykJ_Per Portion
-        - energykCal_Per Portion
-        - fat_Per Portion
-        - saturates_Per Portion
-        - carbohydrates_Per Portion
-        - sugars_Per Portion
-        - fibre_Per Portion
-        - protein_Per Portion
-        - salt_Per Portion
-        - sodium_Per Portion
-    - pdf: nutritional-information-june-2026-pdf-v26-28_05_2026-roi-version.pdf
-      parser: numeric_table
-      region: ROI # Belfast
-      category: food
-      approved: true # copy of the Belfast source for the Republic of Ireland
-      # No allergen information in this PDF (the pre-packed product matrix is a separate PDF), so no `markers`.
-      header: Energy
-      name_below: true # some rows print the name on the line under their figures
-      text_flow: true # page 1 has rows printed over each other
-      free_sections: true # sub-section titles ("Toppings (Condiments)") sit between rows
-      invalid_values: ['#N/A'] # a hidden row under "Guacamole" has Excel errors instead of figures
-      name_amount: true # "Bacon Bits - 18g", "Regular Lemonade - 22oz Freestyle": the amount is the serving size
-      columns:
-        - energykJ_Per Portion
-        - energykCal_Per Portion
-        - fat_Per Portion
-        - saturates_Per Portion
-        - carbohydrates_Per Portion
-        - sugars_Per Portion
-        - fibre_Per Portion
-        - protein_Per Portion
-        - salt_Per Portion
-        - sodium_Per Portion
-    - pdf: pre-packed-product-matrix-june-2026-edition-v22-10_06_2026-uk-version.pdf
+    - pdf: pre-packed-product-matrix-july-2026-edition-v23-09_07_2026-uk-version.pdf
       parser: product_matrix
       line_gap: 2 # rows of the 2026 matrix are printed 3 pt apart
       invalid_values: ['#VALUE!', '#N/A', '#DIV/0!'] # Excel errors printed in a few figure cells; kept as printed and flagged
@@ -665,86 +619,6 @@
         - { column: fibre_Per Portion, x: 716 }
         - { column: protein_Per Portion, x: 741 }
         - { column: salt_Per Portion, x: 764 }
-    - pdf: pre-packed-product-matrix-june-2026-edition-v22-10_06_2026-belfast-version.pdf
-      parser: product_matrix
-      line_gap: 2 # rows of the 2026 matrix are printed 3 pt apart
-      invalid_values: ['#VALUE!', '#N/A', '#DIV/0!'] # Excel errors printed in a few figure cells; kept as printed and flagged
-      region: NI # Belfast, v87
-      category: food
-      approved: true
-      # Pre-packed product matrix: ingredients with allergens in bold (the bold is not in the text layer, so allergens are NOT
-      # derived: the PDF has no allergen column, and the allergen columns stay absent), storage and use text, serving size,
-      # nutrition per 100g and per serving, one product per row. Figures printed with their unit ("22g", "498 kcal") lose
-      # the column's own unit; "N/A" is kept as printed; a dash is kept as printed.
-      text_columns:
-        - { column: Product_Name, x0: 46 }
-        - { column: Pack_Size, x0: 118 }
-        - { column: Ingredients, x0: 136 }
-        - { column: Storage, x0: 246 }
-        - { column: Instructions, x0: 269 }
-        - { column: Serving, x0: 322 }
-      serving_column: Serving
-      pearlscan: { servingsize: ~, servingsizeunit: ~ } # Pearl Scan filled serving sizes the PDF does not print (250 ml for a 500 ml bottle) and left counts blank
-      numeric_columns:
-        - { column: energykJ_Per 100g/ml, x: 373 }
-        - { column: energykCal_Per 100g/ml, x: 395 }
-        - { column: fat_Per 100g/ml, x: 418 }
-        - { column: saturates_Per 100g/ml, x: 441 }
-        - { column: carbohydrates_Per 100g/ml, x: 464 }
-        - { column: sugars_Per 100g/ml, x: 486 }
-        - { column: fibre_Per 100g/ml, x: 509 }
-        - { column: protein_Per 100g/ml, x: 533 }
-        - { column: salt_Per 100g/ml, x: 556 }
-        - { column: energykJ_Per Portion, x: 580 }
-        - { column: energykCal_Per Portion, x: 603 }
-        - { column: fat_Per Portion, x: 624 }
-        - { column: saturates_Per Portion, x: 647 }
-        - { column: carbohydrates_Per Portion, x: 671 }
-        - { column: sugars_Per Portion, x: 694 }
-        - { column: fibre_Per Portion, x: 715 }
-        - { column: protein_Per Portion, x: 740 }
-        - { column: salt_Per Portion, x: 763 }
-
-    - pdf: pre-packed-product-matrix-june-2026-edition-v22-10_06_2026-roi-version.pdf
-      parser: product_matrix
-      line_gap: 2 # rows of the 2026 matrix are printed 3 pt apart
-      invalid_values: ['#VALUE!', '#N/A', '#DIV/0!'] # Excel errors printed in a few figure cells; kept as printed and flagged
-      region: ROI # Belfast, v87
-      category: food
-      approved: true # copy of the Belfast source for the Republic of Ireland
-      # Pre-packed product matrix: ingredients with allergens in bold (the bold is not in the text layer, so allergens are NOT
-      # derived: the PDF has no allergen column, and the allergen columns stay absent), storage and use text, serving size,
-      # nutrition per 100g and per serving, one product per row. Figures printed with their unit ("22g", "498 kcal") lose
-      # the column's own unit; "N/A" is kept as printed; a dash is kept as printed.
-      text_columns:
-        - { column: Product_Name, x0: 46 }
-        - { column: Pack_Size, x0: 118 }
-        - { column: Ingredients, x0: 136 }
-        - { column: Storage, x0: 246 }
-        - { column: Instructions, x0: 269 }
-        - { column: Serving, x0: 322 }
-      serving_column: Serving
-      pearlscan: { servingsize: ~, servingsizeunit: ~ } # Pearl Scan filled serving sizes the PDF does not print (250 ml for a 500 ml bottle) and left counts blank
-      numeric_columns:
-        - { column: energykJ_Per 100g/ml, x: 373 }
-        - { column: energykCal_Per 100g/ml, x: 395 }
-        - { column: fat_Per 100g/ml, x: 418 }
-        - { column: saturates_Per 100g/ml, x: 441 }
-        - { column: carbohydrates_Per 100g/ml, x: 464 }
-        - { column: sugars_Per 100g/ml, x: 486 }
-        - { column: fibre_Per 100g/ml, x: 509 }
-        - { column: protein_Per 100g/ml, x: 533 }
-        - { column: salt_Per 100g/ml, x: 556 }
-        - { column: energykJ_Per Portion, x: 580 }
-        - { column: energykCal_Per Portion, x: 603 }
-        - { column: fat_Per Portion, x: 624 }
-        - { column: saturates_Per Portion, x: 647 }
-        - { column: carbohydrates_Per Portion, x: 671 }
-        - { column: sugars_Per Portion, x: 694 }
-        - { column: fibre_Per Portion, x: 715 }
-        - { column: protein_Per Portion, x: 740 }
-        - { column: salt_Per Portion, x: 763 }
-
 26_PapaJohns:
   chain: Papa Johns
   allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
@@ -1422,7 +1296,7 @@
   chain: Subway
   allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
   sources:
-    - pdf: ukinutritionalinformationmarch2026.pdf
+    - pdf: UKI_IngredientsNutritionalInformationJune2026.pdf
       parser: numeric_table
       region: UK # "UK and ROI" on one table
       category: food
@@ -1456,18 +1330,18 @@
   chain: Tortilla
   allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
   sources:
-    - pdf: tortilla-nutrition-guide-march-2026.pdf
+    - pdf: tortilla-nutrition-guide-10-aug.pdf
       parser: numeric_table
       region: UK
       category: food
       approved: true
-      pages: ['3-16']
+      pages: ['4-17']
       max_x: 392 # the Dietary, Contains and May Contain columns (allergens are not read) start at x 395
       header: Kcal
       wrapped_names: true
       name_fixes: { 'Spiced Apple': 'Spiced Apple Margarita (Glass)' } # the name wraps onto a line under its figures
-      titles: ['Medium Burrito / Bowl', 'Large Burrito / Bowl', 'Medium Salad', 'Large Salad', 'Tres Tacos', 'Nachos Queso', 'Quesadilla', 'Protein Pots', 'Sides', 'Kids Burrito/Naked Burrito', 'Breakfast Roll', 'Breakfast Quesadilla', 'MeDiuM Burrito / Bowl', 'large Burrito / Bowl', 'MeDiuM salaD', 'large salaD', 'tres tacos', 'nacHos Queso', 'QuesaDilla', 'protein pots', 'siDes', 'KiDs Burrito/naKeD Burrito', 'BreaKfast roll', 'BreaKfast QuesaDilla', 'DrinKs', 'LARGE BALANCE BOWL', 'LARGE PROTEIN BOWL', 'Breakfast Quesadilla']
-      furniture: [Energy, Menu Item, 'Fat Sat fat Carbs Sugars Fibre Protein Salt', '(g) (g) (g) (g) (g) (g) (g)', 'Menu Fat Sat fat Carbs Sugars Fibre Protein Salt', 'item (g) (g) (g) (g) (g) (g) (g)']
+      titles: ['Medium Burrito / Bowl', 'Large Burrito / Bowl', 'Medium Salad', 'Large Salad', 'Tres Tacos', 'Nachos Queso', 'Quesadilla', 'Protein Pots', 'Sides', 'Kids Burrito/Naked Burrito', 'Breakfast Roll', 'Breakfast Quesadilla', 'MeDiuM Burrito / Bowl', 'large Burrito / Bowl', 'MeDiuM salaD', 'large salaD', 'tres tacos', 'nacHos Queso', 'QuesaDilla', 'protein pots', 'siDes', 'KiDs Burrito/naKeD Burrito', 'BreaKfast roll', 'BreaKfast QuesaDilla', 'DrinKs', 'LARGE BALANCE BOWL', 'LARGE PROTEIN BOWL', 'Breakfast Quesadilla', 'Medium Burrito/Bowl', 'Large Burrito/Bowl', 'Balance Fuel Bowl', 'Plant Fuel Bowl', 'Cali Caesar Wrap', 'Desserts', 'Breakfast Burrito', 'Breakfast Bowl', 'Breakfast Roll/Bun', 'Hot Drinks', 'MeDiuM Burrito/Bowl', 'large Burrito/Bowl', 'plant Fuel Bowl', 'cali caesar wrap', 'BreaKFast Burrito', 'BreaKFast Bowl', 'BreaKFast roll/Bun']
+      furniture: [Energy, Menu Item, 'Fat Sat fat Carbs Sugars Fibre Protein Salt', '(g) (g) (g) (g) (g) (g) (g)', 'Menu Fat Sat fat Carbs Sugars Fibre Protein Salt', 'item (g) (g) (g) (g) (g) (g) (g)', 'Menu']
       skip_lines: ['Hot DrinKs', 'Contains May', 'Menu Item Dietary', 'Allergens Contain', 'Kcal', 'Espresso Single / Double 2.0 V,VE', 'Americano 22.0 V,VE', 'English Breakfast Tea 15.0 V,VE', 'Peppermint Tea - V,VE', 'Cappuccino 116.0 V Milk', 'Iced Coffee 71.0 Milk', 'Latte 136.0 V Milk', 'Mocha 200.0 V Milk'] # the Hot Drinks table (kcal only, read by the next source)
       columns:
         - energykCal_Per Portion
@@ -1479,15 +1353,41 @@
         - fibre_Per Portion
         - protein_Per Portion
         - salt_Per Portion
-    - pdf: tortilla-nutrition-guide-march-2026.pdf
+    - pdf: tortilla-nutrition-guide-10-aug.pdf
+      parser: numeric_table
+      region: UK
+      category: food
+      approved: true
+      pages: ['18-21']
+      max_x: 392 # the Dietary, Contains and May Contain columns (allergens are not read) start at x 395
+      header: Kcal
+      wrapped_names: true
+      wrap_below: true # "(Canary Wharf only)" sits under the figures
+      wrap_lines: 2.5 # the breakfast names sit above the figures
+      nameless_rows: true
+      name_fixes: { 'Spiced Apple': 'Spiced Apple Margarita (Glass)' } # the name wraps onto a line under its figures
+      titles: ['Medium Burrito / Bowl', 'Large Burrito / Bowl', 'Medium Salad', 'Large Salad', 'Tres Tacos', 'Nachos Queso', 'Quesadilla', 'Protein Pots', 'Sides', 'Kids Burrito/Naked Burrito', 'Breakfast Roll', 'Breakfast Quesadilla', 'MeDiuM Burrito / Bowl', 'large Burrito / Bowl', 'MeDiuM salaD', 'large salaD', 'tres tacos', 'nacHos Queso', 'QuesaDilla', 'protein pots', 'siDes', 'KiDs Burrito/naKeD Burrito', 'BreaKfast roll', 'BreaKfast QuesaDilla', 'DrinKs', 'LARGE BALANCE BOWL', 'LARGE PROTEIN BOWL', 'Breakfast Quesadilla', 'Medium Burrito/Bowl', 'Large Burrito/Bowl', 'Balance Fuel Bowl', 'Plant Fuel Bowl', 'Cali Caesar Wrap', 'Desserts', 'Breakfast Burrito', 'Breakfast Bowl', 'Breakfast Roll/Bun', 'Hot Drinks', 'MeDiuM Burrito/Bowl', 'large Burrito/Bowl', 'plant Fuel Bowl', 'cali caesar wrap', 'BreaKFast Burrito', 'BreaKFast Bowl', 'BreaKFast roll/Bun']
+      furniture: [Energy, Menu Item, 'Fat Sat fat Carbs Sugars Fibre Protein Salt', '(g) (g) (g) (g) (g) (g) (g)', 'Menu Fat Sat fat Carbs Sugars Fibre Protein Salt', 'item (g) (g) (g) (g) (g) (g) (g)', 'Menu']
+      skip_lines: ['Hot DrinKs', 'Contains May', 'Menu Item Dietary', 'Allergens Contain', 'Kcal', 'Espresso Single / Double 2.0 V,VE', 'Americano 22.0 V,VE', 'English Breakfast Tea 15.0 V,VE', 'Peppermint Tea - V,VE', 'Cappuccino 116.0 V Milk', 'Iced Coffee 71.0 Milk', 'Latte 136.0 V Milk', 'Mocha 200.0 V Milk'] # the Hot Drinks table (kcal only, read by the next source)
+      columns:
+        - energykCal_Per Portion
+        - energykJ_Per Portion
+        - fat_Per Portion
+        - saturates_Per Portion
+        - carbohydrates_Per Portion
+        - sugars_Per Portion
+        - fibre_Per Portion
+        - protein_Per Portion
+        - salt_Per Portion
+    - pdf: tortilla-nutrition-guide-10-aug.pdf
       parser: vision_table
       region: UK
       category: drinks
       approved: true
       dpi: 200
-      pages: [16]
+      pages: [21]
       instructions: >-
-        Page 16 has several tables. Return only the rows of the table headed "Hot Drinks": one row per drink (Espresso Single / Double, Americano, English Breakfast Tea,
+        Page 21 has several tables. Return only the rows of the table headed "Hot Drinks": one row per drink (Espresso Single / Double, Americano, English Breakfast Tea,
         Peppermint Tea, Cappuccino, Iced Coffee, Latte, Mocha). section = "Hot Drinks", name = the drink as printed, size = empty, portion = empty, kcal = the figure in the
         Energy Kcal column exactly as printed ("-" when the cell shows a dash). Ignore the dietary and allergen columns and every other table on the page.
       fields: { kcal: energykCal_Per Portion }

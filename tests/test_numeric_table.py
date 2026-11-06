@@ -623,3 +623,11 @@ def test_header_section_off_a_listed_title_printed_before_a_second_table_names_t
     page = (header(10, "") + line(40, "Fries", FULL) + [Word(5, 70, 60, 78, "Rice boxes")] + header(90, "") + line(120, "Dough", FULL))
     a, b = parse_pages([page], COLUMNS, header="Energy", titles=["Rice boxes"], header_section=False)
     assert (a["Category"], b["Category"]) == ("", "Rice boxes")
+
+
+def test_wrap_below_adds_a_note_under_the_figures_to_a_name_printed_above_them():
+    """Tortilla breakfast pages: the name sits on a line above its figures (`nameless_rows`) and a note such as "(Canary Wharf only)" sits under them."""
+    page = (header(10, "") + line(40, "Plain", FULL) + [Word(5, 60, 80, 68, "Large"), Word(82, 60, 140, 68, "Breakfast")] + line(70, "", FULL)[1:]
+            + [Word(5, 80, 90, 88, "(Canary"), Word(92, 80, 130, 88, "Wharf"), Word(132, 80, 160, 88, "only)")])
+    plain, row = parse_pages([page], COLUMNS, header="Energy", wrapped_names=True, wrap_below=True, nameless_rows=True, wrap_lines=2.5)
+    assert (plain["Product_Name"], row["Product_Name"]) == ("Plain", "Large Breakfast (Canary Wharf only)")
