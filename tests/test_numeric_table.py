@@ -561,3 +561,65 @@ def test_a_wide_line_gap_never_interleaves_two_stacked_text_lines():
     page = [Word(5, 100, 60, 108, "Spring"), Word(63, 100, 90, 108, "Rolls"), Word(5, 105.5, 40, 113.5, "with"), Word(43, 105.5, 70, 113.5, "herbs")] + line(130, "Plain", FULL)
     with pytest.raises(ValueError, match="overlap"):
         parse_pages([page], COLUMNS, line_gap=6)
+
+
+def test_header_section_off_ignores_the_header_block_text_for_the_section():
+    page = header(10, "Starters") + line(40, "Dough Balls", FULL)
+    (row,) = parse_pages([page], COLUMNS, header="Energy", header_section=False)
+    assert row["Category"] == ""
+
+
+def test_name_tail_x_moves_a_second_name_column_behind_the_first():
+    # a bento name wraps under its figures while a component column ("Rice") stands on the figures' line
+    page = line(40, "Curry +", FULL) + [Word(150, 40, 170, 48, "Rice")] + [Word(5, 50, 35, 58, "sauce")]
+    (row,) = parse_pages([page], COLUMNS, wrap_below=True, name_tail_x=145)
+    assert row["Product_Name"] == "Curry + sauce Rice"
+
+
+def test_max_x_can_differ_per_page():
+    from pipeline.parsers.numeric_table import only_pages
+    pages = [[Word(10, 0, 20, 8, "a"), Word(100, 0, 110, 8, "b")], [Word(10, 0, 20, 8, "c"), Word(100, 0, 110, 8, "d")]]
+    kept = only_pages(pages, None, {1: 50, 2: 150})
+    assert [[w.text for w in p] for p in kept] == [["a"], ["c", "d"]]
+
+
+def test_name_tail_x_with_a_row_line_holding_only_the_tail_column():
+    # the figures' line carries only "Rice"; the name's two lines sit above and below it
+    page = header(10, "") + line(70, "", FULL)[1:] + [Word(150, 70, 170, 78, "Rice"), Word(5, 66, 35, 74, "Curry +"), Word(5, 74, 35, 82, "sauce")]
+    page = [w for w in page if w.text != "(kcal)"]
+    (row,) = parse_pages([page], COLUMNS, header="Energy", wrapped_names=True, free_sections=True, wrap_below=True, name_tail_x=145)
+    assert row["Product_Name"] == "Curry + sauce Rice"
+
+
+def test_wrap_below_measures_from_the_figures_line_so_the_next_rows_first_line_stays_its_own():
+    def name_lines(y, a, b):
+        return [Word(5, y - 9, 35, y - 1, a), Word(5, y + 9, 35, y + 17, b)]
+    figures = lambda y: line(y, "", FULL)[1:] + [Word(150, y, 170, y + 8, "Rice")]
+    page = header(10, "") + name_lines(70, "A1", "A2") + figures(70) + name_lines(98, "B1", "B2") + figures(98)
+    a, b = parse_pages([page], COLUMNS, header="Energy", wrapped_names=True, free_sections=True, wrap_below=True, name_tail_x=145)
+    assert (a["Product_Name"], b["Product_Name"]) == ("A1 A2 Rice", "B1 B2 Rice")
+
+
+def test_header_section_off_does_not_carry_a_section_label_into_the_next_table():
+    page = (header(10, "") + line(40, "Fries", FULL) + [Word(5, 55, 60, 63, "Sub-label")] + line(70, "Chips", FULL)
+            + header(100, "") + line(130, "Dough", FULL))
+    rows = parse_pages([page], COLUMNS, header="Energy", free_sections=True, header_section=False)
+    assert [r["Category"] for r in rows] == ["", "Sub-label", ""]
+
+
+def test_wrap_below_takes_only_a_line_within_one_and_a_half_line_heights():
+    page = header(10, "") + line(40, "Curry", FULL) + [Word(5, 54, 60, 62, "Next row first line")] + line(66, "Fish", FULL)
+    a, b = parse_pages([page], COLUMNS, header="Energy", wrapped_names=True, free_sections=True, wrap_below=True)
+    assert (a["Product_Name"], b["Product_Name"]) == ("Curry", "Next row first line Fish")
+
+
+def test_wrap_below_takes_a_bracketed_note_that_holds_a_figure():
+    page = header(10, "") + line(40, "Hot gyoza", FULL) + [Word(5, 46, 60, 54, "(Fried"), Word(62, 46, 70, 54, "-"), Word(72, 46, 76, 54, "2"), Word(78, 46, 110, 54, "pieces)")]
+    (row,) = parse_pages([page], COLUMNS, header="Energy", wrapped_names=True, free_sections=True, wrap_below=True)
+    assert row["Product_Name"] == "Hot gyoza (Fried - 2 pieces)" and row["Category"] == ""
+
+
+def test_header_section_off_a_listed_title_printed_before_a_second_table_names_that_table():
+    page = (header(10, "") + line(40, "Fries", FULL) + [Word(5, 70, 60, 78, "Rice boxes")] + header(90, "") + line(120, "Dough", FULL))
+    a, b = parse_pages([page], COLUMNS, header="Energy", titles=["Rice boxes"], header_section=False)
+    assert (a["Category"], b["Category"]) == ("", "Rice boxes")

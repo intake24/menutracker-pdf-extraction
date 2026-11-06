@@ -1,6 +1,6 @@
 # Goal: June 2026 batch (nutrition only)
 
-Status: done 2026-11-05 except Wasabi (results: `outputs/data-dictionary/end-of-round-report-2026-06.md`). Started 2026-11-05. Same rules and done criteria as `docs/goal-batch-2026-03.md`, with the dates changed. Results go to `outputs/data-dictionary/findings-report-2026-06.md` and `end-of-round-report-2026-06.md`.
+Status: done 2026-11-05, Wasabi added 2026-11-06 (results: `outputs/data-dictionary/end-of-round-report-2026-06.md`). Started 2026-11-05. Same rules and done criteria as `docs/goal-batch-2026-03.md`, with the dates changed. Results go to `outputs/data-dictionary/findings-report-2026-06.md` and `end-of-round-report-2026-06.md`.
 
 ## Objective
 

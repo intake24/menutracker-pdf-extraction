@@ -19,6 +19,8 @@ Source options (config/chains.yaml):
   wrapped_names  join a name-only line directly above a data row onto that row's name
   column_gap     how far (pt, default 9) a cell's right edge may sit from its column's right edge; widen it where cells are centred (Ask, 2026)
   line_gap       words whose vertical centres are this close (pt, default 3) are one line; raise it where a name's font sits higher than its figures (Pho: 4.7 pt)
+  header_section false: the header block text is not a section name (Wasabi: the block holds the column titles, the section is the printed page title, listed under `titles`)
+  name_tail_x    a name word at or right of this x is a second name column and is read after the rest of the name (Wasabi mixed bento: "Rice")
   join_less_than a "<" printed apart from its figure ("< 0.5") becomes one cell "<0.5" (the space is dropped, nothing else changes)
   join_slash_pairs  two figures with a slash between them ("101 / 110") become one cell as printed; list it under `invalid_values` (a `re:` pattern) to keep it and flag the row
   titles         page titles allowed above a table header, e.g. "Breakfast (selected restaurants only)"; each
@@ -179,7 +181,7 @@ def _classify(lines: list[list[Word]], tables: list[list[float]], table_of: dict
 
 def _row(line: list[Word], lead: list[Word], anchors: list[float], columns: list[str], category: str,
          page_no: int, number: re.Pattern = NUMBER, name_amount: bool = False,
-         anywhere: re.Pattern = NUMBER, nameless: bool = False, section_x: float | None = None) -> dict:
+         anywhere: re.Pattern = NUMBER, nameless: bool = False, section_x: float | None = None, name_tail_x: float | None = None) -> dict:
     edge = anchors[0] - COLUMN_GAP                         # words wholly left of this are the name
     name = [w for w in line if w.x1 < edge]
     if section_x is not None:   # `section_x`: a section column left of this x names the row's category
@@ -187,6 +189,8 @@ def _row(line: list[Word], lead: list[Word], anchors: list[float], columns: list
         name = [w for w in name if w.x0 >= section_x]
     if not name and not (lead and nameless):   # `nameless_rows`: the row's name is printed on lines above its figures
         raise ValueError(f"page {page_no}: numbers without a name: {' '.join(w.text for w in line)!r}")
+    if name_tail_x is not None:   # `name_tail_x`: a name word at or right of this x is a second name column, read last
+        name = [w for w in name if w.x0 < name_tail_x] + [w for w in name if w.x0 >= name_tail_x]
     product = " ".join(w.text for w in lead + name)
     if sum(bool(number.match(w.text)) for w in name) >= MIN_NUMBERS:
         raise ValueError(f"page {page_no}: name contains numbers, so the row's columns don't match the config: "
@@ -213,17 +217,19 @@ def _row(line: list[Word], lead: list[Word], anchors: list[float], columns: list
     return row
 
 
-def _merge_wrapped_below(lines: list[list[Word]], number: re.Pattern) -> list[list[Word]]:
+def _merge_wrapped_below(lines: list[list[Word]], number: re.Pattern, tail_x: float | None = None) -> list[list[Word]]:
     """`wrap_below`: a line of name text with no figures, printed right under a data row and left of its figures, is the rest of that row's name."""
     out: list[list[Word]] = []
     for line in lines:
         prev = out[-1] if out else None
         figures = _split(prev, number)[1] if prev else []   # the trailing figure cells (a number inside the name, such as 2026, is not one)
-        if (prev and len(figures) >= MIN_NUMBERS and not any(number.match(w.text) for w in line)
+        if (prev and len(figures) >= MIN_NUMBERS and (line[0].text.startswith("(") or not any(number.match(w.text) for w in line))   # a bracketed note may hold a figure: "(Fried - 2 pieces)"
                 and max(w.x1 for w in line) < figures[0].x0 - COLUMN_GAP
-                and line[0].y0 - prev[0].y0 <= 2 * (prev[0].y1 - prev[0].y0)):
-            end = max(w.x1 for w in prev if w.x1 < figures[0].x0 - COLUMN_GAP)   # the last word of the name
-            moved = [Word(end + 0.02 * (k + 1), w.y0, end + 0.02 * (k + 1) + 0.01, w.y1, w.text, w.layer) for k, w in enumerate(line)]   # only the order matters
+                and line[0].y0 - prev[0].y0 <= WRAP_LINES * (prev[0].y1 - prev[0].y0)):
+            name_words = [w for w in prev if w.x1 < figures[0].x0 - COLUMN_GAP]
+            head = [w for w in name_words if tail_x is None or w.x0 < tail_x]   # a `name_tail_x` column comes after the rest of the name
+            end = max(w.x1 for w in head) if head else min(w.x0 for w in name_words) - 1   # the last word of the name
+            moved = [Word(end + 0.02 * (k + 1), figures[0].y0, end + 0.02 * (k + 1) + 0.01, figures[0].y1, w.text, w.layer) for k, w in enumerate(line)]   # only the order matters; on the figures' line, so later distance checks measure from the row
             out[-1] = sorted(prev + moved, key=lambda w: w.x0)
         else:
             out.append(line)
@@ -231,20 +237,21 @@ def _merge_wrapped_below(lines: list[list[Word]], number: re.Pattern) -> list[li
 
 
 def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None = None,
-                wrapped_names: bool = False, titles: list[str] = (), text_values: list[str] = (), furniture: list[str] = (), name_amount: bool = False, free_sections: bool = False, invalid_values: list[str] = (), name_below: bool = False, skip_lines: list[str] = (), wrap_lines: float = WRAP_LINES, nameless_rows: bool = False, section_x: float | None = None, wrap_below: bool = False, line_gap: float = LINE_GAP) -> list[dict]:
+                wrapped_names: bool = False, titles: list[str] = (), text_values: list[str] = (), furniture: list[str] = (), name_amount: bool = False, free_sections: bool = False, invalid_values: list[str] = (), name_below: bool = False, skip_lines: list[str] = (), wrap_lines: float = WRAP_LINES, nameless_rows: bool = False, section_x: float | None = None, wrap_below: bool = False, line_gap: float = LINE_GAP, header_section: bool = True, name_tail_x: float | None = None) -> list[dict]:
     def extend(words):   # a word starting with "re:" is a pattern, anything else is matched as it stands
         alt = "|".join(w[3:] if w.startswith("re:") else re.escape(w) for w in words)
         return re.compile(NUMBER.pattern + "|^(?:" + alt + ")$") if words else NUMBER
     number = extend([*text_values, *invalid_values])
     anywhere = extend(invalid_values)   # may stand under a nutrient column: kept as printed and flagged downstream
     rows = []
+    titled = ""   # a listed title between two tables, kept for the next table when `header_section` is off
     parent = section = ""   # parent: a page title that persists ("Breakfast (selected restaurants only)")
     for page_no, words in enumerate(pages, start=1):
         lines = [l for l in _lines(words, line_gap, True) if not _is_ruler(l) and " ".join(w.text for w in l) not in skip_lines]   # skip_lines: description text printed beside a name
         if name_below:
             lines = _names_from_below(lines, number)
         if wrap_below:
-            lines = _merge_wrapped_below(lines, number)
+            lines = _merge_wrapped_below(lines, number, name_tail_x)
         split = [_split(line, number) for line in lines]
         found = [(i, cells) for i, (name, cells) in enumerate(split) if name and len(cells) >= MIN_NUMBERS]
         if not found:
@@ -308,6 +315,7 @@ def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None 
                     block.append(line)
                 elif heading := _heading(line, left) or (text if text in titles else None):   # a listed title between rows starts a section too
                     section = heading
+                    titled = text if text in titles else ""
                 elif i < last_row and not text.startswith(NOTE_START):
                     if not wrapped_names and not free_sections:
                         raise ValueError(f"page {page_no}: text between rows that is not a heading or note "
@@ -321,7 +329,7 @@ def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None 
                     bottom = max(w.y1 for l in block for w in l if w.x1 >= edge)
                     above = [l for l in block if l[0].y0 < bottom]
                     left_text = " ".join(w.text for l in above for w in l if w.x1 < edge)
-                    section = ("" if left_text in furniture else left_text) or section
+                    section, titled = (titled, "") if not header_section else (("" if left_text in furniture else left_text) or section, "")   # without `header_section` a new table starts with no section
                     pending = [l for l in block if l[0].y0 >= bottom]
                     in_header = False
                     if pending and not wrapped_names:
@@ -347,16 +355,17 @@ def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None 
                     if any(w.x1 >= anchors[0] - COLUMN_GAP for w in lead):
                         raise ValueError(f"page {page_no}: text above a row reaches into the columns, so it is not "
                                          f"a name: {' '.join(w.text for w in lead)!r}")
-                rows.append(_row(line, lead, anchors, columns, " - ".join(c for c in (parent, section) if c), page_no, number, name_amount, anywhere, nameless_rows, section_x))
+                rows.append(_row(line, lead, anchors, columns, " - ".join(c for c in (parent, section) if c), page_no, number, name_amount, anywhere, nameless_rows, section_x, name_tail_x))
     return rows
 
 
-def only_pages(pages: list[list[Word]], spec: list | None, max_x: float | None = None, skip_words: list[str] = ()) -> list[list[Word]]:
-    """With a `pages` option, every other page is emptied (page numbers stay the PDF's own); `max_x` drops words that
+def only_pages(pages: list[list[Word]], spec: list | None, max_x: float | dict | None = None, skip_words: list[str] = ()) -> list[list[Word]]:
+    """With a `pages` option, every other page is emptied (page numbers stay the PDF's own); `max_x` (a number, or a {page: number} map) drops words that
     start further right (a rotated document code in the margin); `skip_words` drops words with exactly that text (a unit
     line such as "(g)" repeated inside the cells of one row)."""
     keep = set(expand_pages(spec)) if spec else None
-    return [[w for w in p if (max_x is None or w.x0 < max_x) and w.text not in skip_words] if keep is None or n in keep else []
+    limit = (lambda n: max_x.get(n)) if isinstance(max_x, dict) else (lambda n: max_x)   # `max_x` may map page -> x
+    return [[w for w in p if (limit(n) is None or w.x0 < limit(n)) and w.text not in skip_words] if keep is None or n in keep else []
             for n, p in enumerate(pages, start=1)]
 
 
@@ -415,4 +424,4 @@ def parse(pdf: Path, source: dict) -> list[dict]:
 def _parse(pages: list[list[Word]], source: dict) -> list[dict]:
     return parse_pages(only_pages(pages, source.get("pages"), source.get("max_x"), source.get("skip_words", ())), source["columns"], source.get("header"),
                        source.get("wrapped_names", False), source.get("titles", ()), source.get("text_values", ()), source.get("furniture", ()), source.get("name_amount", False), source.get("free_sections", False),
-                       source.get("invalid_values", ()), source.get("name_below", False), source.get("skip_lines", ()), source.get("wrap_lines", WRAP_LINES), source.get("nameless_rows", False), source.get("section_x"), source.get("wrap_below", False), source.get("line_gap", LINE_GAP))
+                       source.get("invalid_values", ()), source.get("name_below", False), source.get("skip_lines", ()), source.get("wrap_lines", WRAP_LINES), source.get("nameless_rows", False), source.get("section_x"), source.get("wrap_below", False), source.get("line_gap", LINE_GAP), source.get("header_section", True), source.get("name_tail_x"))

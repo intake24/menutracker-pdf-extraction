@@ -11,13 +11,13 @@
 #   flags        "error: ..." / "warn: ..." checks joined with " | "; informational, values are never changed
 version: 1
 text_columns: [Product_Name, Product_Description, Size, Milk, CoffeeType, Ingredients,
-               Category, Serving_Size, Serving_Size_Unit, Diet, notes,
+               Category, Serving_Size, Serving_Size_Large, Serving_Size_Unit, Diet, notes,
                # counts and amounts printed per product (Domino's, Pizza Hut, Papa John's), kept as printed
                Serves, Portion_Type, Portion_Size, Number_of_Slices, Number_of_Portions, Recommended_Portions,
                Total_Slices, Total_Pieces, Total_Portions, Total_Weight,
                Suitable_for_Vegetarian, Suitable_for_Vegan, Suitable_for_Coeliac, Suitable_for_Halal,
                Pack_Size, Storage, Instructions, Cheese, Crust]
-bases: ["Per 100g/ml", "Per Portion", "Per Pizza", "Per Slice", "Per Product As Sold"]
+bases: ["Per 100g/ml", "Per Portion", "Per Pizza", "Per Slice", "Per Product As Sold", "Per Large Portion"]
 nutrients: [carbohydrates, energykCal, energykJ, fat, fibre, protein, salt, saturates, sugars,
             vitaminB6, vitaminB12, vitaminC, zinc, sodium, caffeine]
 # A nutrient cell holds the PDF's value as printed: a number, "<number", or one of these words. Three flagged clean-ups apply first

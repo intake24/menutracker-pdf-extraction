@@ -1883,3 +1883,153 @@
       furniture: [MACROS, Total of which]
       titles: ['Starters & Sides : món khai vị Excludes dipping sauces Total of which', 'Vietnamese noodle soup : phở Total of which', 'Curry : cà-ri Excludes rice (see below) Total of which', 'Rice bowls : món cơm Excludes rice (see below) Total of which', 'Vermicelli noodles : bún* Includes sauces Total of which', 'Vietnamese salads : gỏi Includes dressings Total of which']
       columns: [energykCal_Per Portion, protein_Per Portion, carbohydrates_Per Portion, fat_Per Portion, saturates_Per Portion, fibre_Per Portion, sugars_Per Portion]
+
+76_Wasabi: # id from Menu Tracker (chain id 76, confirmed by the owner 2026-11-06)
+  chain: Wasabi
+  allergens: false # no allergen columns (docs/goal-batch-2026-03.md)
+  sources:
+    # One PDF, seven table layouts: figure columns differ by page group, so one source per group (columns checked against each header on the rendered pages).
+    # Kept out: the Y/N dietary columns (Vegetarian, Vegan, MSG, Alcohol, Gluten, Raw fish) and the allergen letter codes;  per page cuts them off.
+    # "n/a" cells are kept as printed; one decimal comma (4,3) is normalised by the export.
+
+    # Onigiri (page 4): ten figures, the Number of servings column is printed as N in every row and not read (it is a Y/N column)
+    - pdf: WAS_Nutritional_Guide-4-260226.pdf
+      parser: numeric_table
+      region: UK
+      category: food
+      approved: true
+      header: Energy
+      pages: [4]
+      header_section: false # the header block holds only column titles; the section is the page title
+      free_sections: true
+      wrapped_names: true
+      wrap_below: true # (excl. dressing) and similar sit under the figures
+      join_less_than: true
+      line_gap: 6
+      skip_words: ['100g']
+      invalid_values: ['n/a', 're:\d+,\d+']
+      max_x: {4: 582.8}
+      titles: ['sushi', 'すし', 'Onigiri']
+      furniture: ['SALMON MADE FRESH DAILY', 'We only ever use sustainably Our sushi is made from scratch every day', 'sourced Scottish, Norwegian or using the freshest and finest ingredients.', 'Iceland salmon giving our sushi the We take our motto very seriously and', 'freshest, sweetest taste! never keep any food back for the next', 'day, ensuring the food you get from', 'Wasabi is always at its best.']
+      columns: [energykCal_Per 100g/ml, energykJ_Per 100g/ml, energykCal_Per Portion, protein_Per 100g/ml, carbohydrates_Per 100g/ml, sugars_Per 100g/ml, fat_Per 100g/ml, saturates_Per 100g/ml, salt_Per 100g/ml, Serving_Size]
+
+    # Sushi boxes, salads, gyozas, soups, hot cabinet, drinks: eleven figures (kcal and kJ per 100g, kcal per portion, six nutrients per 100g, portion size, number of servings)
+    - pdf: WAS_Nutritional_Guide-4-260226.pdf
+      parser: numeric_table
+      region: UK
+      category: food
+      approved: true
+      header: Energy
+      pages: [5, 6, 7, 9, 10, 11, 12, 18, 19, 20, 21, 22, 23, 24, 25]
+      header_section: false # the header block holds only column titles; the section is the page title
+      free_sections: true
+      wrapped_names: true
+      wrap_below: true # (excl. dressing) and similar sit under the figures
+      join_less_than: true
+      line_gap: 6
+      skip_words: ['100g']
+      invalid_values: ['n/a', 're:\d+,\d+']
+      max_x: {5: 582.8, 6: 582.8, 7: 594.1, 9: 582.8, 10: 619.1, 11: 651.0, 12: 659.3, 18: 651.0, 19: 651.0, 20: 651.0, 21: 651.0, 22: 651.0, 23: 651.0, 24: 647.2, 25: 650.5}
+      titles: ['sushi', 'すし', 'Sushi set boxes', 'Sushi set boxes continued', 'Rice boxes', 'Ramen', 'Miso', 'Other', 'salads', 'サラダ', 'Salads and bowls', 'Potto salads and protein pots', 'cold sides', 'ホットフード', 'Cold gyozas', 'soup', 'スープヌードル', 'Tom yum', 'bento', 'Hot cabinet', 'Hot cabinet continued', 'Hot cabinet - breakfast', 'sides', 'hot beverages', 'Coffee', 'Tea', 'Extras']
+      columns: [energykCal_Per 100g/ml, energykJ_Per 100g/ml, energykCal_Per Portion, protein_Per 100g/ml, carbohydrates_Per 100g/ml, sugars_Per 100g/ml, fat_Per 100g/ml, saturates_Per 100g/ml, salt_Per 100g/ml, Serving_Size, Number_of_Portions]
+
+    # Platter sets: kcal per pack and per portion
+    - pdf: WAS_Nutritional_Guide-4-260226.pdf
+      parser: numeric_table
+      region: UK
+      category: food
+      approved: true
+      header: Energy
+      pages: [8]
+      header_section: false # the header block holds only column titles; the section is the page title
+      free_sections: true
+      wrapped_names: true
+      wrap_below: true # (excl. dressing) and similar sit under the figures
+      join_less_than: true
+      line_gap: 6
+      skip_words: ['100g']
+      invalid_values: ['n/a', 're:\d+,\d+']
+      max_x: {8: 609.7}
+      titles: ['sushi', 'すし', 'Platter sets']
+      columns: [energykCal_Per 100g/ml, energykJ_Per 100g/ml, energykCal_Per Product As Sold, energykCal_Per Portion, protein_Per 100g/ml, carbohydrates_Per 100g/ml, sugars_Per 100g/ml, fat_Per 100g/ml, saturates_Per 100g/ml, salt_Per 100g/ml, Serving_Size, Number_of_Portions]
+
+    # Bain marie: kcal per standard and per large portion, two portion sizes
+    - pdf: WAS_Nutritional_Guide-4-260226.pdf
+      parser: numeric_table
+      region: UK
+      category: food
+      approved: true
+      header: Energy
+      pages: [13, 14]
+      header_section: false # the header block holds only column titles; the section is the page title
+      free_sections: true
+      wrapped_names: true
+      wrap_below: true # (excl. dressing) and similar sit under the figures
+      join_less_than: true
+      line_gap: 6
+      skip_words: ['100g']
+      invalid_values: ['n/a', 're:\d+,\d+']
+      max_x: {13: 653.9, 14: 653.9}
+      titles: ['bento', 'ホットフード', 'Bain marie', 'Bain marie continued']
+      columns: [energykCal_Per 100g/ml, energykJ_Per 100g/ml, energykCal_Per Portion, energykCal_Per Large Portion, protein_Per 100g/ml, carbohydrates_Per 100g/ml, sugars_Per 100g/ml, fat_Per 100g/ml, saturates_Per 100g/ml, salt_Per 100g/ml, Serving_Size, Serving_Size_Large, Number_of_Portions]
+
+    # Bain marie, mixed bento: a second name column (the rice or noodle base) sits between the two name lines
+    - pdf: WAS_Nutritional_Guide-4-260226.pdf
+      parser: numeric_table
+      region: UK
+      category: food
+      approved: true
+      header: Energy
+      pages: [15, 16, 17]
+      header_section: false # the header block holds only column titles; the section is the page title
+      free_sections: true
+      wrapped_names: true
+      wrap_below: true # (excl. dressing) and similar sit under the figures
+      join_less_than: true
+      line_gap: 3
+      name_tail_x: 170 # the base column ("Rice", "Yakisoba noodles") is read after the dish name
+      skip_words: ['100g']
+      invalid_values: ['n/a', 're:\d+,\d+']
+      max_x: {}
+      titles: ['bento', 'ホットフード', 'Bain marie – mixed bento', 'Bain marie – mixed bento continued']
+      columns: [energykCal_Per 100g/ml, energykJ_Per 100g/ml, energykCal_Per Portion, protein_Per 100g/ml, carbohydrates_Per 100g/ml, sugars_Per 100g/ml, fat_Per 100g/ml, saturates_Per 100g/ml, salt_Per 100g/ml, Serving_Size, Number_of_Portions]
+
+    # Sauces, page 26: kcal per pot/sachet and per counter-salad portion, two portion sizes (the Number of servings column is printed as N in every row and not read (it is a Y/N column))
+    - pdf: WAS_Nutritional_Guide-4-260226.pdf
+      parser: numeric_table
+      region: UK
+      category: food
+      approved: true
+      header: Energy
+      pages: [26]
+      header_section: false # the header block holds only column titles; the section is the page title
+      free_sections: true
+      wrapped_names: true
+      wrap_below: true # (excl. dressing) and similar sit under the figures
+      join_less_than: true
+      line_gap: 6
+      skip_words: ['100g']
+      invalid_values: ['n/a', 're:\d+,\d+']
+      max_x: {26: 656.2}
+      titles: ['optional sauce & dressing', 'Sauce & dressing – sushi']
+      columns: [energykCal_Per 100g/ml, energykJ_Per 100g/ml, energykCal_Per Portion, energykCal_Per Large Portion, protein_Per 100g/ml, carbohydrates_Per 100g/ml, sugars_Per 100g/ml, fat_Per 100g/ml, saturates_Per 100g/ml, salt_Per 100g/ml, Serving_Size, Serving_Size_Large]
+
+    # Sauces and dressings, page 27: as page 26 with the number of servings
+    - pdf: WAS_Nutritional_Guide-4-260226.pdf
+      parser: numeric_table
+      region: UK
+      category: food
+      approved: true
+      header: Energy
+      pages: [27]
+      header_section: false # the header block holds only column titles; the section is the page title
+      free_sections: true
+      wrapped_names: true
+      wrap_below: true # (excl. dressing) and similar sit under the figures
+      join_less_than: true
+      line_gap: 6
+      skip_words: ['100g']
+      invalid_values: ['n/a', 're:\d+,\d+']
+      max_x: {27: 656.7}
+      titles: ['optional sauce & dressing', 'Sauce & dressing']
+      columns: [energykCal_Per 100g/ml, energykJ_Per 100g/ml, energykCal_Per Portion, energykCal_Per Large Portion, protein_Per 100g/ml, carbohydrates_Per 100g/ml, sugars_Per 100g/ml, fat_Per 100g/ml, saturates_Per 100g/ml, salt_Per 100g/ml, Serving_Size, Number_of_Portions]
