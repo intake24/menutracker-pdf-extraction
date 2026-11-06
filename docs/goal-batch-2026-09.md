@@ -1,6 +1,6 @@
 # Goal: September 2026 batch (nutrition only)
 
-Status: started 2026-11-06. Same rules and done criteria as `docs/goal-batch-2026-03.md`, with the dates changed. Results go to `outputs/data-dictionary/findings-report-2026-09.md` and `end-of-round-report-2026-09.md`.
+Status: done 2026-11-06 (results: `outputs/data-dictionary/end-of-round-report-2026-09.md`). Started 2026-11-06. Same rules and done criteria as `docs/goal-batch-2026-03.md`, with the dates changed. Results go to `outputs/data-dictionary/findings-report-2026-09.md` and `end-of-round-report-2026-09.md`.
 
 ## Objective
 

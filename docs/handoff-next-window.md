@@ -1,5 +1,7 @@
 # Handoff
 
+Update 2026-11-06: the September 2026 batch is done (19 chains, 7,994 rows, 2 new chains: Zizzi and Chicken Cottage; see `docs/goal-batch-2026-09.md` and the reports in `outputs/data-dictionary/`). Nine chains have no September PDF and stay unapproved until their next issue arrives; Five Guys' September PDF has no nutrition.
+
 State on 2026-10-06: all 17 food chains are extracted, approved and in `outputs/` (17 CSVs, 8,768 rows, from 35 PDFs); 314 tests pass; `eval` passes with every source checked. Nothing is blocked.
 
 Read in this order: `start-here.md` (how the project works and the rules), `end-of-round-report-2026-10.md` (result, known limits, how to run a batch without Pearl Scan, improvements made before the next batch), `playbook-new-batches.md` (adding chains and layouts), `chain-mapping-reference.md` (what each chain's CSV contains), `findings-report-2026-10.md` (what went wrong in each source).
