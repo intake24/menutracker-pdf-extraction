@@ -77,3 +77,17 @@ Row counts are those of `outputs/` on 2026-10-05 (8,768 in total).
 5. Figures without Pearl Scan: arithmetic flags (kJ against kcal, saturates against fat, sugars against carbohydrate), the second read, and a second look at the pages with the most flags or empty cells.
 6. Review by a fresh model (Opus) for every new parser and for any slice that touches allergens or the model route; fix findings with tests that fail first.
 7. A person approves in `config/chains.yaml`; `run`, `eval`, commit.
+
+## 8. September 2026 additions and changes
+
+Nutrition only, no allergen columns (as in March and June). Per chain, what the CSV holds after the September batch (details in `findings-report-2026-09.md`):
+
+- **Zizzi** (`24_Zizzi`, new): two sources, UK V2 and ROI/Belfast V1 (`region` UK and ROI). Per 100 g and per portion: energy kJ and kcal, fat, saturates, carbohydrate, sugar, protein, salt (the guide prints no fibre). `menu_section` is blank: the group titles are printed over a watermark word and cannot be read. Names that wrap under the figures are joined (`wrap_below`, `wrap_below_lines`).
+- **Chicken Cottage** (`88_ChickenCottage`, new): five menu-board images converted to one-page PDFs `ChickenCottage_<NAME>.pdf` (originals kept), kcal only, `menu_section` is the board heading. A count or size with its own figure is a row `<heading> - <count>`; an unlabelled pair (`297 kcal / 414 kcal`) is `<item> - 1st figure` and `<item> - 2nd figure`; items with no figure are not rows.
+- **Brewhouse**: now a one-page matrix read from the text layer with nine nutrition columns (kJ, kcal, fat, saturates, carbohydrate, sugar, fibre, protein, salt; `Category` is the printed Menu category). Its kJ and kcal columns disagree in most rows in the PDF; values are as printed and flagged.
+- **Cookhouse**: a third source, the breakfast menu (category `breakfast`).
+- **Starbucks**: a third source, the Castillo Ready-to-Eat book (Y/N diet cells are columns `Suitable_for_Vegetarian` and `Suitable_for_Vegan` as in the food guide; no allergen columns).
+- **Papa John's**: read at 200 dpi; the new pizza range (pages 76 to 78) is included.
+- **Vue**: only drinks and sweets in September; the packaged-drinks items have two rows each (per 100 ml with no portion, per serving with the volume in `Portion_Size`).
+- **Odeon**: UK only (Belfast and ROI sources were removed when their PDFs did not come).
+- **Not extracted** (no September PDF): Beefeater, Brewers Fayre, Table Table, Domino's, Real Greek, Ask Italian, Chef & Brewer, Pho, Flaming Grill; Five Guys' September PDF has no nutrition.

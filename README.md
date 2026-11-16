@@ -2,7 +2,7 @@
 
 Turns the allergen and nutrition PDFs that Menu Tracker scrapes from UK food chains into CSVs, replacing the paid Pearl Scan (human) process. One CSV per chain, one row per food, drink or product.
 
-**New here? Read [docs/start-here.md](docs/start-here.md)** (how it works, code map, commands, rules, which document answers which question). Agents: see also [AGENTS.md](AGENTS.md). Current state and known limits: [docs/end-of-round-report-2026-10.md](docs/end-of-round-report-2026-10.md). Original design (historical): [docs/pipeline-design.md](docs/pipeline-design.md).
+**New here? Read [docs/start-here.md](docs/start-here.md)** (how it works, code map, commands, rules, which document answers which question). Agents: see also [AGENTS.md](AGENTS.md). Starting a monthly batch: [docs/runbook-monthly-batch.md](docs/runbook-monthly-batch.md) and [docs/handoff-next-window.md](docs/handoff-next-window.md). Latest batch (September 2026): [docs/end-of-round-report-2026-09.md](docs/end-of-round-report-2026-09.md); first round: [docs/end-of-round-report-2026-10.md](docs/end-of-round-report-2026-10.md). Original design (historical): [docs/pipeline-design.md](docs/pipeline-design.md).
 
 ## Quick start
 
@@ -69,5 +69,5 @@ Findings from the first round (errors per source, Pearl Scan mistakes, lessons):
 
 ## Status
 
-Live and approved (`config/chains.yaml`, output in `outputs/`): Beefeater, Brewers Fayre, Table Table (Whitbread), Five Guys, Pizza Express (UK, NI), Cineworld, Domino's (sides, dips, pizzas), Vue, Odeon (nutrition tables and pre-packed matrices for UK, NI, ROI), Papa John's, Krispy Kreme, Pizza Hut, Coffee #1, Starbucks, Brewhouse, Cookhouse, Top Golf. Seventeen chain CSVs, 8,768 rows. A record of what each chain's PDFs map to is in `docs/chain-mapping-reference.md`. Every compared figure agrees with Pearl Scan except the 75 mistakes recorded in `config/ground_truth_errata.yaml`. The end-of-round report is `docs/end-of-round-report-2026-10.md`.
+Live and approved after the first round (October 2026; the September 2026 batch has 19 chains, see `docs/end-of-round-report-2026-09.md`) (`config/chains.yaml`, output in `outputs/`): Beefeater, Brewers Fayre, Table Table (Whitbread), Five Guys, Pizza Express (UK, NI), Cineworld, Domino's (sides, dips, pizzas), Vue, Odeon (nutrition tables and pre-packed matrices for UK, NI, ROI), Papa John's, Krispy Kreme, Pizza Hut, Coffee #1, Starbucks, Brewhouse, Cookhouse, Top Golf. Seventeen chain CSVs, 8,768 rows. A record of what each chain's PDFs map to is in `docs/chain-mapping-reference.md`. Every compared figure agrees with Pearl Scan except the 75 mistakes recorded in `config/ground_truth_errata.yaml`. The end-of-round report is `docs/end-of-round-report-2026-10.md`.
 

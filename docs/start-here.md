@@ -4,7 +4,7 @@ For new developers and for AI agents working in this repository. Read this page 
 
 ## 1. What this project does
 
-Menu Tracker collects allergen and nutrition PDFs published by UK food chains. This pipeline turns those PDFs into one CSV per chain (`outputs/<id>_<Chain>.csv`, one row per food, drink or product), replacing a paid human service called Pearl Scan. In the first round (October 2026) 17 food chains, 35 PDFs and 8,768 rows were done.
+Menu Tracker collects allergen and nutrition PDFs published by UK food chains. This pipeline turns those PDFs into one CSV per chain (`outputs/<id>_<Chain>.csv`, one row per food, drink or product), replacing a paid human service called Pearl Scan. In the first round (October 2026) 17 food chains, 35 PDFs and 8,768 rows were done; the monthly batches since (March, June, September 2026) are nutrition only, and September gave 19 chains and 7,994 rows.
 
 Allergen data is safety-relevant: a wrong "No" can hurt someone. That is why the pipeline copies values as printed (three flagged clean-ups, rule 1), never guesses, and stops with an error when it meets something it does not know.
 
@@ -19,7 +19,8 @@ Allergen data is safety-relevant: a wrong "No" can hurt someone. That is why the
 | How much does a model-read round cost on the SDK? | `sdk-cost-estimate-2026-10.md` | Current (rates from 2026-10-06) |
 | What was the original design and why? | `pipeline-design.md` | Historical (2026-10-01): the architecture still holds; the details of stages, backends and rollout were overtaken by the code |
 | What were the implementation plans? | `superpowers/plans/` | Historical |
-| Where did the last session stop? | `handoff-next-window.md` | Current |
+| Where did the last session stop? How do I run a monthly batch? | `handoff-next-window.md`, `runbook-monthly-batch.md` | Current. Read the runbook first for a new batch |
+| What was done in September 2026, what went wrong, what are the doubtful calls? | `end-of-round-report-2026-09.md`, `findings-report-2026-09.md` | Current (the latest batch) |
 
 ## 3. How a PDF becomes a CSV
 
@@ -82,6 +83,7 @@ The two reports of the October 2026 round stay in `docs/` as the committed recor
 | `config/pearlscan_columns.yaml` | Which Pearl Scan column maps to which of our columns (used by `eval` only) |
 | `golden/<pdf stem>.csv` | Hand-checked sample rows: allergens, diet cells, nutrition figures |
 | `tests/` | The test suite (offline; the model backends are blocked by `tests/conftest.py`) |
+| `tools/` | Small scripts for a batch: `figcheck.py` (figures of a model-read PDF against its text layer), `gcheck.py` (golden file against the PDF text), `cfgedit.py` (rename or drop sources in `config/chains.yaml`) |
 | `inputs/`, `outputs/`, `work/`, `samples/` | Local data, never committed |
 
 ### Parsers

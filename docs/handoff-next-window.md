@@ -1,16 +1,27 @@
 # Handoff
 
-Update 2026-11-06: the September 2026 batch is done (19 chains, 7,994 rows, 2 new chains: Zizzi and Chicken Cottage; see `docs/goal-batch-2026-09.md` and the reports in `outputs/data-dictionary/`). Nine chains have no September PDF and stay unapproved until their next issue arrives; Five Guys' September PDF has no nutrition.
+State on 2026-11-16: the September 2026 batch is done and committed (19 chains, 7,994 rows, 35 PDFs plus 5 PDFs derived from JPGs; `eval` passes; 330 tests pass, 75 skipped because they read PDFs of earlier batches). Next: the November 2026 collection. Nothing is blocked.
 
-State on 2026-10-06: all 17 food chains are extracted, approved and in `outputs/` (17 CSVs, 8,768 rows, from 35 PDFs); 314 tests pass; `eval` passes with every source checked. Nothing is blocked.
+## Start here (in this order)
 
-Read in this order: `start-here.md` (how the project works and the rules), `end-of-round-report-2026-10.md` (result, known limits, how to run a batch without Pearl Scan, improvements made before the next batch), `playbook-new-batches.md` (adding chains and layouts), `chain-mapping-reference.md` (what each chain's CSV contains), `findings-report-2026-10.md` (what went wrong in each source).
+1. `start-here.md`: what the project is, how a PDF becomes a CSV, the commands, the rules (section 8).
+2. `runbook-monthly-batch.md`: the step-by-step for a monthly batch, the per-chain "what changed last time" table, the pitfalls. **This is the page to follow for November.**
+3. `goal-batch-2026-11.md`: the goal and decisions for the next batch (intake table to fill in).
+4. `end-of-round-report-2026-09.md` and `findings-report-2026-09.md`: the last batch's result, doubtful calls and per-source findings. (Older rounds: `end-of-round-report-2026-10.md`, `findings-report-2026-10.md`; the March and June reports were kept in `outputs/` only.)
+5. `playbook-new-batches.md` (layouts, parser options, lessons in sections 5c to 5e) and `chain-mapping-reference.md` (what each chain's CSV means) when you touch a parser or a chain.
+
+## Where things are
+
+- `config/chains.yaml`: 29 chains. 19 approved (September CSVs), 10 `approved: false` (no September PDF, or Five Guys: allergen chart only). Old sources that were deleted in September are in git (`git show 7bf31f1:config/chains.yaml`).
+- `inputs/` and `outputs/` still hold the September files: archive them outside the repo before copying the November PDFs in (runbook step 1). Never delete `work/` (model cache), `golden/`, `config/`.
+- `tools/`: `figcheck.py`, `gcheck.py`, `cfgedit.py` (see the runbook).
+- The September reports are in `docs/` (copies) and `outputs/data-dictionary/` (not in git).
 
 ## Open items for the next batch
 
-0. Intake: run `manifest` (new, changed, unassigned) and `scaffold` for each PDF: `start-here.md` section 7.
-1. Run one page with `--backend sdk` and compare the answer with the cached headless one: the SDK path has only been tested with a fake client.
-2. For every model-read source of the new batch run `reread --pages all` and check that `report` shows the reread column equal to the model-read pages column.
-3. Write golden files with `golden` (allergens, diet cells and nutrition figures) and check every cell against the page or `pdftotext`; ask a second person to spot-check them.
-4. Look at the pages `coverage` lists for each new source.
-5. Known limits that stay (see section 6 of the end-of-round report): the V/VE check on menus is partial, `eval` compares from the reference side only, `text_check` ignores a few figures on both sides, instruction caching for the SDK is not built.
+1. Intake as in the runbook; read the research team's list of PDFs first and ask the owner about any mismatch with `inputs/`.
+2. The ten unapproved chains: if a new issue of one arrives, onboard it (recover the old source from git, re-measure pages and columns). Domino's, Real Greek, Ask Italian, Chef & Brewer, Pho and Flaming Grill have a model-read or numeric source from earlier months; Beefeater, Brewers Fayre, Table Table use the Whitbread parsers; Five Guys needs the nutrition guide, not the allergen chart.
+3. For every model-read source with an intact text layer run `tools/figcheck.py`; without one (Vue, images) run `reread --pages all` and look at the pages by eye.
+4. Write golden files and check each against the page; watch for names shared by two sources (runbook step 5).
+5. Known limits that stay: the V/VE check on menus is partial; `eval` compares from the reference side only; `text_check` ignores a few figures on both sides; the SDK backend has only been tested with a fake client (run one page with `--backend sdk` and compare with the cached answer before relying on it); Zizzi has no `menu_section`; Brewhouse, Vue (F'Real), Tortilla, Odeon and Soho print figures that disagree with themselves (kept as printed and flagged); instruction caching for the SDK is not built.
+6. Questions still open for the research team (not blocking): the unit of sodium and caffeine differs by source and is not in the column names; whether `manifest` should read images directly (September used derived PDFs).

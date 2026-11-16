@@ -1,6 +1,6 @@
 # Instructions for AI agents working in this repository
 
-Read `docs/start-here.md` first: what the project is, how a PDF becomes a CSV, the code map, the commands, and the rules we work by (section 8). Then read `docs/end-of-round-report-2026-10.md` for the current state and known limits.
+Read `docs/start-here.md` first: what the project is, how a PDF becomes a CSV, the code map, the commands, and the rules we work by (section 8). Starting a monthly batch? Read `docs/runbook-monthly-batch.md` and `docs/handoff-next-window.md` next. Current state and known limits: `docs/end-of-round-report-2026-09.md` (the latest batch) and `docs/end-of-round-report-2026-10.md` (the first round).
 
 The rules that matter most: values are copied as printed (apart from the three flagged clean-ups in `docs/start-here.md`, rule 1) and problems go to `flags`; an unknown word stops the run; a blank allergen cell means "not stated"; Pearl Scan never produces values; from the March 2026 batch the agent decides `approved: true` and checks golden rows itself, with a fresh reviewer as second check and every call listed under "Remarks for the owner" in the end-of-round report (`docs/goal-batch-2026-03.md`); never delete or overwrite `inputs/`, `outputs/`, `work/` or `golden/`; write the test first; do not call a real model from tests; ask a fresh reviewer to review parsers and anything touching allergens or the model route.
 
