@@ -536,7 +536,7 @@
   chain: Odeon
   allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
   sources:
-    - pdf: nutritional-information-july-2026-pdf-v28-09_07_2026-uk-version.pdf
+    - pdf: nutritional-information-november-2026-pdf-v32-04_11_2026-uk-version.pdf
       parser: numeric_table
       region: UK
       category: food
@@ -558,7 +558,7 @@
         - protein_Per Portion
         - salt_Per Portion
         - sodium_Per Portion
-    - pdf: pre-packed-product-matrix-july-2026-edition-v23-09_07_2026-uk-version.pdf
+    - pdf: pre-packed-product-matrix-november-2026-edition-v26-11_11_2026-uk-version.pdf
       parser: product_matrix
       line_gap: 2 # rows of the 2026 matrix are printed 3 pt apart
       invalid_values: ['#VALUE!', '#N/A', '#DIV/0!'] # Excel errors printed in a few figure cells; kept as printed and flagged
@@ -1143,11 +1143,12 @@
   chain: Subway
   allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
   sources:
-    - pdf: UKI_IngredientsNutritionalInformationJune2026.pdf
+    - pdf: UKIBuildsandIngredientsNutritionalInformationNovember2026AD.pdf
       parser: numeric_table
       region: UK # "UK and ROI" on one table
       category: food
       approved: true
+      skip_words: ['#'] # November 2026: a footnote marker printed after the salt figure of Margherita Pizza (page 4): not data
       header: Energy
       free_sections: true # headings such as "Subs", "Wraps" sit between rows
       # Columns left to right: serving size (g), nine figures per serving, then the same ten per 100g (the second serving size is always 100).
@@ -1177,17 +1178,17 @@
   chain: Tortilla
   allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
   sources:
-    - pdf: tortilla-nutrition-guide-10-aug.pdf
+    - pdf: tortilla-nutrition-guide.pdf
       parser: numeric_table
       region: UK
       category: food
       approved: true
-      pages: ['4-17']
+      pages: ['4-20']
       max_x: 392 # the Dietary, Contains and May Contain columns (allergens are not read) start at x 395
       header: Kcal
       wrapped_names: true
       name_fixes: { 'Spiced Apple': 'Spiced Apple Margarita (Glass)' } # the name wraps onto a line under its figures
-      titles: ['Medium Burrito / Bowl', 'Large Burrito / Bowl', 'Medium Salad', 'Large Salad', 'Tres Tacos', 'Nachos Queso', 'Quesadilla', 'Protein Pots', 'Sides', 'Kids Burrito/Naked Burrito', 'Breakfast Roll', 'Breakfast Quesadilla', 'MeDiuM Burrito / Bowl', 'large Burrito / Bowl', 'MeDiuM salaD', 'large salaD', 'tres tacos', 'nacHos Queso', 'QuesaDilla', 'protein pots', 'siDes', 'KiDs Burrito/naKeD Burrito', 'BreaKfast roll', 'BreaKfast QuesaDilla', 'DrinKs', 'LARGE BALANCE BOWL', 'LARGE PROTEIN BOWL', 'Breakfast Quesadilla', 'Medium Burrito/Bowl', 'Large Burrito/Bowl', 'Balance Fuel Bowl', 'Plant Fuel Bowl', 'Cali Caesar Wrap', 'Desserts', 'Breakfast Burrito', 'Breakfast Bowl', 'Breakfast Roll/Bun', 'Hot Drinks', 'MeDiuM Burrito/Bowl', 'large Burrito/Bowl', 'plant Fuel Bowl', 'cali caesar wrap', 'BreaKFast Burrito', 'BreaKFast Bowl', 'BreaKFast roll/Bun']
+      titles: ['Medium Burrito / Bowl', 'Large Burrito / Bowl', 'Medium Salad', 'Large Salad', 'Tres Tacos', 'Nachos Queso', 'Quesadilla', 'Protein Pots', 'Sides', 'Kids Burrito/Naked Burrito', 'Breakfast Roll', 'Breakfast Quesadilla', 'MeDiuM Burrito / Bowl', 'large Burrito / Bowl', 'MeDiuM salaD', 'large salaD', 'tres tacos', 'nacHos Queso', 'QuesaDilla', 'protein pots', 'siDes', 'KiDs Burrito/naKeD Burrito', 'BreaKfast roll', 'BreaKfast QuesaDilla', 'DrinKs', 'LARGE BALANCE BOWL', 'LARGE PROTEIN BOWL', 'Breakfast Quesadilla', 'Medium Burrito/Bowl', 'Large Burrito/Bowl', 'Balance Fuel Bowl', 'Plant Fuel Bowl', 'Cali Caesar Wrap', 'Desserts', 'Breakfast Burrito', 'Breakfast Bowl', 'Breakfast Roll/Bun', 'Hot Drinks', 'MeDiuM Burrito/Bowl', 'large Burrito/Bowl', 'plant Fuel Bowl', 'cali caesar wrap', 'BreaKFast Burrito', 'BreaKFast Bowl', 'BreaKFast roll/Bun', 'MeDiuM DaMn tHat’s Hot Burrito', 'large DaMn tHat’s Hot Burrito', 'MeDiuM DaMn tHat’s Hot Bowl', 'large DaMn tHat’s Hot Bowl']
       furniture: [Energy, Menu Item, 'Fat Sat fat Carbs Sugars Fibre Protein Salt', '(g) (g) (g) (g) (g) (g) (g)', 'Menu Fat Sat fat Carbs Sugars Fibre Protein Salt', 'item (g) (g) (g) (g) (g) (g) (g)', 'Menu']
       skip_lines: ['Hot DrinKs', 'Contains May', 'Menu Item Dietary', 'Allergens Contain', 'Kcal', 'Espresso Single / Double 2.0 V,VE', 'Americano 22.0 V,VE', 'English Breakfast Tea 15.0 V,VE', 'Peppermint Tea - V,VE', 'Cappuccino 116.0 V Milk', 'Iced Coffee 71.0 Milk', 'Latte 136.0 V Milk', 'Mocha 200.0 V Milk'] # the Hot Drinks table (kcal only, read by the next source)
       columns:
@@ -1200,12 +1201,12 @@
         - fibre_Per Portion
         - protein_Per Portion
         - salt_Per Portion
-    - pdf: tortilla-nutrition-guide-10-aug.pdf
+    - pdf: tortilla-nutrition-guide.pdf
       parser: numeric_table
       region: UK
       category: food
       approved: true
-      pages: ['18-21']
+      pages: ['21-24']
       max_x: 392 # the Dietary, Contains and May Contain columns (allergens are not read) start at x 395
       header: Kcal
       wrapped_names: true
@@ -1213,7 +1214,7 @@
       wrap_lines: 2.5 # the breakfast names sit above the figures
       nameless_rows: true
       name_fixes: { 'Spiced Apple': 'Spiced Apple Margarita (Glass)' } # the name wraps onto a line under its figures
-      titles: ['Medium Burrito / Bowl', 'Large Burrito / Bowl', 'Medium Salad', 'Large Salad', 'Tres Tacos', 'Nachos Queso', 'Quesadilla', 'Protein Pots', 'Sides', 'Kids Burrito/Naked Burrito', 'Breakfast Roll', 'Breakfast Quesadilla', 'MeDiuM Burrito / Bowl', 'large Burrito / Bowl', 'MeDiuM salaD', 'large salaD', 'tres tacos', 'nacHos Queso', 'QuesaDilla', 'protein pots', 'siDes', 'KiDs Burrito/naKeD Burrito', 'BreaKfast roll', 'BreaKfast QuesaDilla', 'DrinKs', 'LARGE BALANCE BOWL', 'LARGE PROTEIN BOWL', 'Breakfast Quesadilla', 'Medium Burrito/Bowl', 'Large Burrito/Bowl', 'Balance Fuel Bowl', 'Plant Fuel Bowl', 'Cali Caesar Wrap', 'Desserts', 'Breakfast Burrito', 'Breakfast Bowl', 'Breakfast Roll/Bun', 'Hot Drinks', 'MeDiuM Burrito/Bowl', 'large Burrito/Bowl', 'plant Fuel Bowl', 'cali caesar wrap', 'BreaKFast Burrito', 'BreaKFast Bowl', 'BreaKFast roll/Bun']
+      titles: ['Medium Burrito / Bowl', 'Large Burrito / Bowl', 'Medium Salad', 'Large Salad', 'Tres Tacos', 'Nachos Queso', 'Quesadilla', 'Protein Pots', 'Sides', 'Kids Burrito/Naked Burrito', 'Breakfast Roll', 'Breakfast Quesadilla', 'MeDiuM Burrito / Bowl', 'large Burrito / Bowl', 'MeDiuM salaD', 'large salaD', 'tres tacos', 'nacHos Queso', 'QuesaDilla', 'protein pots', 'siDes', 'KiDs Burrito/naKeD Burrito', 'BreaKfast roll', 'BreaKfast QuesaDilla', 'DrinKs', 'LARGE BALANCE BOWL', 'LARGE PROTEIN BOWL', 'Breakfast Quesadilla', 'Medium Burrito/Bowl', 'Large Burrito/Bowl', 'Balance Fuel Bowl', 'Plant Fuel Bowl', 'Cali Caesar Wrap', 'Desserts', 'Breakfast Burrito', 'Breakfast Bowl', 'Breakfast Roll/Bun', 'Hot Drinks', 'MeDiuM Burrito/Bowl', 'large Burrito/Bowl', 'plant Fuel Bowl', 'cali caesar wrap', 'BreaKFast Burrito', 'BreaKFast Bowl', 'BreaKFast roll/Bun', 'MeDiuM DaMn tHat’s Hot Burrito', 'large DaMn tHat’s Hot Burrito', 'MeDiuM DaMn tHat’s Hot Bowl', 'large DaMn tHat’s Hot Bowl']
       furniture: [Energy, Menu Item, 'Fat Sat fat Carbs Sugars Fibre Protein Salt', '(g) (g) (g) (g) (g) (g) (g)', 'Menu Fat Sat fat Carbs Sugars Fibre Protein Salt', 'item (g) (g) (g) (g) (g) (g) (g)', 'Menu']
       skip_lines: ['Hot DrinKs', 'Contains May', 'Menu Item Dietary', 'Allergens Contain', 'Kcal', 'Espresso Single / Double 2.0 V,VE', 'Americano 22.0 V,VE', 'English Breakfast Tea 15.0 V,VE', 'Peppermint Tea - V,VE', 'Cappuccino 116.0 V Milk', 'Iced Coffee 71.0 Milk', 'Latte 136.0 V Milk', 'Mocha 200.0 V Milk'] # the Hot Drinks table (kcal only, read by the next source)
       columns:
@@ -1226,15 +1227,15 @@
         - fibre_Per Portion
         - protein_Per Portion
         - salt_Per Portion
-    - pdf: tortilla-nutrition-guide-10-aug.pdf
+    - pdf: tortilla-nutrition-guide.pdf
       parser: vision_table
       region: UK
       category: drinks
       approved: true
       dpi: 200
-      pages: [21]
+      pages: [24]
       instructions: >-
-        Page 21 has several tables. Return only the rows of the table headed "Hot Drinks": one row per drink (Espresso Single / Double, Americano, English Breakfast Tea,
+        Page 24 has several tables. Return only the rows of the table headed "Hot Drinks": one row per drink (Espresso Single / Double, Americano, English Breakfast Tea,
         Peppermint Tea, Cappuccino, Iced Coffee, Latte, Mocha). section = "Hot Drinks", name = the drink as printed, size = empty, portion = empty, kcal = the figure in the
         Energy Kcal column exactly as printed ("-" when the cell shows a dash). Ignore the dietary and allergen columns and every other table on the page.
       fields: { kcal: energykCal_Per Portion }
@@ -1630,7 +1631,7 @@
     # "n/a" cells are kept as printed; one decimal comma (4,3) is normalised by the export.
 
     # Onigiri (page 4): ten figures, the Number of servings column is printed as N in every row and not read (it is a Y/N column)
-    - pdf: WAS_Nutritional_Guide-7-160726.pdf
+    - pdf: WAS_Nutritional_Guide_210926v3.pdf
       parser: numeric_table
       region: UK
       category: food
@@ -1651,7 +1652,7 @@
       columns: [energykCal_Per 100g/ml, energykJ_Per 100g/ml, energykCal_Per Portion, protein_Per 100g/ml, carbohydrates_Per 100g/ml, sugars_Per 100g/ml, fat_Per 100g/ml, saturates_Per 100g/ml, salt_Per 100g/ml, Serving_Size]
 
     # Sushi boxes, salads, gyozas, soups, hot cabinet, drinks: eleven figures (kcal and kJ per 100g, kcal per portion, six nutrients per 100g, portion size, number of servings)
-    - pdf: WAS_Nutritional_Guide-7-160726.pdf
+    - pdf: WAS_Nutritional_Guide_210926v3.pdf
       parser: numeric_table
       region: UK
       category: food
@@ -1671,7 +1672,7 @@
       columns: [energykCal_Per 100g/ml, energykJ_Per 100g/ml, energykCal_Per Portion, protein_Per 100g/ml, carbohydrates_Per 100g/ml, sugars_Per 100g/ml, fat_Per 100g/ml, saturates_Per 100g/ml, salt_Per 100g/ml, Serving_Size, Number_of_Portions]
 
     # Platter sets: kcal per pack and per portion
-    - pdf: WAS_Nutritional_Guide-7-160726.pdf
+    - pdf: WAS_Nutritional_Guide_210926v3.pdf
       parser: numeric_table
       region: UK
       category: food
@@ -1691,7 +1692,7 @@
       columns: [energykCal_Per 100g/ml, energykJ_Per 100g/ml, energykCal_Per Portion, protein_Per 100g/ml, carbohydrates_Per 100g/ml, sugars_Per 100g/ml, fat_Per 100g/ml, saturates_Per 100g/ml, salt_Per 100g/ml, Serving_Size, Number_of_Portions]
 
     # Platter sets: kcal per pack and per portion
-    - pdf: WAS_Nutritional_Guide-7-160726.pdf
+    - pdf: WAS_Nutritional_Guide_210926v3.pdf
       parser: numeric_table
       region: UK
       category: food
@@ -1711,7 +1712,7 @@
       columns: [energykCal_Per 100g/ml, energykJ_Per 100g/ml, energykCal_Per Product As Sold, energykCal_Per Portion, protein_Per 100g/ml, carbohydrates_Per 100g/ml, sugars_Per 100g/ml, fat_Per 100g/ml, saturates_Per 100g/ml, salt_Per 100g/ml, Serving_Size, Number_of_Portions]
 
     # Bain marie: kcal per standard and per large portion, two portion sizes
-    - pdf: WAS_Nutritional_Guide-7-160726.pdf
+    - pdf: WAS_Nutritional_Guide_210926v3.pdf
       parser: numeric_table
       region: UK
       category: food
@@ -1731,7 +1732,7 @@
       columns: [energykCal_Per 100g/ml, energykJ_Per 100g/ml, energykCal_Per Portion, energykCal_Per Large Portion, protein_Per 100g/ml, carbohydrates_Per 100g/ml, sugars_Per 100g/ml, fat_Per 100g/ml, saturates_Per 100g/ml, salt_Per 100g/ml, Serving_Size, Serving_Size_Large, Number_of_Portions]
 
     # Bain marie, mixed bento: a second name column (the rice or noodle base) sits between the two name lines
-    - pdf: WAS_Nutritional_Guide-7-160726.pdf
+    - pdf: WAS_Nutritional_Guide_210926v3.pdf
       parser: numeric_table
       region: UK
       category: food
@@ -1752,7 +1753,7 @@
       columns: [energykCal_Per 100g/ml, energykJ_Per 100g/ml, energykCal_Per Portion, protein_Per 100g/ml, carbohydrates_Per 100g/ml, sugars_Per 100g/ml, fat_Per 100g/ml, saturates_Per 100g/ml, salt_Per 100g/ml, Serving_Size, Number_of_Portions]
 
     # Sauces, page 26: kcal per pot/sachet and per counter-salad portion, two portion sizes (the Number of servings column is printed as N in every row and not read (it is a Y/N column))
-    - pdf: WAS_Nutritional_Guide-7-160726.pdf
+    - pdf: WAS_Nutritional_Guide_210926v3.pdf
       parser: numeric_table
       region: UK
       category: food
@@ -1772,7 +1773,7 @@
       columns: [energykCal_Per 100g/ml, energykJ_Per 100g/ml, energykCal_Per Portion, energykCal_Per Large Portion, protein_Per 100g/ml, carbohydrates_Per 100g/ml, sugars_Per 100g/ml, fat_Per 100g/ml, saturates_Per 100g/ml, salt_Per 100g/ml, Serving_Size, Serving_Size_Large]
 
     # Sauces and dressings, page 27: as page 26 with the number of servings
-    - pdf: WAS_Nutritional_Guide-7-160726.pdf
+    - pdf: WAS_Nutritional_Guide_210926v3.pdf
       parser: numeric_table
       region: UK
       category: food
