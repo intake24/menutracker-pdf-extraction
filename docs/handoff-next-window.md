@@ -1,6 +1,6 @@
 # Handoff
 
-State on 2026-11-16: the September 2026 batch is done and committed (19 chains, 7,994 rows, 35 PDFs plus 5 PDFs derived from JPGs; `eval` passes; 330 tests pass, 75 skipped because they read PDFs of earlier batches). Next: the November 2026 collection. Nothing is blocked.
+State on 2026-11-16: the September 2026 batch is done and committed (19 chains, 7,994 rows, 35 PDFs plus 5 PDFs derived from JPGs; `eval` passes; 333 tests pass, 75 skipped because they read PDFs of earlier batches). Next: the November 2026 collection. Nothing is blocked.
 
 ## Start here (in this order)
 
