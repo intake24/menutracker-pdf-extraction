@@ -649,3 +649,11 @@ def test_a_name_line_under_a_nameless_rows_figures_is_not_glued_to_that_row_as_a
             + [Word(5, 80, 90, 88, "Next"), Word(92, 80, 130, 88, "Product")] + [Word(5, 90, 90, 98, "second"), Word(92, 90, 130, 98, "line")] + line(100, "", FULL)[1:])
     rows = parse_pages([page], COLUMNS, header="Energy", wrapped_names=True, wrap_below=True, nameless_rows=True, wrap_lines=2.5)
     assert [r["Product_Name"] for r in rows][1] == "Row One"
+
+
+def test_name_below_accepts_a_name_that_contains_a_digit_but_not_a_data_row():
+    """Odeon November 2026: "Chicken Strips Southern Fried Portion 6 - 270g" is printed under its figures and holds a digit."""
+    page = (header(10, "") + line(40, "Fries", FULL) + line(60, "", FULL)[1:]
+            + [Word(5, 66, 70, 74, "Strips"), Word(72, 66, 90, 74, "Portion"), Word(92, 66, 98, 74, "6"), Word(100, 66, 130, 74, "270g")] + line(90, "Chips", FULL))
+    rows = parse_pages([page], COLUMNS, header="Energy", name_below=True)
+    assert [r["Product_Name"] for r in rows] == ["Fries", "Strips Portion 6 270g", "Chips"]

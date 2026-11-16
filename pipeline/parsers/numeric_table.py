@@ -93,13 +93,13 @@ def _is_ruler(line: list[Word]) -> bool:
 
 
 def _names_from_below(lines: list[list[Word]], number: re.Pattern) -> list[list[Word]]:
-    """A line of only numbers followed by a line of only text: the text is that row's name, printed under it."""
+    """A line of only numbers followed by a line of text (fewer than MIN_NUMBERS figures, so a name such as "Portion 6 - 270g" counts, a data row does not): the text is that row's name, printed under it."""
     out, i = [], 0
     while i < len(lines):
         line = lines[i]
         nxt = lines[i + 1] if i + 1 < len(lines) else None
         if (nxt and len(line) >= MIN_NUMBERS and all(number.match(w.text) for w in line)
-                and not any(number.match(w.text) for w in nxt) and nxt[0].y0 - line[0].y1 < 2 * (line[0].y1 - line[0].y0)):
+                and sum(bool(number.match(w.text)) for w in nxt) < MIN_NUMBERS and nxt[0].y0 - line[0].y1 < 2 * (line[0].y1 - line[0].y0)):
             dy = (line[0].y0 + line[0].y1) / 2 - (nxt[0].y0 + nxt[0].y1) / 2
             out.append(sorted([w._replace(y0=w.y0 + dy, y1=w.y1 + dy) for w in nxt] + line, key=lambda w: w.x0))
             i += 2

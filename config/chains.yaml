@@ -542,6 +542,8 @@
       category: food
       approved: true
       # No allergen information in this PDF (the pre-packed product matrix is a separate PDF), so no `markers`.
+      max_x: 620 # November 2026 page 1: a stale block (KJ, Sat Fat, Total Sugar ... 5253) is hidden right of the table, at x 634 to 766
+      name_below: true # November 2026 page 1: the name of "Chicken Strips Southern Fried Portion 6" is printed under its figures
       header: Energy
       text_flow: true # page 1 has rows printed over each other
       free_sections: true # sub-section titles ("Toppings (Condiments)") sit between rows
