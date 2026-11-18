@@ -209,12 +209,12 @@ class FakeClient:
 
 def _reply(**over):
     from types import SimpleNamespace as NS
-    base = dict(stop_reason="tool_use", content=[NS(type="tool_use", name="record_rows", input={"rows": [{"name": "A"}]})],
+    base = dict(stop_reason="end_turn", content=[NS(type="text", text='{"rows": [{"name": "A"}]}')],
                 usage=NS(input_tokens=4000, output_tokens=1500))
     return NS(**(base | over))
 
 
-def test_the_sdk_runner_sends_the_image_and_a_forced_tool_and_returns_the_headless_result_shape(tmp_path):
+def test_the_sdk_runner_sends_the_image_and_a_json_schema_output_format_and_returns_the_headless_result_shape(tmp_path):
     import base64
 
     from pipeline import llm
@@ -225,7 +225,8 @@ def test_the_sdk_runner_sends_the_image_and_a_forced_tool_and_returns_the_headle
     sent = client.messages.sent
     assert result["structured_output"] == {"rows": [{"name": "A"}]} and result["is_error"] is False
     assert abs(result["total_cost_usd"] - (4000 * 2 + 1500 * 10) / 1e6) < 1e-9                    # Sonnet 5.5: $2 in, $10 out per million tokens
-    assert sent["model"] == llm.MODEL and sent["tool_choice"] == {"type": "tool", "name": "record_rows"} and sent["tools"][0]["input_schema"] == {"type": "object"}
+    assert sent["model"] == llm.MODEL and sent["output_config"]["format"] == {"type": "json_schema", "schema": {"type": "object", "additionalProperties": False}} and "tool_choice" not in sent and "tools" not in sent   # Sonnet 5.5 rejects forced tool use (400, 2026-11-16)
+    assert sent["thinking"] == {"type": "between_tools"}                                         # transcription: thinking off, so no billed reasoning tokens
     blocks = sent["messages"][0]["content"]
     assert blocks[0]["type"] == "image" and blocks[0]["source"]["data"] == base64.b64encode(b"\x89PNGdata").decode()
     assert "Return rows." in blocks[1]["text"]
@@ -248,6 +249,10 @@ def test_the_sdk_runner_turns_a_cut_off_answer_a_rate_limit_and_a_missing_key_in
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     with pytest.raises(llm.LlmError, match="ANTHROPIC_API_KEY"):
         llm.sdk_runner("q", {}, tmp_path, image=img)
+    with pytest.raises(llm.LlmError, match="not JSON"):
+        llm.sdk_runner("q", {}, tmp_path, image=img, client=FakeClient(reply=_reply(content=[NS(type="text", text="sorry")])))
+    with pytest.raises(llm.LlmError, match="refus"):
+        llm.sdk_runner("q", {}, tmp_path, image=img, client=FakeClient(reply=_reply(stop_reason="refusal", content=[])))
     big = tmp_path / "big.png"
     big.write_bytes(b"x" * (llm.SDK_MAX_IMAGE_BYTES + 1))
     with pytest.raises(llm.LlmError, match="larger than"):
@@ -292,3 +297,91 @@ def test_a_row_with_no_printed_name_gets_the_configured_placeholder_and_a_flag_o
         vt.rows_from_answer(answer, {"kj": "energykJ_Per Portion"}, 2)
     row = vt.rows_from_answer(answer, {"kj": "energykJ_Per Portion"}, 2, unnamed="(no name printed)")[0]
     assert row["Product_Name"] == "(no name printed)" and row["flags"].startswith("warn:") and row["energykJ_Per Portion"] == "1"
+
+
+def test_the_api_schema_has_additional_properties_false_on_every_object_and_the_original_is_untouched():
+    from pipeline import llm
+    schema = {"type": "object", "required": ["rows"], "properties": {"rows": {"type": "array", "items": {"type": "object", "properties": {"name": {"type": "string"}}}}}}
+    out = llm.strict_schema(schema)
+    assert out["additionalProperties"] is False and out["properties"]["rows"]["items"]["additionalProperties"] is False
+    assert "additionalProperties" not in schema and "additionalProperties" not in schema["properties"]["rows"]["items"]
+
+
+def test_strict_schema_keeps_a_free_form_map_that_already_states_its_additional_properties():
+    """vision_products: "values" maps any printed header to a string; forcing additionalProperties false there emptied every row (Papa John's, 2026-11-16)."""
+    from pipeline import llm
+    schema = {"type": "object", "properties": {"values": {"type": "object", "additionalProperties": {"type": "string"}}}}
+    out = llm.strict_schema(schema)
+    assert out["properties"]["values"]["additionalProperties"] == {"type": "string"} and out["additionalProperties"] is False
+
+
+def test_a_schema_with_a_free_form_map_is_answered_as_plain_json_text_without_structured_outputs(tmp_path):
+    """The API accepts only additionalProperties false: vision_products' "values" map (any printed header to a string) cannot use output_config.format."""
+    from types import SimpleNamespace as NS
+
+    from pipeline import llm
+    img = tmp_path / "p.png"
+    img.write_bytes(b"x")
+    schema = {"type": "object", "properties": {"values": {"type": "object", "additionalProperties": {"type": "string"}}}}
+    client = FakeClient(reply=_reply(content=[NS(type="text", text='```json\n{"values": {"ENERGY kJ": "1203"}}\n```')]))
+    result = llm.sdk_runner("Read it.", schema, tmp_path, image=img, client=client)
+    sent = client.messages.sent
+    assert result["structured_output"] == {"values": {"ENERGY kJ": "1203"}} and "output_config" not in sent
+    assert "JSON schema" in sent["messages"][0]["content"][1]["text"] and '"additionalProperties": {"type": "string"}' in sent["messages"][0]["content"][1]["text"]
+
+
+def test_a_schema_the_api_calls_too_complex_is_asked_again_as_plain_json(tmp_path):
+    """Krispy Kreme's vision_pairs schema: 400 "Schema is too complex" with structured outputs; the same request goes again with the schema in the prompt."""
+    from types import SimpleNamespace as NS
+
+    import anthropic
+
+    from pipeline import llm
+    img = tmp_path / "p.png"
+    img.write_bytes(b"x")
+    calls = []
+
+    class Msgs:
+        def create(self, **kw):
+            calls.append(kw)
+            if "output_config" in kw:
+                raise anthropic.BadRequestError("Schema is too complex.", response=NS(status_code=400, headers={}, request=NS(method="POST", url="u")), body=None)
+            return _reply()
+    client = NS(messages=Msgs())
+    result = llm.sdk_runner("Read it.", {"type": "object", "properties": {"a": {"type": "string"}}}, tmp_path, image=img, client=client)
+    assert result["structured_output"] == {"rows": [{"name": "A"}]} and len(calls) == 2 and "output_config" not in calls[1]
+    assert "JSON schema" in calls[1]["messages"][0]["content"][1]["text"]
+
+
+def test_a_billed_answer_that_fails_still_counts_against_the_cap_and_the_usage_log(tmp_path, image):
+    """Review 2026-11-17: a cut-off, refused or non-JSON API answer was billed but never added to the budget or the log."""
+    from types import SimpleNamespace as NS
+
+    from pipeline import llm
+    for reply in (_reply(stop_reason="max_tokens"), _reply(stop_reason="refusal", content=[]), _reply(content=[NS(type="text", text="sorry")])):
+        budget = Budget(max_calls=5, max_usd=5.0)
+        runner = lambda p, s, d, image=None, r=reply: llm.sdk_runner(p, s, d, image=image, client=FakeClient(reply=r))
+        runner.wants_image = True
+        with pytest.raises(LlmError):
+            call("q", SCHEMA, image, runner=runner, cache_dir=tmp_path / "c", budget=budget)
+        assert round(budget.usd, 4) == 0.023 and (budget.input_tokens, budget.output_tokens) == (4000, 1500)
+    assert len(llm.USAGE_LOG.read_text().splitlines()) == 4        # header + three billed failures
+
+
+def test_a_plain_json_answer_that_does_not_match_the_schema_is_an_error_and_is_not_cached(tmp_path, image):
+    """Review 2026-11-17: {"values": {"Kcal": 250}} (a number where the schema says string) was cached and crashed the parser on every re-run."""
+    from types import SimpleNamespace as NS
+
+    from pipeline import llm
+    schema = {"type": "object", "required": ["rows"], "properties": {"rows": {"type": "array", "items": {
+        "type": "object", "required": ["name", "values"], "properties": {"name": {"type": "string"},
+        "values": {"type": "object", "additionalProperties": {"type": "string"}}}}}}}
+    for text in ('{"rows":[{"name":"X","values":{"Kcal":250}}]}', '{"rows":[{"name":"X"}]}', '{"rows":"none"}'):
+        runner = lambda p, s, d, image=None, t=text: llm.sdk_runner(p, s, d, image=image, client=FakeClient(reply=_reply(content=[NS(type="text", text=t)])))
+        runner.wants_image = True
+        with pytest.raises(LlmError, match="does not match"):
+            call("q", schema, image, runner=runner, cache_dir=tmp_path / "c", budget=Budget())
+    assert not list((tmp_path / "c").glob("*.json"))
+    ok = lambda p, s, d, image=None: llm.sdk_runner(p, s, d, image=image, client=FakeClient(reply=_reply(content=[NS(type="text", text='{"rows":[{"name":"X","values":{"Kcal":"250"}}]}')])))
+    ok.wants_image = True
+    assert call("q", schema, image, runner=ok, cache_dir=tmp_path / "c", budget=Budget())["rows"][0]["values"] == {"Kcal": "250"}

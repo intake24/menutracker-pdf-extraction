@@ -94,7 +94,14 @@ def rows_from_answer(answer: dict, source: dict, page_no: int) -> list[dict]:
             raise llm.LlmError(f"header_columns: {h!r} and another header read as the same header but name different columns")
     unlisted = source.get("markers", {}).get("", "")
     rows = []
-    for item in answer["rows"]:
+    items = answer["rows"]
+    if source.get("name_beside_middle_row"):   # a name printed once beside the middle of three rows: the one unnamed row directly above a named row takes its name (never a longer run of unnamed rows)
+        items = [dict(i) for i in items]
+        for k in range(len(items) - 1):
+            if not (answer["rows"][k].get("name") or "").strip() and (answer["rows"][k + 1].get("name") or "").strip() \
+                    and (k == 0 or (answer["rows"][k - 1].get("name") or "").strip()):
+                items[k]["name"] = answer["rows"][k + 1]["name"]
+    for item in items:
         name = (item.get("name") or "").strip()
         if not name:
             raise llm.LlmError(f"page {page_no}: the model returned a row without a name: {item!r}")
@@ -242,5 +249,5 @@ def parse(pdf: Path, source: dict) -> list[dict]:
         if source.get("snap_labels"):
             rows = snap_labels(pdf, n, rows, source["snap_labels"])
         return with_text_figures(pdf, source, n, rows) if source.get("figures_from_text") else rows
-    with ThreadPoolExecutor(max_workers=WORKERS) as pool:   # results come back in page order
+    with ThreadPoolExecutor(max_workers=llm.workers()) as pool:   # results come back in page order
         return [row for rows in pool.map(one, pages) for row in rows]

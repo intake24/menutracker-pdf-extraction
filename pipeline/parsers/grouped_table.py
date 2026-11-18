@@ -10,6 +10,13 @@ Source options (config/chains.yaml):
   left       label columns, left to right: {column: <dictionary column>, x0: <left edge in pt>, x1: <right edge, default the next column's x0>, rotated: <bool>}; the first
              is the product name; words left of `size_x0` belong to the column whose x0 is the largest not above them
   size_order the sizes from largest to smallest; a row whose size is not smaller than the one above starts a new lowest-level group
+  own_group_sizes  sizes ("Single", "Double", or "" for no size) whose row is always a drink of its own, whatever the size above it
+  label_gap  label lines within this many line heights are one label (default 1.7; 1 for one-line names on consecutive rows)
+  serving_unit  value of Serving_Size_Unit for such rows (the column title says "Serving g")
+  label_centre  "range": a label above several groups sits at the middle of their extent, not at the mean of the groups' positions (Domino's 2026 pizzas: cheese labels over crusts with different numbers of sizes)
+  carry_labels  list of pages: a page whose rows have no label for a column (a pizza continued from the page before) takes the last row's label of the page before
+  label_above  how far above the first row a label may start (default 6 pt; 20 when a drink continued from the page before is named beside the column titles); `{page: pt}` for single pages (a pizza label that stands above the one row of page 15)
+  serving_column  a line with one figure more than `columns` has the serving size first (cans: 200, 320, 510): it goes to this column and is also the row's size
   starts_at  (on a label column) {lower column: value}: a new group of this label starts at every group of the lower label with that value
   ignore_words words that are never part of a label ("Per single serve" printed beside the names)
   header_word  a word that appears in every column-title block (default Energy); words level with it are not labels
@@ -24,6 +31,8 @@ from pathlib import Path
 from pipeline.ingest import Word, page_words, page_words_fine
 from pipeline.parsers.allergen_matrix import _partition
 from pipeline.parsers.numeric_table import NUMBER, _lines
+
+BLANK_CELLS = {"-", "–", "—", "n/a", "N/A"}
 
 LINE_GAP = 1.7   # label lines within this many line heights are one label
 
@@ -43,7 +52,7 @@ def _rotated(w: Word) -> bool:
     return len(w.text) > 2 and (w.x1 - w.x0) < 4   # sideways words are only a line height wide
 
 
-def _clusters(words: list[Word], rotated: bool) -> list[tuple[float, str]]:
+def _clusters(words: list[Word], rotated: bool, gap: float = LINE_GAP) -> list[tuple[float, str]]:
     """(centre y, text) of each label in a column."""
     if rotated:   # sideways text: contiguous tall boxes make one label, read from the bottom up
         words = sorted(words, key=lambda w: w.y0)
@@ -59,7 +68,7 @@ def _clusters(words: list[Word], rotated: bool) -> list[tuple[float, str]]:
     group: list[list[Word]] = []
     for line in lines:
         height = line[0].y1 - line[0].y0
-        if group and (line[0].y0 + line[0].y1) / 2 - (group[-1][0].y0 + group[-1][0].y1) / 2 <= LINE_GAP * height * 1.2:
+        if group and (line[0].y0 + line[0].y1) / 2 - (group[-1][0].y0 + group[-1][0].y1) / 2 <= gap * height * 1.2:
             group.append(line)
         else:
             if group:
@@ -95,11 +104,36 @@ def _partition_rows(rows: list[float], centres: list[float], breaks: set[int]) -
     return groups
 
 
+def _partition_range(rows: list[float], centres: list[float]) -> list[int]:
+    """Like allergen_matrix._partition, but a group's position is the middle of its extent (first and last row), not the mean of its rows: a label printed
+    in the middle of its group stays at the middle when the groups hold different numbers of rows (a cheese label over crusts with 4, 3, 2, 2 and 3 sizes)."""
+    n, m = len(rows), len(centres)
+    if m > n:
+        raise ValueError(f"{m} labels but only {n} groups")
+    INF = float("inf")
+    best = [[INF] * (n + 1) for _ in range(m + 1)]
+    cut = [[0] * (n + 1) for _ in range(m + 1)]
+    best[0][0] = 0.0
+    for k in range(1, m + 1):
+        for i in range(k, n + 1):
+            for j in range(k - 1, i):
+                if best[k - 1][j] < INF:
+                    cost = best[k - 1][j] + abs((rows[j] + rows[i - 1]) / 2 - centres[k - 1])
+                    if cost < best[k][i]:
+                        best[k][i], cut[k][i] = cost, j
+    groups, i = [0] * n, n
+    for k in range(m, 0, -1):
+        j = cut[k][i]
+        groups[j:i] = [k - 1] * (i - j)
+        i = j
+    return groups
+
+
 def figure_lines(pdf: Path, page_no: int, columns: list[str], size_x0: float, size_order: list[str], text_flow: bool = True, line_gap: float | None = None) -> list[tuple[str, dict[str, str]]]:
     """(size, {column: figure}) of every data line of a page, top to bottom, read from the text layer."""
     vocab = {part for name in size_order for part in name.split()}
     out = []
-    for line in _lines(page_words_fine(pdf, text_flow=text_flow)[page_no - 1], *([line_gap] if line_gap else [])):   # line_gap: rows whose name and figures are printed a few points apart
+    for line in _lines([w for w in page_words_fine(pdf, text_flow=text_flow)[page_no - 1] if not (len(w.text) == 1 and w.text.isalpha())], *([line_gap] if line_gap else [])):   # line_gap: rows whose name and figures are printed a few points apart
         nums = [w for w in line if NUMBER.match(w.text)]
         if len(nums) < 9:
             continue
@@ -118,30 +152,40 @@ def parse(pdf: Path, source: dict) -> list[dict]:
     rows: list[dict] = []
     for page_no in expand_pages(source["pages"]):
         data = []   # (y, size, numbers)
-        for line in _lines(figures[page_no - 1]):
+        for line in _lines([w for w in figures[page_no - 1] if not (len(w.text) == 1 and w.text.isalpha())]):   # single letters are pieces of a rotated label: they must not start a line of their own
             nums = [w for w in line if NUMBER.match(w.text)]
-            if len(nums) < 9:
+            if len(nums) < min(9, len(columns)):
+                blanks = [w.text for w in line if w.text in BLANK_CELLS and w.x0 > nums[0].x0] if nums else []   # a cell printed "-" is not a figure: the row must not vanish as if it were text
+                if blanks and len(nums) + len(blanks) >= min(9, len(columns)):
+                    raise ValueError(f"page {page_no}: a data line has a cell that is not a figure ({blanks}) and {len(nums)} figures, config names {len(columns)}: {' '.join(w.text for w in line)!r}")
                 continue
             first = nums[0]
-            vocab = {part for name in source["size_order"] for part in name.split()}
+            vocab = {part for name in [*source["size_order"], *source.get("own_group_sizes", ())] for part in name.split()}
             size_words = [w.text for w in line if size_x0 <= w.x0 < first.x0 and w.text in vocab]   # not stray letters of a label
+            serving = None
+            if source.get("serving_column") and len(nums) == len(columns) + 1 and not size_words:
+                serving, nums = nums[0], nums[1:]
+                first = nums[0]
             if len(nums) != len(columns):
                 raise ValueError(f"page {page_no}: a data line has {len(nums)} figures, config names {len(columns)}: "
                                  f"{' '.join(w.text for w in line)!r}")
-            data.append(((line[0].y0 + line[0].y1) / 2, " ".join(size_words), [w.text for w in nums]))
+            data.append(((line[0].y0 + line[0].y1) / 2, serving.text if serving else " ".join(size_words), [w.text for w in nums], serving.text if serving else None))
         if not data:
             continue
-        top = min(d[0] for d in data) - 40   # labels above the first row (the table's header) are not labels
+        above = source.get("label_above", 6)
+        above = above.get(page_no, 6) if isinstance(above, dict) else above   # a number, or {page: number}
+        top = min(d[0] for d in data) - max(40, above)   # labels above the first row (the table's header) are not labels
         # The header block is repeated down the page: words level with a header word ("Energy") are column titles.
         header_ys = sorted({w.y0 for w in labels[page_no - 1] if w.text == source.get("header_word", "Energy")})
         titles = lambda w: any(h - 6 <= w.y0 <= h + 12 for h in header_ys)
         for col in left:
             col["_x1"] = col.get("x1") or next((c["x0"] for c in left if c["x0"] > col["x0"]), size_x0)
-        order = {name: i for i, name in enumerate(source["size_order"])}
+        order = {name: i for i, name in enumerate(source["size_order"])} | {name: -2 for name in source.get("own_group_sizes", ())}
         ranks = [order.get(d[1], -1) for d in data]
         if -1 in ranks:
             raise ValueError(f"page {page_no}: a size not in size_order: {[d[1] for d in data if d[1] not in order][:3]}")
-        breaks = {i for i in range(1, len(data)) if ranks[i] <= ranks[i - 1]}   # the sizes start over: a new crust group
+        alone = source.get("own_group_sizes", ())
+        breaks = {i for i in range(1, len(data)) if ranks[i] <= ranks[i - 1] or data[i][1] in alone or data[i - 1][1] in alone}   # the sizes start over: a new crust group
         assigned: list[list[str]] = [[] for _ in data]
         unit_of = list(range(len(data)))   # the group (lowest level) of each row; higher labels cover whole groups
         ys = [d[0] for d in data]
@@ -150,8 +194,10 @@ def parse(pdf: Path, source: dict) -> list[dict]:
             words = [w for w in labels[page_no - 1] if w.y0 >= top and w.y0 <= max(d[0] for d in data) + 6 and not titles(w) and col["x0"] - 2 <= w.x0 < col["_x1"]
                      and bool(col.get("rotated")) == _rotated(w) and not NUMBER.match(w.text)
                      and w.text not in source.get("ignore_words", ())
-                     and w.y0 > min(d[0] for d in data) - 6 - (w.y1 - w.y0 if col.get("rotated") else 0)]
-            clusters = _clusters(words, bool(col.get("rotated")))
+                     and w.y0 > min(d[0] for d in data) - above - (w.y1 - w.y0 if col.get("rotated") else 0)]
+            clusters, carried = _clusters(words, bool(col.get("rotated")), source.get("label_gap", LINE_GAP)), False
+            if not clusters and page_no in (source.get("carry_labels") or ()) and rows and rows[-1].get(col["column"]) and rows[-1]["source_page"] == page_no - 1:   # a row continued from the page before has no name of its own here
+                clusters, carried = [(sum(ys) / len(ys), rows[-1][col["column"]])], True
             if not clusters:
                 raise ValueError(f"page {page_no}: no labels found for {col['column']!r}")
             starts = col.get("starts_at")
@@ -167,24 +213,28 @@ def parse(pdf: Path, source: dict) -> list[dict]:
                     if new_unit and assigned[r][0] == value:
                         current += 1
                     groups.append(max(current, 0))
-                if current + 1 != len(clusters):
+                if current + 1 != len(clusters) and not carried:
                     raise ValueError(f"page {page_no}: {len(clusters)} {col['column']!r} labels but {current + 1} groups start at {value!r}")
             else:   # a higher label covers whole lower groups
                 units: dict[int, list[float]] = {}
                 for r, u in enumerate(unit_of):
                     units.setdefault(u, []).append(ys[r])
                 order_u = sorted(units)
-                by_unit = _partition([sum(units[u]) / len(units[u]) for u in order_u], [c[0] for c in clusters])
+                by_unit = (_partition_range if source.get("label_centre") == "range" else _partition)([sum(units[u]) / len(units[u]) for u in order_u], [c[0] for c in clusters])
                 groups = [by_unit[order_u.index(u)] for u in unit_of]
             for i, g in enumerate(groups):
                 assigned[i].insert(0, clusters[g][1])
             unit_of = groups
         shared: dict[str, str] = {}   # figures of the group's "per 100g" row, repeated on each of its other rows
-        for (y, size, nums), labs in zip(data, assigned):
+        for (y, size, nums, serving), labs in zip(data, assigned):
             if size == source.get("shared_row"):
                 shared = dict(zip(source["shared_columns"], nums))
                 continue
             row = {left[i]["column"]: labs[i] for i in range(len(left))} | {size_column: size, "source_page": page_no}
             row |= shared | dict(zip(columns, nums))
+            if serving:
+                row[source["serving_column"]] = serving
+                if source.get("serving_unit"):
+                    row["Serving_Size_Unit"] = source["serving_unit"]
             rows.append(row)
     return rows

@@ -1,0 +1,25 @@
+# PDFs in inputs/ that no source of config/chains.yaml reads, with the reason (November 2026). tests/test_ingest.py requires every other PDF to belong to a source.
+# Allergen or ingredient lists only (the pipeline is nutrition only since March 2026):
+13fc56df1fc780f7aa0a4d6bfc65c855bf8377e5.pdf: allergen information, Pizza Express England
+249d05c98e46020bdd58394243c827e32870cf22.pdf: allergen, ingredient and nutrition QR page, Pizza Express Mac & Wings Belfast
+54f700afdd4d648f763807dac379b53a2a48ea24.pdf: ingredients list, Pizza Express Mac & Wings
+7899ebacc32ea04f76467059e328531c13e991b3.pdf: ingredients list, Pizza Express England
+981c035b36dbce94a881b5dc51b96165c6d59a17.pdf: allergen information, Pizza Express Northern Ireland
+bde1babff51653ddaf516f3c36f7f99b4b23c7cf.pdf: QR page, Pizza Express Mac & Wings
+2026-Allergen-Matrix-V15.pdf: allergen matrix, Soho Coffee
+ALL-ALLERGENS-2026-v2.pdf: allergen guide, Boswells
+allergen_leaflet.pdf: allergen leaflet, Domino's
+ingredients-and-allergens.pdf: ingredients and allergens, Domino's
+allergens-matrix-november-2026-edition-v36-12_11_2026-uk-version.pdf: allergen matrix, Odeon
+m20493-allergen-info-icecream.pdf: allergens, Vue
+m20560-allergen-info-alcohol.pdf: allergens, Vue
+m20744-allergen-info-drinks.pdf: allergens, Vue
+m20744-allergen-info-food.pdf: allergens, Vue
+m20756-allergen-info-sweets.pdf: allergens, Vue
+Pho-Allergen-Guide-2026_web.pdf: allergen guide, Pho
+UKallergeninformationC5.pdf: allergen information, Subway
+d4ccac0c2f8e41f5b34253f3940b5b18v=9c536bad.pdf: allergen guide of Farmhouse Inns and Greene King (one identical file in both folders)
+FGUK_FOH_allergen_ingredient_nutrition_MM_shake_DIGITAL_20261013.pdf: allergen chart, Five Guys (no nutrition figures)
+CB-AB-A4-A-1_Allergen_Book_V48_Proof.pdf: 'allergen matrix of Cornish Bakery (70_Cornish Bakery) with one kcal figure per product and no other nutrients; owner decided on 2026-11-17 to skip it'
+# Superseded or conflicting:
+2d0517b6da69a62e29b0e482794b196f.pdf: Cineworld issue of 20 July 2026, superseded by 2d377f6b... of 5 November 2026

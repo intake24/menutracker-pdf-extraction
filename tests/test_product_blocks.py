@@ -6,7 +6,7 @@ import yaml
 from pipeline.parsers import product_blocks as pb
 
 ROOT = Path(__file__).resolve().parent.parent
-SOURCE = yaml.safe_load((ROOT / "config" / "chains.yaml").read_text())["47_Coffee1"]["sources"][0]
+SOURCE = yaml.safe_load((ROOT / "tests" / "fixtures" / "chains_2026-09.yaml").read_text())["47_Coffee1"]["sources"][0]
 PDF = ROOT / "inputs" / SOURCE["pdf"]
 SYN = {**SOURCE, "name_size": 5.8, "title_size": 7, "rule_width": 450, "nutrition_x0": 432}   # the synthetic pages below are drawn at the scale of the January 2026 guide; the config is for the 888 pt wide May 2026 guide
 
@@ -156,3 +156,41 @@ def test_blank_cells_does_not_blank_a_label_that_prints_a_word_instead_of_a_figu
         page = kj + [nut("Fibre", 440, 110), nut(word, 470, 110), nut(word, 510, 110)] + salt
         with pytest.raises(ValueError, match="does not have two values"):
             pb._block(page, {**SYN, "blank_cells": True}, 3)
+
+
+def test_split_rules_adds_a_rule_above_every_later_nutrition_block_of_a_band_with_no_rule_between_its_products():
+    """Coffee #1 October 2026, page 19: two products share one band; their nutrition blocks start at KJ y 418 and 588."""
+    rules = [62, 79, 171, 265, 409, 677]
+    assert pb.split_rules(rules, [90, 183, 275, 418, 588], 14) == [62, 79, 171, 265, 409, 574, 677]
+    assert pb.split_rules(rules, [90, 183, 275, 418], 14) == rules          # one block per band: nothing added
+
+
+def test_weight_labels_lets_a_guide_print_product_weight_instead_of_portion_weight():
+    """Coffee #1 Festive guide (November 2026): "Product Weight: 225" ends each block, and its headings are "Per 100g" / "Per portion"."""
+    def nut(text, x, top):
+        return {"text": text, "x0": x, "x1": x + 12, "top": top, "bottom": top + 6, "size": 6, "fontname": "Gothic"}
+    page = [nut("Per", 440, 90), nut("KJ", 440, 100), nut("100", 470, 100), nut("90", 510, 100), nut("Salt", 440, 110), nut("0.1", 470, 110), nut("0.1", 510, 110),
+            nut("Product", 440, 120), nut("Weight:", 470, 120), nut("225", 510, 120)]
+    with pytest.raises(ValueError, match="Product"):
+        pb._block(page, SYN, 3)
+    got = pb._block(page, {**SYN, "weight_labels": ["Portion", "Product"]}, 3)
+    assert got["weight"] == "225" and got["rows"]["KJ"] == ["100", "90"]
+
+
+def _october_source():
+    return next(s for s in yaml.safe_load((ROOT / "config" / "chains.yaml").read_text())["47_Coffee1"]["sources"]
+                if s["parser"] == "product_blocks" and s["pdf"].startswith("C1-Core-Food-Oct"))
+
+
+def test_join_next_page_reads_a_product_whose_nutrition_block_runs_on_to_the_next_page():
+    """Coffee #1 October 2026: the Ham & Cheese Toastie's block starts at the foot of page 24; its Salt and portion weight are the first lines of page 25."""
+    src = _october_source()
+    with_join = pb.parse(ROOT / "inputs" / src["pdf"], {**src, "pages": ["24"]})
+    last = with_join[-1]
+    assert last["Product_Name"] == "Ham & Cheese Toastie" and last["source_page"] == 24 and last["Diet"] == "(V)"
+    assert (last["salt_Per 100g/ml"], last["salt_Per Portion"], last["Serving_Size"]) == ("1.40", "2.80", "215")
+    assert (last["energykCal_Per Portion"], last["protein_Per Portion"]) == ("581.0", "23.2")
+    assert last["Ingredients"].endswith("West Country Cheddar ( MILK ) (9%).") and "Version" not in last["Ingredients"]
+    assert len([r for r in with_join if r["Product_Name"] == "Ham & Cheese Toastie"]) == 1
+    without = pb.parse(ROOT / "inputs" / src["pdf"], {k: v for k, v in {**src, "pages": ["24"], "join_next_page": None}.items() if v is not None} | {"footer_y": {24: 696}})
+    assert [r["Product_Name"] for r in without] == [r["Product_Name"] for r in with_join][:-1]

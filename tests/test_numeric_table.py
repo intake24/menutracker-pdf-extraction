@@ -657,3 +657,15 @@ def test_name_below_accepts_a_name_that_contains_a_digit_but_not_a_data_row():
             + [Word(5, 66, 70, 74, "Strips"), Word(72, 66, 90, 74, "Portion"), Word(92, 66, 98, 74, "6"), Word(100, 66, 130, 74, "270g")] + line(90, "Chips", FULL))
     rows = parse_pages([page], COLUMNS, header="Energy", name_below=True)
     assert [r["Product_Name"] for r in rows] == ["Fries", "Strips Portion 6 270g", "Chips"]
+
+
+def test_pizza_express_2026_sections_are_the_words_under_the_stack_of_rotated_letters():
+    import yaml
+    from pipeline.parsers import numeric_table
+    ROOT = Path(__file__).resolve().parent.parent
+    src = next(s for s in yaml.safe_load((ROOT / "config" / "chains.yaml").read_text())["11_PizzaExpress"]["sources"] if s["pdf"].startswith("13294855"))
+    sections = {}
+    for page in (5, 6, 23):
+        rows = numeric_table.parse(ROOT / "inputs" / src["pdf"], {**src, "pages": [page]})
+        sections[page] = {r["Category"] for r in rows}
+    assert sections == {5: {"Sides"}, 6: {"Pizza - Classic"}, 23: {"Piccolo - Pizzas"}}   # page 23 prints the first letter of "Piccolo" as a word of its own

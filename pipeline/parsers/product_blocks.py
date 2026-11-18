@@ -16,10 +16,16 @@ Source options (config/chains.yaml):
   rule_width     minimum width (pt) of a horizontal line that counts as a row rule (default 400)
   furniture      words that are page furniture above the table header (running heads, the page key)
   footer_word    the first word of the page footer (default Version): the last row ends there
+  weight_labels  the labels of the portion weight line (default ["Portion"]; the November 2026 Festive guide prints "Product Weight:")
+  footer_y       {page: y}: where the last row of that page ends, instead of the footer word (Coffee #1 October 2026, page 24: the last product runs on below the footer text)
+  join_next_page {page: next page}: the last product of that page has its nutrition block run on to the first lines of the next page (Coffee #1 October 2026, Ham & Cheese Toastie: 24 -> 25).
+                 The product's name and declaration are read from the first page; the next page adds only the lines of its nutrition column (x from `nutrition_x0`) above its footer, so it must hold nothing else (another product there stops the run).
+                 The first page's own footer (large type below the footer line: "Version 59", the page number) is left out, small type below it stays, and the last row of the first page runs on to the end of the next page's lines.
   header_word    the table header's first title (default PRODUCT): its y is the top of the table
   diet_tags      the tags printed under a name, e.g. ["V", "Vg", "GF"]; "(V)" and "(Vg/GF)" go to `Diet` as printed
   may_phrases    phrases that start the list of what may be present (default ["May contain"]); capitals before the first one are allergens
   allergen_words extra allergen words (capitals) -> text for the allergen reader ("EGGS": "Egg"); "" for a word that only completes another ("SEEDS")
+  split_blocks   true: a band with two nutrition blocks and no rule between its products is split above the second block (`split_rules`; `split_offset`, default 14 pt, is how far above its `KJ` line the rule goes)
   blank_cells    true: a nutrition label printed with no figures at all (both cells empty, Lotus Biscuits "Fibre") stays blank; a line with one figure still stops the run
   markers        {"": "No"} when the guide says every allergen is in capitals, so an unmarked allergen is absent
 A product with no name, no ingredients or a block with a missing value raises.
@@ -128,7 +134,8 @@ def _block(words: list[dict], source: dict, page_no: int) -> dict | None:
     for line in _lines([w for w in area if _centre(w) >= starts[0] - 2]):
         label = line[0]["text"]
         values = [w["text"] for w in line[1:] if re.match(r"^<?\d[\d,]*(\.\d+)?$", w["text"])]
-        if values and label not in labels and label not in ("Portion", "per"):
+        weight_labels = source.get("weight_labels", ["Portion"])
+        if values and label not in labels and label not in (*weight_labels, "per", "Per"):
             raise ValueError(f"page {page_no}: the nutrition label {label!r} is not in `nutrients`")
         if label in labels:
             if len(values) == 0 and len(line) == 1 and source.get("blank_cells"):   # only the label alone on its line: "Fibre -" or "Fibre n/a" is printed content and still raises   # `blank_cells`: a label printed with both cells empty stays blank
@@ -137,13 +144,24 @@ def _block(words: list[dict], source: dict, page_no: int) -> dict | None:
             if len(values) != 2:
                 raise ValueError(f"page {page_no}: the nutrition line {' '.join(w['text'] for w in line)!r} does not have two values")
             rows[label] = values
-        elif label == "Portion":
+        elif label in weight_labels:
             if len(values) != 1:
                 raise ValueError(f"page {page_no}: the portion weight line has {len(values)} values")
             weight = values[0]
     if "Salt" not in rows:
         raise ValueError(f"page {page_no}: a nutrition block does not reach Salt")
     return {"rows": rows, "weight": weight}
+
+
+def split_rules(rules: list[float], kj_tops: list[float], offset: float) -> list[float]:
+    """`split_blocks`: products printed one under the other with no rule between them leave two nutrition blocks (two `KJ` lines) in one band; a rule is
+    added `offset` pt above the `KJ` line of every block but the first of such a band (the "per 100g" header line sits just above it)."""
+    rules = sorted(rules)
+    extra = []
+    for lo, hi in zip(rules, rules[1:]):
+        inside = sorted(t for t in kj_tops if lo < t < hi)
+        extra += [t - offset for t in inside[1:]]
+    return sorted(rules + extra)
 
 
 def parse_page(words: list[dict], rules: list[float], source: dict, page_no: int) -> list[dict]:
@@ -225,14 +243,33 @@ def expand_pages(spec: list) -> list[int]:
     return out
 
 
+def _foot(words: list[dict], source: dict, page, n: int) -> float:
+    """Where the last row of page `n` ends: `footer_y`, else the top of the footer word, else the page bottom."""
+    if isinstance(source.get("footer_y"), dict) and n in source["footer_y"]:
+        return source["footer_y"][n]
+    return min((w["top"] for w in words if w["text"] == source.get("footer_word", "Version")), default=page.height)
+
+
 def parse(pdf: Path, source: dict) -> list[dict]:
     rows = []
+    join = {int(k): int(v) for k, v in (source.get("join_next_page") or {}).items()}
     with pdfplumber.open(pdf) as doc:
         for n in expand_pages(source["pages"]):
             page = doc.pages[n - 1]
             words = page.extract_words(extra_attrs=["fontname", "size"], x_tolerance=1.5, y_tolerance=1)
             wide = source.get("rule_width", 400)
             rules = sorted({round(e["top"]) for e in page.edges if e["orientation"] == "h" and e["x1"] - e["x0"] >= wide})
-            foot = min((w["top"] for w in words if w["text"] == source.get("footer_word", "Version")), default=page.height)
-            rows += parse_page(words, rules + [round(foot) - 1], source, n)   # the last row of a page has no rule under it: it ends at the footer
+            foot = _foot(words, source, page, n)
+            if n in join:   # `join_next_page`: the next page's nutrition lines continue the last row, placed one page height further down
+                nxt = doc.pages[join[n] - 1]
+                more = nxt.extract_words(extra_attrs=["fontname", "size"], x_tolerance=1.5, y_tolerance=1)
+                more_foot = _foot(more, source, nxt, join[n])
+                words = [w for w in words if w["top"] < foot or w["size"] < source["name_size"]] + [   # the declaration runs on below the footer line, in small type: it stays
+                    {**w, "top": w["top"] + page.height, "bottom": w["bottom"] + page.height}
+                    for w in more if w["x0"] >= source["nutrition_x0"] and w["top"] < more_foot]
+                foot = more_foot + page.height
+            rules = rules + [round(foot) - 1]   # the last row of a page has no rule under it: it ends at the footer
+            if source.get("split_blocks"):
+                rules = split_rules(rules, [w["top"] for w in words if w["text"] == "KJ" and w["x0"] >= source["nutrition_x0"]], source.get("split_offset", 14))
+            rows += parse_page(words, rules, source, n)
     return rows

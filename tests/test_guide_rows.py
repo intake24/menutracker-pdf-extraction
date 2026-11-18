@@ -7,7 +7,7 @@ from pipeline.parsers import guide_rows as gr
 from pipeline.parsers import modifier_matrix as mm
 
 ROOT = Path(__file__).resolve().parent.parent
-SOURCES = yaml.safe_load((ROOT / "config" / "chains.yaml").read_text())["7_Starbucks"]["sources"]
+SOURCES = yaml.safe_load((ROOT / "tests" / "fixtures" / "chains_2026-09.yaml").read_text())["7_Starbucks"]["sources"]
 FOOD = next(s for s in SOURCES if s["parser"] == "guide_rows" and s["category"] == "food")
 BEV = next(s for s in SOURCES if s["parser"] == "guide_rows" and s["category"] == "drinks")   # the first of each: the Spring 2026 guides
 MOD = next(iter(s for s in SOURCES if s['parser'] == 'modifier_matrix'), None)   # absent from the March 2026 config

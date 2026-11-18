@@ -1,6 +1,6 @@
 # Goal: November 2026 batch (nutrition only)
 
-Status: started 2026-11-16 (intake done). Same rules and done criteria as `docs/goal-batch-2026-03.md`, with the dates changed; procedure in `docs/runbook-monthly-batch.md`. Results go to `outputs/data-dictionary/findings-report-2026-11.md` and `end-of-round-report-2026-11.md`, with a copy in `docs/`.
+Status: first round done 2026-11-16 (results: `docs/end-of-round-report-2026-11.md`); the pending list below is open. Same rules and done criteria as `docs/goal-batch-2026-03.md`, with the dates changed; procedure in `docs/runbook-monthly-batch.md`. Results go to `outputs/data-dictionary/findings-report-2026-11.md` and `end-of-round-report-2026-11.md`, with a copy in `docs/`.
 
 ## Objective
 
@@ -67,4 +67,20 @@ Parse the nutrition PDFs the research team put in `inputs/collection/` (per-chai
 
 ## Limits
 
+- Model backend: the owner may choose headless Claude Code or the API per run (runbook 4b). On the API the cap is $20 per run; a stop writes `interim-report.md` and a re-run resumes. The end-of-round report gets a "Model usage and cost" section from `usage`.
+
 As in March: report model calls per chain; pause before any single chain goes beyond a rerun of all its pages twice; commit after each chain passes. The model quota is a 5-hour window: queue the model-read chains (Papa John's 63 pages, Vue 25, Krispy Kreme 20, Soho 20, Tesco 35) one after another in a background script and keep working on text-layer chains meanwhile.
+
+
+## Pending list (open at the end of the first round, 2026-11-16; items 1-7 done the same day, see the end-of-round report)
+
+Owner answers of 2026-11-17 (all three former open items are closed):
+
+1. Second Mac & Wings PDF (`a9adac8b...`): another restaurant of Pizza Express (#11). Read as a fifth source (region `UK`, golden `a9adac8b...`); its Buffalo Wings (6) and (12) No Dip rows differ from `1bebca8e...` and are flagged as duplicates with different values (the same name and region); the owner decided on 2026-11-17 to keep both rows with region `UK` and leave the conflict to the research team; it is listed in the end-of-round report's remarks.
+2. Cornish Bakery `CB-AB-A4-A-1_Allergen_Book_V48_Proof.pdf` (chain `70_Cornish Bakery`, an allergen matrix with one kcal figure per product): skipped by the owner; listed in `config/skipped_pdfs.yaml`.
+3. Coffee #1 Ham & Cheese Toastie (October core guide, page 24 into 25): read with the new `join_next_page: {24: 25}` option of `product_blocks` (Salt 1.40/2.80, weight 215 g); `tests/test_product_blocks.py::test_join_next_page_*`; figcheck 0 misses.
+4. Optional: a by-eye check of the new goldens against rendered pages. A fresh reviewer checked the open-items parser changes (no regressions on other sources; six findings fixed: `name_beside_middle_row` fills one row only, `serving_column` needs a line without a size word, `carry_labels` is a page list, `block_section` heading rejoin, `bold_font` reset). Still unreviewed: the earlier first-round changes (`numeric_table` `name_below` and `block_section`, `product_blocks` `split_blocks`/`footer_y`/`weight_labels`, `grouped_table` options, `drink_tables` `bold_font`, `vision_products` `name_beside_middle_row`, `llm.py`).
+
+Fresh review of the first-round changes (2026-11-17, Opus subagent; old and new parsers compared on every numeric_table, drink_tables and product_blocks source: sources without new options give identical output). Fixed: sdk answers that were billed but failed (cut off, refused, not JSON) are now added to the spend cap and the usage log; a plain-JSON answer (free-form schemas: vision_products, or the "too complex" fallback) is checked against the schema before it is cached (a number where a string is expected used to crash the parser on every re-run); the interim report lists only the chains written by that run; the usage table folds crop and strip images into their PDF and says headless token counts are partial; docstrings of `name_below`, `title_min_size` and `join_next_page`; `autogolden --n 1`. Also fixed (owner, 2026-11-17): a `grouped_table` data line with a cell printed "-" or "n/a" now stops the run instead of being skipped (checked on the November Boswells PDF: 110 data lines, 110 rows, none short). Still accepted: an empty size (`''` in `own_group_sizes`) for a row whose size word is missing or misplaced. Known and accepted: with 8 parallel API workers the spend cap can be overshot by up to about 7 calls in flight; `join_next_page` keeps small-type words under the footer at any x (nothing else is printed there in the October guide); `tools/autotitles.py` adds titles to every one-line `titles:` list and misses a title containing an apostrophe.
+
+Done in the open-items round: Pizza Express England and Northern Ireland, Domino's, Boswells drinks, Pho, Coffee #1 (April beverages, Festive beverages and savoury page), Starbucks syrup and cold-foam pages.

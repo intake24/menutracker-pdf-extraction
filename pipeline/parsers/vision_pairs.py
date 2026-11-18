@@ -267,7 +267,7 @@ def _select(rows: list[dict], pattern: str | None, what: str, page_no: int, fiel
 
 def parse(pdf: Path, source: dict) -> list[dict]:
     pages = pages_of(pdf, source)
-    with ThreadPoolExecutor(max_workers=WORKERS) as pool:   # one read per page, even when joins share a page
+    with ThreadPoolExecutor(max_workers=llm.workers()) as pool:   # one read per page, even when joins share a page
         read = dict(zip(pages, pool.map(lambda p: raw_rows(pdf, source, p), pages)))
     rows, consumed, ledger = [], set(), {}
     for j in source["joins"]:

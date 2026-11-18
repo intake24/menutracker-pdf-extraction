@@ -14,11 +14,12 @@ Source options (config/chains.yaml):
   name_amount    a trailing amount in the name ("BBQ Dip 25g") becomes Serving_Size and Serving_Size_Unit
   text_flow      read words in drawing order and keep rows printed over each other apart (an Odeon PDF defect)
   invalid_values cell values that are errors in the source ("#N/A"); kept as printed, the row is flagged
-  name_below     a line of only numbers followed by a line of only text: the text is that row's name
+  name_below     a line with figures only (fewer than 3 numbers may stand beside words: "Portion 6 - 270g") followed by a line of only text: the text is that row's name
   free_sections  name-only text that is not a wrapped name is a sub-section label; without wrapped_names, all of it is
   wrapped_names  join a name-only line directly above a data row onto that row's name
   column_gap     how far (pt, default 9) a cell's right edge may sit from its column's right edge; widen it where cells are centred (Ask, 2026)
   line_gap       words whose vertical centres are this close (pt, default 3) are one line; raise it where a name's font sits higher than its figures (Pho: 4.7 pt)
+  block_section  the header block is a stack of rotated letters; a line of whole words in it ("Sides", "Pizzas–Classic") is the table's section name (Pizza Express, November 2026)
   header_section false: the header block text is not a section name (Wasabi: the block holds the column titles, the section is the printed page title, listed under `titles`)
   wrap_below_lines  with `wrap_below`: how many line heights under its figures a name may continue (default 1.5; 2.5 lets it run over two lines, Zizzi ROI)
   name_tail_x    a name word at or right of this x is a second name column and is read after the rest of the name (Wasabi mixed bento: "Rice")
@@ -248,7 +249,7 @@ def _merge_wrapped_below(lines: list[list[Word]], number: re.Pattern, tail_x: fl
 
 
 def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None = None,
-                wrapped_names: bool = False, titles: list[str] = (), text_values: list[str] = (), furniture: list[str] = (), name_amount: bool = False, free_sections: bool = False, invalid_values: list[str] = (), name_below: bool = False, skip_lines: list[str] = (), wrap_lines: float = WRAP_LINES, nameless_rows: bool = False, section_x: float | None = None, wrap_below: bool = False, line_gap: float = LINE_GAP, header_section: bool = True, name_tail_x: float | None = None, wrap_below_lines: float = WRAP_LINES) -> list[dict]:
+                wrapped_names: bool = False, titles: list[str] = (), text_values: list[str] = (), furniture: list[str] = (), name_amount: bool = False, free_sections: bool = False, invalid_values: list[str] = (), name_below: bool = False, skip_lines: list[str] = (), wrap_lines: float = WRAP_LINES, nameless_rows: bool = False, section_x: float | None = None, wrap_below: bool = False, line_gap: float = LINE_GAP, header_section: bool = True, name_tail_x: float | None = None, wrap_below_lines: float = WRAP_LINES, block_section: bool = False) -> list[dict]:
     def extend(words):   # a word starting with "re:" is a pattern, anything else is matched as it stands
         alt = "|".join(w[3:] if w.startswith("re:") else re.escape(w) for w in words)
         return re.compile(NUMBER.pattern + "|^(?:" + alt + ")$") if words else NUMBER
@@ -313,17 +314,21 @@ def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None 
 
         in_header = False
         block: list[list[Word]] = []     # lines of the current column-header block
+        block_heading = block_heading_raw = ""
         pending: list[list[Word]] = []   # name-only lines waiting for the data row they continue
         for i in range(start, len(lines)):
             line, anchors = lines[i], kinds[i]
             text = " ".join(w.text for w in line)
             if i in header_lines:
-                block = block if in_header else []
+                block, block_heading = (block, block_heading) if in_header else ([], "")
                 block.append(line)
                 in_header, pending = True, []   # a title above a column header ("PER PORTION PER 100g") is not a name
             elif anchors is None:
                 if in_header:
                     block.append(line)
+                    if block_section and sum(len(w.text) < 2 and w.text not in "–-&" for w in line) <= 1 and len(text) >= 3:   # a line of whole words under the stack of rotated letters: the table's heading
+                        block_heading = text if len(line[0].text) > 1 or line[1].text[0].isupper() else line[0].text + text[len(line[0].text) + 1:]   # ("P iccolo": the first letter is a word of its own; "A la carte" is not joined)
+                        block_heading_raw = text
                 elif heading := _heading(line, left) or (text if text in titles else None):   # a listed title between rows starts a section too
                     section = heading
                     titled = text if text in titles else ""
@@ -342,6 +347,9 @@ def parse_pages(pages: list[list[Word]], columns: list[str], header: str | None 
                     left_text = " ".join(w.text for l in above for w in l if w.x1 < edge)
                     section, titled = (titled, "") if not header_section else (("" if left_text in furniture else left_text) or section, "")   # without `header_section` a new table starts with no section
                     pending = [l for l in block if l[0].y0 >= bottom]
+                    if block_section and block_heading:
+                        section = block_heading
+                        pending = [l for l in pending if " ".join(w.text for w in l) not in (block_heading, block_heading_raw)]
                     in_header = False
                     if pending and not wrapped_names:
                         raise ValueError(f"page {page_no}: text between the column headers and the first row "
@@ -435,4 +443,4 @@ def parse(pdf: Path, source: dict) -> list[dict]:
 def _parse(pages: list[list[Word]], source: dict) -> list[dict]:
     return parse_pages(only_pages(pages, source.get("pages"), source.get("max_x"), source.get("skip_words", ())), source["columns"], source.get("header"),
                        source.get("wrapped_names", False), source.get("titles", ()), source.get("text_values", ()), source.get("furniture", ()), source.get("name_amount", False), source.get("free_sections", False),
-                       source.get("invalid_values", ()), source.get("name_below", False), source.get("skip_lines", ()), source.get("wrap_lines", WRAP_LINES), source.get("nameless_rows", False), source.get("section_x"), source.get("wrap_below", False), source.get("line_gap", LINE_GAP), source.get("header_section", True), source.get("name_tail_x"), source.get("wrap_below_lines", WRAP_LINES))
+                       source.get("invalid_values", ()), source.get("name_below", False), source.get("skip_lines", ()), source.get("wrap_lines", WRAP_LINES), source.get("nameless_rows", False), source.get("section_x"), source.get("wrap_below", False), source.get("line_gap", LINE_GAP), source.get("header_section", True), source.get("name_tail_x"), source.get("wrap_below_lines", WRAP_LINES), source.get("block_section", False))

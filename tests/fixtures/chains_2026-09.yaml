@@ -1,0 +1,1914 @@
+# The September 2026 config, kept for tests whose synthetic pages are drawn for that batch's options (Starbucks guide_rows, Coffee #1 product_blocks, Pizza Express numeric_table). The live config/chains.yaml changes every month.
+# Every chain Menu Tracker extracts, keyed by its Menu Tracker script key (menutracker.ipynb).
+# Output: outputs/<key>.csv, one CSV per chain, merging all of its sources.
+#
+# Per source:
+#   pdf       file name in inputs/
+#   parser    name in pipeline/parsers/__init__.py PARSERS (one layout can serve many chains)
+#   region    UK | NI | ROI
+#   columns   (numeric_table only) the dictionary column of each numeric column, left to right
+#   markers   the PDF's allergen key: printed marker -> Yes | May contain | No. Omit when the PDF has none.
+#             "" = what an allergen with no marker means for this PDF ("No" only if the PDF says so).
+#   labels, header_words, sizes, variants, units, note_labels, group_column_end   (allergen_matrix only) header label ->
+#             allergen column, other allowed header words, size-column words, variant words (sizes only in a run of
+#             two or more or beside a size row), portion units, labels of note-only rows, x where the group column ends
+#   disclaimer  menu-wide allergen statement, kept here (not in the CSV)
+#   approved  set to true by a person after checking markers/disclaimer against the PDF
+
+11_PizzaExpress:
+  chain: Pizza Express
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
+  sources:
+    - pdf: 230f6a921a100e32ad47e5f9f92e1fdbd01fef23.pdf
+      parser: numeric_table
+      region: UK # "England, Wales & Scotland"
+      category: food
+      # No allergen information in these PDFs, so no `markers` and the CSV has no allergen columns.
+      header: Energy # each table has a column-header block; its left-hand text is the section name
+      wrapped_names: true # long names wrap onto a second line
+      titles: &pizza_express_titles ['Breakfast (selected restaurants only)', 'Hot Drinks – Café Nero', 'Breakfast: Airport Sites Only (Edinburgh & Gatwick)'] # printed once on page 22 / 18; applies to the sections after it
+      # Columns left to right: nine values per portion, then the same nine per 100g.
+      columns: &pizza_express_columns
+        - energykCal_Per Portion
+        - energykJ_Per Portion
+        - fat_Per Portion
+        - saturates_Per Portion
+        - carbohydrates_Per Portion
+        - sugars_Per Portion
+        - fibre_Per Portion
+        - protein_Per Portion
+        - salt_Per Portion
+        - energykCal_Per 100g/ml
+        - energykJ_Per 100g/ml
+        - fat_Per 100g/ml
+        - saturates_Per 100g/ml
+        - carbohydrates_Per 100g/ml
+        - sugars_Per 100g/ml
+        - fibre_Per 100g/ml
+        - protein_Per 100g/ml
+        - salt_Per 100g/ml
+      approved: true
+    - pdf: 43d31e9ddc71a1aa7e8a2c06b75c386e6d596a35.pdf
+      parser: numeric_table
+      region: NI # "Northern Ireland"
+      category: food
+      header: Energy
+      wrapped_names: true
+      titles: *pizza_express_titles
+      columns: *pizza_express_columns
+      approved: true
+    - pdf: 79d486acda1d637755e68c260689eb5fe309fd6c.pdf
+      parser: numeric_table
+      region: UK # Mac & Wings (listed under Pizza Express in the March 2026 PDF list)
+      category: food
+      header: Energy
+      wrapped_names: true
+      columns: *pizza_express_columns
+      approved: true
+    - pdf: 4248f3d3421884e5e6206910b11c9bbe2776a89f.pdf
+      parser: numeric_table
+      region: UK # QSR Brixton (listed under Pizza Express in the June 2026 PDF list)
+      category: food
+      header: Energy
+      wrapped_names: true
+      columns: *pizza_express_columns
+      approved: true
+
+16_Beefeater:
+  chain: Beefeater
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
+  sources:
+    - pdf: beefeater_ss25_breakfast_menu_allergy_nutrition_v1.pdf
+      parser: premier_inn_breakfast
+      region: UK
+      category: breakfast
+      # The guide "covers the following major allergens" and lists each item's Contains / May Contain.
+      markers: { '': 'No' }
+      disclaimer: >-
+        We take great care to prevent cross-contamination when preparing your order in our kitchens.
+        However, due to the layout and operation of our kitchens we do not have specific allergen free
+        zones and it is therefore not possible to fully guarantee separation of allergens. There is
+        significant risk of cross-contamination in our buffet areas and deep fat fryers.
+      approved: false # no March 2026 PDF for this chain (docs/goal-batch-2026-03.md)
+    - pdf: beefeater_ss25_drinks_menu_allergy_nutrition_v1.pdf
+      parser: whitbread_drinks_grid
+      region: UK
+      category: drinks
+      # Key: "Y  The allergen is present". The guide "declares allergens intentionally added only"
+      # and "does not include any 'may contains'", so no mark = not an ingredient.
+      markers: { 'Y': 'Yes', '': 'No' }
+      disclaimer: >-
+        Our allergen information sheet does not include any “may contains” information where provided by
+        our suppliers. Our kitchens also handle numerous ingredients and allergens and whilst we have
+        strict controls in place to reduce the risk of contamination, unfortunately, it is not possible
+        for us to guarantee that our dishes will be 100% allergen free. There is also significant risk
+        of cross contamination from our fryers.
+      approved: false # no March 2026 PDF for this chain (docs/goal-batch-2026-03.md)
+
+17_Brewersfayre:
+  chain: Brewers Fayre
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
+  sources:
+    - pdf: brewers_fayre_allergy_nutrition_ss25_breakfast_menu.pdf
+      parser: premier_inn_breakfast
+      region: UK
+      category: breakfast
+      # The guide "covers the following major allergens" and lists each item's Contains / May Contain.
+      markers: { '': 'No' }
+      disclaimer: >-
+        We take great care to prevent cross-contamination when preparing your order in our kitchens.
+        However, due to the layout and operation of our kitchens we do not have specific allergen free
+        zones and it is therefore not possible to fully guarantee separation of allergens. There is
+        significant risk of cross-contamination in our buffet areas and deep fat fryers.
+      approved: false # no March 2026 PDF for this chain (docs/goal-batch-2026-03.md)
+    - pdf: brewers_fayre_allergy_nutrition_ss25_drinks_menu.pdf
+      parser: whitbread_drinks_grid
+      region: UK
+      category: drinks
+      # Key: "Y  The allergen is present". The guide "declares allergens intentionally added only"
+      # and "does not include any 'may contains'", so no mark = not an ingredient.
+      markers: { 'Y': 'Yes', '': 'No' }
+      disclaimer: >-
+        Our allergen information sheet does not include any “may contains” information where provided by
+        our suppliers. Our kitchens also handle numerous ingredients and allergens and whilst we have
+        strict controls in place to reduce the risk of contamination, unfortunately, it is not possible
+        for us to guarantee that our dishes will be 100% allergen free. There is also significant risk
+        of cross contamination from our fryers.
+      approved: false # no March 2026 PDF for this chain (docs/goal-batch-2026-03.md)
+
+21_TableTable:
+  chain: Table Table
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
+  sources:
+    - pdf: table_table_allergy_nutrition_ss25_breakfast_menu.pdf
+      parser: premier_inn_breakfast
+      region: UK
+      category: breakfast
+      # The guide "covers the following major allergens" and lists each item's Contains / May Contain.
+      markers: { '': 'No' }
+      disclaimer: >-
+        We take great care to prevent cross-contamination when preparing your order in our kitchens.
+        However, due to the layout and operation of our kitchens we do not have specific allergen free
+        zones and it is therefore not possible to fully guarantee separation of allergens. There is
+        significant risk of cross-contamination in our buffet areas and deep fat fryers.
+      approved: false # no March 2026 PDF for this chain (docs/goal-batch-2026-03.md)
+    - pdf: table_table_allergy_nutrition_ss25_drinks_menu.pdf
+      parser: whitbread_drinks_grid
+      region: UK
+      category: drinks
+      # Key: "Y  The allergen is present". The guide "declares allergens intentionally added only"
+      # and "does not include any 'may contains'", so no mark = not an ingredient.
+      markers: { 'Y': 'Yes', '': 'No' }
+      disclaimer: >-
+        Our allergen information sheet does not include any “may contains” information where provided by
+        our suppliers. Our kitchens also handle numerous ingredients and allergens and whilst we have
+        strict controls in place to reduce the risk of contamination, unfortunately, it is not possible
+        for us to guarantee that our dishes will be 100% allergen free. There is also significant risk
+        of cross contamination from our fryers.
+      approved: false # no March 2026 PDF for this chain (docs/goal-batch-2026-03.md)
+
+52_FiveGuys:
+  chain: Five Guys
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
+  sources:
+    - pdf: FGUK_FOH_allergen_ingredient_nutrition_Myprotein_shake_DIGITAL_20260805.pdf
+      parser: numeric_table
+      region: UK # "UK LOCATIONS ONLY"
+      category: food
+      skip_lines: ['Patty, Tomatoes, Pickles,', 'Grilled Onions, Green Peppers,', 'Grilled Mushrooms'] # the filling of the Lettuce Wrap, printed beside its figures
+      wrapped_names: true
+      wrap_lines: 2.5 # the Lettuce Wrap's name sits two lines above its figures
+      nameless_rows: true # ...and its figures line has no name of its own
+      max_x: 580 # a rotated document code runs down the right margin
+      pages: ['5-6'] # the March 2026 PDF has the allergen guide (1-2) and ingredients (3-4) before the nutrition guide
+      # No allergen information in this PDF, so no `markers` and the CSV has no allergen columns.
+      # Columns left to right: nine values per serving, then the same nine per 100g.
+      columns:
+        - energykJ_Per Portion
+        - energykCal_Per Portion
+        - fat_Per Portion
+        - saturates_Per Portion
+        - carbohydrates_Per Portion
+        - sugars_Per Portion
+        - fibre_Per Portion
+        - protein_Per Portion
+        - salt_Per Portion
+        - energykJ_Per 100g/ml
+        - energykCal_Per 100g/ml
+        - fat_Per 100g/ml
+        - saturates_Per 100g/ml
+        - carbohydrates_Per 100g/ml
+        - sugars_Per 100g/ml
+        - fibre_Per 100g/ml
+        - protein_Per 100g/ml
+        - salt_Per 100g/ml
+      approved: false # September 2026: the only PDF (FGUK_..._Myprotein_shake_DIGITAL_20260805.pdf) is a one-page allergen and ingredient chart with no nutrition figures
+
+46_Cineworld:
+  chain: Cineworld
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
+  sources:
+    - pdf: 26-08-13_20Cineworld_20Allergen_20and_20Nutritional_20Information.pdf
+      parser: allergen_matrix
+      region: UK
+      category: food
+      approved: true
+      # Key (page 1 and every page header): "✓ - Contains", "▲ - May Contain". It does not say what a blank cell
+      # means, so a blank is "not stated". The PDF is an allergen matrix with calories only.
+      markers: { '✓': 'Yes', '▲': 'May contain', '': '' }
+      disclaimer: 'We cannot guarantee that any of our products are free of a particular allergen due to the use of shared equipment, utensils, cooking methods and open product handling on site.'
+      sizes: [Large, Regular, Small, Medium, Pint, Half Pint, Splash, Munchbox]
+      variants:
+        [
+          Semi-Skimmed Milk,
+          Soya Milk,
+          Sugar Free Caramel,
+          Sugar Free Vanilla,
+          Chocolate,
+          Hazelnut,
+        ]
+      units: [g, ml]
+      note_labels: [Pick and Mix, Ice Cream]
+      group_column_end: 92 # the left-most column (item group names, sub-sections) ends here
+      header_words: [Allergens, Tree, Nuts, Cereals, Containing, Gluten]
+      labels:
+        Celery: celery
+        Wheat: wheat
+        Rye: rye
+        Barley: barley
+        Oats: oats
+        Spelt: spelt
+        Kamut: kamut
+        Crustaceans: crustacean
+        Egg: egg
+        Fish: fish
+        Lupin: lupin
+        Milk: milk
+        Molluscs: mollusc
+        Mustard: mustard
+        Almond: treeNuts
+        Hazelnut: treeNuts
+        Walnut: treeNuts
+        Cashew: treeNuts
+        Peacan: treeNuts
+        Brazil: treeNuts
+        Pistachio: treeNuts
+        Macadamia: treeNuts
+        Peanuts: peanut
+        Sesame: sesame
+        Soya: soya
+        Sulphites: sulphite
+
+6_Dominos:
+  chain: Dominos
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
+  sources:
+    - pdf: nutrition_sides-and-desserts.pdf
+      golden: nutrition_sides-and-desserts__2026-06 # the March 2026 PDF has the same name
+      parser: numeric_table
+      region: UK
+      category: food
+      approved: false # no September 2026 PDF
+      # No allergen information in these PDFs, so no `markers` and the CSV has no allergen columns.
+      # The first row of page 4 has the header's unit line inside its cells: "(g)14.3", "KCal356", "kJ1496". Kept as printed and flagged.
+      invalid_values: ['re:^\(g\)\d+(\.\d+)?$', KCal356, kJ1496]
+      skip_words: ['(g)']
+      header: Energy
+      wrapped_names: true
+      text_values: [Portion, Piece, Dip, Wrap]
+      name_amount: true # "BBQ Dip 25g": the amount is the serving size
+      furniture: ['Nutritional Information- Sides and Desserts', Product Name, 'Per Product As Sold Per Portion or Piece', 'Per Product As Sold Per Portion or Dip'] # running head; the name column's header
+      titles: [Sides, Dips, Chick 'N' Dip] # a page's title, printed above its column headers
+      # Columns left to right (the 2026 PDF has no per 100g group): how many it serves, ten per product as sold,
+      # the portion's kind (words), then ten per portion or piece.
+      columns:
+        - Serves
+        - energykCal_Per Product As Sold
+        - energykJ_Per Product As Sold
+        - fat_Per Product As Sold
+        - saturates_Per Product As Sold
+        - carbohydrates_Per Product As Sold
+        - sugars_Per Product As Sold
+        - fibre_Per Product As Sold
+        - protein_Per Product As Sold
+        - salt_Per Product As Sold
+        - sodium_Per Product As Sold
+        - Portion_Type
+        - energykCal_Per Portion
+        - energykJ_Per Portion
+        - fat_Per Portion
+        - saturates_Per Portion
+        - carbohydrates_Per Portion
+        - sugars_Per Portion
+        - fibre_Per Portion
+        - protein_Per Portion
+        - salt_Per Portion
+        - sodium_Per Portion
+    - pdf: nutrition_pizzas.pdf
+      golden: nutrition_pizzas__2026-06 # the March 2026 PDF has the same name
+      parser: grouped_table
+      region: UK
+      category: food
+      approved: false # no September 2026 PDF
+      # No allergen information in this PDF. Pages 3-16: pizza name, rotated cheese label, crust, then one row per size.
+      # KNOWN GAP: page 2 (95 rows: gluten free, plant-based, cheeky little, Italiano trial-store, delight pizzas, Absolute Banger) is
+      # not extracted yet: its six small tables label rows differently and one model read of the whole page returned no rows.
+      pages: ['3-16']
+      size_x0: 190
+      size_order: [Large, Medium, Small, Personal]
+      left:
+        - {
+            column: Product_Name,
+            x0: 0,
+            starts_at: { Cheese: Standard Mozzarella },
+          }
+        - { column: Cheese, x0: 90, rotated: true }
+        - { column: Crust, x0: 103 }
+      pearlscan: { 'slice/portion/piece': ~ }
+      # Figures left to right: ten per pizza, ten per slice (the 2026 PDF has no per 100g group).
+      columns:
+        - energykCal_Per Pizza
+        - energykJ_Per Pizza
+        - fat_Per Pizza
+        - saturates_Per Pizza
+        - carbohydrates_Per Pizza
+        - sugars_Per Pizza
+        - fibre_Per Pizza
+        - protein_Per Pizza
+        - salt_Per Pizza
+        - sodium_Per Pizza
+        - energykCal_Per Slice
+        - energykJ_Per Slice
+        - fat_Per Slice
+        - saturates_Per Slice
+        - carbohydrates_Per Slice
+        - sugars_Per Slice
+        - fibre_Per Slice
+        - protein_Per Slice
+        - salt_Per Slice
+        - sodium_Per Slice
+    - pdf: nutrition_pizzas.pdf
+      golden: nutrition_pizzas__2026-06 # the March 2026 PDF has the same name
+      parser: grouped_table
+      region: UK
+      category: food
+      approved: false # no September 2026 PDF
+      # Page 17: bases (crust label, then one row per size; figures per pizza, per slice).
+      pages: [17]
+      size_x0: 180
+      size_order: [Large, Medium, Small, Personal]
+      left:
+        - { column: Product_Name, x0: 0 }
+      pearlscan: { 'slice/portion/piece': ~ }
+      columns:
+        - energykCal_Per Pizza
+        - energykJ_Per Pizza
+        - fat_Per Pizza
+        - saturates_Per Pizza
+        - carbohydrates_Per Pizza
+        - sugars_Per Pizza
+        - fibre_Per Pizza
+        - protein_Per Pizza
+        - salt_Per Pizza
+        - sodium_Per Pizza
+        - energykCal_Per Slice
+        - energykJ_Per Slice
+        - fat_Per Slice
+        - saturates_Per Slice
+        - carbohydrates_Per Slice
+        - sugars_Per Slice
+        - fibre_Per Slice
+        - protein_Per Slice
+        - salt_Per Slice
+        - sodium_Per Slice
+    - pdf: nutrition_pizzas.pdf
+      golden: nutrition_pizzas__2026-06 # the March 2026 PDF has the same name
+      parser: grouped_table
+      region: UK
+      category: food
+      approved: false # no September 2026 PDF
+      # Pages 18-20: sauce, cheese and toppings: one row per size with the single serve figures (the 2026 PDF has no per 100g row).
+      pages: [18, 19, 20]
+      size_x0: 192
+      size_order: [Large, Medium, Small, Personal]
+      ignore_words: [Per, single, serve]
+      left:
+        - { column: Product_Name, x0: 0, x1: 190 } # the "Per single serve" label beside the names is not a name
+      pearlscan: { 'slice/portion/piece': ~ }
+      columns:
+        - energykCal_Per Portion
+        - energykJ_Per Portion
+        - fat_Per Portion
+        - saturates_Per Portion
+        - carbohydrates_Per Portion
+        - sugars_Per Portion
+        - fibre_Per Portion
+        - protein_Per Portion
+        - salt_Per Portion
+        - sodium_Per Portion
+    - pdf: nutrition_pizzas.pdf
+      golden: nutrition_pizzas__2026-06 # the March 2026 PDF has the same name
+      parser: vision_products
+      region: UK
+      category: food
+      approved: false # no September 2026 PDF
+      # Page 2 only (gluten free, plant-based, cheeky little, Italiano range, delight pizzas and Absolute Banger; the
+      # Italiano table is new in the April 2026 guide). The page holds six small tables with different row labels, so each table is cropped and read from its image. No allergen information.
+      pages: [2]
+      dpi: 150
+      variant_columns: true
+      snap_labels: [Product_Name, Crust] # a label the model misread (Margherita-tastic for Margheri-tastic) is replaced by the printed one
+      # The print on this page is too small for the model: at 150 dpi it misread about a quarter of the figures (758 for 708).
+      # So only the labels (section, pizza, cheese, crust, size) come from the model; every figure comes from the text layer.
+      figures_from_text:
+        line_gap: 3.5 # rows of the Plant-Based and Italiano tables print their per slice figures 3 pt below the per pizza ones (at 3 and 4.5 one row of the new Italiano table stays split in two lines of ten figures)
+        size_x0: 192
+        size_order: [Large, Medium, Small, Personal]
+        columns:
+          - energykCal_Per Pizza
+          - energykJ_Per Pizza
+          - fat_Per Pizza
+          - saturates_Per Pizza
+          - carbohydrates_Per Pizza
+          - sugars_Per Pizza
+          - fibre_Per Pizza
+          - protein_Per Pizza
+          - salt_Per Pizza
+          - sodium_Per Pizza
+          - energykCal_Per Slice
+          - energykJ_Per Slice
+          - fat_Per Slice
+          - saturates_Per Slice
+          - carbohydrates_Per Slice
+          - sugars_Per Slice
+          - fibre_Per Slice
+          - protein_Per Slice
+          - salt_Per Slice
+          - sodium_Per Slice
+      crop_dpi: { 2-4: 230, 2-6: 230 } # the two big tables (Italiano range, Absolute Banger): their print is too small at 150
+      crops:
+        {
+          2:
+            [
+              [80, 138],
+              [138, 212],
+              [212, 298],
+              [298, 512],
+              [512, 572],
+              [572, 770],
+            ],
+        }
+      instructions: >-
+        It is part of a Domino's UK nutrition table page: one small table with its own column titles (the left block of ten columns is titled Per Pizza and the right block
+        Per Slice, each with Energy kcal, Energy kJ, Fat, Sat, Carb, Sugars, Fibre, Protein, Salt, Sodium). Every row has a size
+        (Small, Medium, Large or Personal) and a pizza label. section = the range heading printed at the left of the table (for
+        example "Gluten Free Pizzas", "Plant-Based Pizzas", "Cheeky Little Pizzas", "Delight Pizzas", "Absolute
+        Banger"), or empty if the image shows none. name = the pizza name exactly as printed in the pizza name column, including a
+        trial stores note when it is part of the printed name. variant = the cheese (the sideways label, for example "Standard
+        Mozzarella" or "Reduced Fat Mozzarella") when the table has one, then the crust text if it is printed beside the row, then
+        the size, separated by " - ". values = every figure of the row keyed by its printed column header written as "<table
+        title> / <column header> <unit>" (for example "Per Pizza / Energy kcal", "Per Slice / Fat g").
+      # Printed header -> column; the model writes each as '<table title> / <column header> <unit>'.
+      header_columns:
+        'Per Pizza / Energy kcal': energykCal_Per Pizza
+        'Per Pizza / Energy kJ': energykJ_Per Pizza
+        'Per Pizza / Fat g': fat_Per Pizza
+        'Per Pizza / Sat g': saturates_Per Pizza
+        'Per Pizza / Carb g': carbohydrates_Per Pizza
+        'Per Pizza / Sugars g': sugars_Per Pizza
+        'Per Pizza / Fibre g': fibre_Per Pizza
+        'Per Pizza / Protein g': protein_Per Pizza
+        'Per Pizza / Salt g': salt_Per Pizza
+        'Per Pizza / Sodium g': sodium_Per Pizza
+        'Per Slice / Energy kcal': energykCal_Per Slice
+        'Per Slice / Energy kJ': energykJ_Per Slice
+        'Per Slice / Fat g': fat_Per Slice
+        'Per Slice / Sat g': saturates_Per Slice
+        'Per Slice / Carb g': carbohydrates_Per Slice
+        'Per Slice / Sugars g': sugars_Per Slice
+        'Per Slice / Fibre g': fibre_Per Slice
+        'Per Slice / Protein g': protein_Per Slice
+        'Per Slice / Salt g': salt_Per Slice
+        'Per Slice / Sodium g': sodium_Per Slice
+
+58_Vue:
+  chain: Vue
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
+  sources:
+    # The text layer of these PDFs is corrupt (the embedded font drops characters: 197 prints as 19), so the page
+    # images are read by the model (parser vision_table). No allergen information in these PDFs. (The September 2026 batch has only the drinks and sweets PDFs: no food or ice-cream PDF.)
+    - pdf: m20645-nutritional-info-drinks.pdf
+      parser: vision_table
+      region: UK
+      category: drinks
+      approved: true
+      instructions: >-
+        It is a nutrition table of cinema drinks; all figures are per portion. section = the orange heading above the
+        rows ("DISPENSED SOFT DRINKS"). Each drink is a bold name line (it can wrap onto two lines: join them) followed by
+        several rows whose left cell (Portion/Pack Size) is a size such as "Large", "Regular", "Junior", "Kids": for those
+        rows name = the bold name above them, size = the left cell, portion = empty. For an item that has a single row
+        with a volume or count in the left cell, name = the bold name, size = empty, portion = that cell.
+        Many items (the PACKAGED DRINKS pages, and some others) have two figure lines: the first is level with the bold name and its Portion/Pack Size cell is empty, the second is the next line and its
+        Portion/Pack Size cell holds a volume ("500", "250", "200", "330", "275"). Return both lines as two rows with the same name: first row portion = empty, second row portion = that volume exactly as printed.
+        Never leave the volume out and never drop either line. Copy names exactly as printed, including the apostrophe in F’Real (a typographic apostrophe) and letters and digits in names such as J2O.
+      fields: &vue_fields
+        kj: energykJ_Per Portion
+        kcal: energykCal_Per Portion
+        protein: protein_Per Portion
+        carbohydrate: carbohydrates_Per Portion
+        sugars: sugars_Per Portion
+        fat: fat_Per Portion
+        saturates: saturates_Per Portion
+        fibre: fibre_Per Portion
+        sodium: sodium_Per Portion
+        salt: salt_Per Portion
+    - pdf: m20685-nutritional-info-sweets.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: true
+      dpi: 130 # a second read at another resolution than the first (150) after the first misread Haribo Gold Bears saturates (0.5 for 0.1)
+      instructions: >-
+        It is a nutrition table of sweets; all figures are per portion. section = the orange heading above the rows
+        ("PICK'N'MIX"). name = the bold item name exactly as printed (it may contain " - "); size = empty;
+        portion = the Portion/Pack Size cell ("100g").
+      fields: *vue_fields
+59_Odeon:
+  chain: Odeon
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
+  sources:
+    - pdf: nutritional-information-july-2026-pdf-v28-09_07_2026-uk-version.pdf
+      parser: numeric_table
+      region: UK
+      category: food
+      approved: true
+      # No allergen information in this PDF (the pre-packed product matrix is a separate PDF), so no `markers`.
+      header: Energy
+      text_flow: true # page 1 has rows printed over each other
+      free_sections: true # sub-section titles ("Toppings (Condiments)") sit between rows
+      invalid_values: ['#N/A'] # a hidden row under "Guacamole" has Excel errors instead of figures
+      name_amount: true # "Bacon Bits - 18g", "Regular Lemonade - 22oz Freestyle": the amount is the serving size
+      columns:
+        - energykJ_Per Portion
+        - energykCal_Per Portion
+        - fat_Per Portion
+        - saturates_Per Portion
+        - carbohydrates_Per Portion
+        - sugars_Per Portion
+        - fibre_Per Portion
+        - protein_Per Portion
+        - salt_Per Portion
+        - sodium_Per Portion
+    - pdf: pre-packed-product-matrix-july-2026-edition-v23-09_07_2026-uk-version.pdf
+      parser: product_matrix
+      line_gap: 2 # rows of the 2026 matrix are printed 3 pt apart
+      invalid_values: ['#VALUE!', '#N/A', '#DIV/0!'] # Excel errors printed in a few figure cells; kept as printed and flagged
+      region: UK # July 2026 issue (v23)
+      category: food
+      approved: true
+      # Pre-packed product matrix: ingredients with allergens in bold (the bold is not in the text layer, so allergens are NOT
+      # derived: the PDF has no allergen column, and the allergen columns stay absent), storage and use text, serving size,
+      # nutrition per 100g and per serving, one product per row. Figures printed with their unit ("22g", "498 kcal") lose
+      # the column's own unit; "N/A" is kept as printed; a dash is kept as printed.
+      text_columns:
+        - { column: Product_Name, x0: 40 }
+        - { column: Pack_Size, x0: 118 }
+        - { column: Ingredients, x0: 140 }
+        - { column: Storage, x0: 284 }
+        - { column: Instructions, x0: 316 }
+        - { column: Serving, x0: 365 }
+      serving_column: Serving
+      pearlscan: { servingsize: ~, servingsizeunit: ~ } # Pearl Scan filled serving sizes the PDF does not print (250 ml for a 500 ml bottle) and left counts blank
+      numeric_columns:
+        - { column: energykJ_Per 100g/ml, x: 434 }
+        - { column: energykCal_Per 100g/ml, x: 474 }
+        - { column: fat_Per 100g/ml, x: 488 }
+        - { column: saturates_Per 100g/ml, x: 503 }
+        - { column: carbohydrates_Per 100g/ml, x: 524 }
+        - { column: sugars_Per 100g/ml, x: 542.5 }
+        - { column: fibre_Per 100g/ml, x: 557 }
+        - { column: protein_Per 100g/ml, x: 571 }
+        - { column: salt_Per 100g/ml, x: 585.5 }
+        - { column: energykJ_Per Portion, x: 621.5 }
+        - { column: energykCal_Per Portion, x: 661.5 }
+        - { column: fat_Per Portion, x: 676.5 }
+        - { column: saturates_Per Portion, x: 691.5 }
+        - { column: carbohydrates_Per Portion, x: 711.5 }
+        - { column: sugars_Per Portion, x: 730.5 }
+        - { column: fibre_Per Portion, x: 744.5 }
+        - { column: protein_Per Portion, x: 758.5 }
+        - { column: salt_Per Portion, x: 773 }
+26_PapaJohns:
+  chain: Papa Johns
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
+  sources:
+    # The text layer is empty (image pages), so the pages are read by the model (parser vision_products).
+    - pdf: nutritional-information.pdf
+      parser: vision_products
+      region: UK
+      category: food
+      approved: true
+      golden: nutritional-information__2026-09 # the March and June 2026 PDFs have the same name
+      # Pages with a table (February 2026 issue): pizzas 6-33, stuffed crust 34-38, sides and desserts 39-61, create-your-own 62-63,
+      # bases and sauces 66, choux nuts 70. The other pages (cover, contents, welfare, allergen lists for the
+      # create-your-own ingredients, drinks, Ben & Jerry's) carry no nutrition table; their allergens are not read yet.
+      pages: ['7-64', '68-69', '76-78'] # August 2026 issue (AUG26-1): pizzas 7-42, sides 43-59, desserts 60-64, cooked ingredients (create-your-own) 68-69, new pizzas 76-78; 65-67 and 73-75 print "see individual pack" (no table), 70-72 and 79-81 are allergen lists
+      dpi: 200 # September 2026: the 150 dpi first read misread cells on pages 9, 10 and 76; the 200 dpi read matches the page text
+      skip_allergens: true # the March 2026 batch has no allergen columns
+      share_per_100g: true # one VALUES PER 100G table serves every portion row of a product (the model fills it on one row only); copied cells are flagged
+      # Each sheet lists the ingredient allergens per dough or base and what "may contain"; "None" is printed when empty,
+      # so an allergen that is not listed is absent from the ingredients.
+      markers: { '': 'No' }
+      # Printed on page 4, not repeated on each sheet: the wheat free base is not suitable for people with Coeliac
+      # disease (cross contact), pizzas made with it "may still have traces of wheat", pizzas without cheese may still have
+      # traces of milk, and the vegan items are prepared where cheese (milk), egg and meat are handled. The rules below
+      # turn the two row-specific warnings into "May contain" cells; the menu-wide ones stay here.
+      rules:
+        - { variant_has: Wheat Free, may_contain: [gluten, wheat] }
+        - { section_has: VEGAN, may_contain: [milk, egg] }
+      disclaimer: >-
+        Pizzas without cheese may still have traces of milk; pizzas made with the Wheat Free base may still have traces of wheat; we make no claim that our products will be free from all allergens. Allergens: "None" refers to the ingredients themselves, not the finished product from store. All of our food is
+        freshly prepared in store. We cannot guarantee that our products will be free from allergens / animal products
+        due to the risk of cross contact when assembling the products. Product customisation may affect calorie content.
+      # Note: the model uses the block headed 'ORIGINAL OR AUTHENTIC THIN CRUST BASE' for the stuffed crust rows too; the sheets
+      # print no other block for them (page 38 names a 'Vegan Stuffed Crust' exception to it). Do not edit the instructions
+      # text without meaning to re-read every page: it is part of the cache key.
+      instructions: >-
+        It is a Papa John's UK product sheet (one or two products per page). section = the coloured band at the bottom of
+        the page (PIZZAS, SIDES, ...). name = the product title as printed (for a page with two products, each row gets
+        the title of its own product). variant = the first-column label of the row in a 'SIZE & CRUST' table
+        (for example 'Original Base - Medium'), or empty when the table has a single row. values = the cells of that row
+        from every table on the sheet (the 'VALUES PER 100G' table and the 'VALUES PER SLICE' or 'VALUES PER PORTION'
+        table). contains and may = the text under 'INGREDIENT ALLERGENS WITH ...' and 'INGREDIENT MAY CONTAIN' for the
+        dough or base that this row's variant uses (a sheet can have a separate block for the wheat free base); when
+        there is one block, use it for every row; leave both empty on a page without such text.
+      # Printed header -> column. "per Total" is the whole product; "per Portion" is per slice/piece. The unit word
+      # of a count header (Slice, Piece, Box of) is dropped except where `@Type` records it.
+      header_columns:
+        'VALUES PER 100G / CARBOHYDRATE g': carbohydrates_Per 100g/ml
+        'VALUES PER 100G / CARBOHYDRATES g': carbohydrates_Per 100g/ml
+        'VALUES PER 100G / ENERGY kJ': energykJ_Per 100g/ml
+        'VALUES PER 100G / ENERGY kcal': energykCal_Per 100g/ml
+        'VALUES PER 100G / FAT g': fat_Per 100g/ml
+        'VALUES PER 100G / FIBRE g': fibre_Per 100g/ml
+        'VALUES PER 100G / PROTEIN g': protein_Per 100g/ml
+        'VALUES PER 100G / SALT g': salt_Per 100g/ml
+        'VALUES PER 100G / SATURATES g': saturates_Per 100g/ml
+        'VALUES PER 100G / SODIUM g': sodium_Per 100g/ml
+        'VALUES PER 100G / SUGARS g': sugars_Per 100g/ml
+        'COOKED INGREDIENT VALUES PER 100G / CARBOHYDRATE g': carbohydrates_Per 100g/ml
+        'COOKED INGREDIENT VALUES PER 100G / ENERGY kJ': energykJ_Per 100g/ml
+        'COOKED INGREDIENT VALUES PER 100G / ENERGY kcal': energykCal_Per 100g/ml
+        'COOKED INGREDIENT VALUES PER 100G / FAT g': fat_Per 100g/ml
+        'COOKED INGREDIENT VALUES PER 100G / FIBRE g': fibre_Per 100g/ml
+        'COOKED INGREDIENT VALUES PER 100G / PROTEIN g': protein_Per 100g/ml
+        'COOKED INGREDIENT VALUES PER 100G / SALT g': salt_Per 100g/ml
+        'COOKED INGREDIENT VALUES PER 100G / SATURATES g': saturates_Per 100g/ml
+        'COOKED INGREDIENT VALUES PER 100G / SODIUM g': sodium_Per 100g/ml
+        'COOKED INGREDIENT VALUES PER 100G / SUGARS g': sugars_Per 100g/ml
+        'VALUES PER SLICE / ENERGY kcal per Portion': energykCal_Per Portion
+        'VALUES PER SLICE / ENERGY kcal per Total': energykCal_Per Product As Sold
+        'VALUES PER SLICE / ENERGY kJ per Portion': energykCal_Per Portion # printed "kcal per Portion": the model misread the unit of the header on page 27 (checked on the image); this guide prints no kJ per portion
+        'VALUES PER SLICE / ENERGY kJ per Total': energykCal_Per Product As Sold # printed "kcal per Total", same misread
+        'VALUES PER SLICE / TOTAL PRODUCT WEIGHT g': Total_Weight
+        'VALUES PER SLICE / PORTION SIZE g': Serving_Size|g
+        'VALUES PER SLICE / PORTION SIZE Slice': Portion_Size@Slice
+        'VALUES PER SLICE / PORTION SIZE Piece': Portion_Size@Piece
+        'VALUES PER SLICE / RECOMMENDED PORTION SIZE Serving': Recommended_Portions
+        'VALUES PER SLICE / TOTAL SLICES SLICE': Total_Slices
+        'VALUES PER SLICE / TOTAL PORTION SIZE Slice': Total_Slices
+        'VALUES PER SLICE / TOTAL PORTION SIZE Box of': Total_Pieces
+        'VALUES PER SLICE / TOTAL PORTIONS Box of': Total_Portions
+        'VALUES PER SLICE / TOTAL IN BOX Pieces': Total_Pieces
+        'VALUES PER SLICE / TOTAL IN BOX Box of': Total_Pieces
+        'VALUES PER SLICE / NO. OF PORTIONS Per box': Number_of_Portions
+        'VALUES PER SLICE / NO. OF PORTIONS Piece': Number_of_Portions
+        'VALUES PER PORTION / ENERGY kcal per Portion': energykCal_Per Portion
+        'VALUES PER PORTION / ENERGY kcal per Total': energykCal_Per Product As Sold
+        'VALUES PER PORTION / ENERGY kJ per Portion': energykCal_Per Portion # printed "kcal per Portion": the model misread the unit of the header on page 27 (checked on the image); this guide prints no kJ per portion
+        'VALUES PER PORTION / ENERGY kJ per Total': energykCal_Per Product As Sold # printed "kcal per Total", same misread
+        'VALUES PER PORTION / TOTAL PRODUCT WEIGHT g': Total_Weight
+        'VALUES PER PORTION / PORTION SIZE g': Serving_Size|g
+        'VALUES PER PORTION / PORTION SIZE Slice': Portion_Size@Slice
+        'VALUES PER PORTION / PORTION SIZE Piece': Portion_Size@Piece
+        'VALUES PER PORTION / RECOMMENDED PORTION SIZE Serving': Recommended_Portions
+        'VALUES PER PORTION / TOTAL SLICES SLICE': Total_Slices
+        'VALUES PER PORTION / TOTAL PORTION SIZE Slice': Total_Slices
+        'VALUES PER PORTION / TOTAL PORTION SIZE Box of': Total_Pieces
+        'VALUES PER PORTION / TOTAL PORTIONS Box of': Total_Portions
+        'VALUES PER PORTION / TOTAL PORTIONS Per Box': Total_Portions
+        'VALUES PER PORTION / TOTAL IN BOX Pieces': Total_Pieces
+        'VALUES PER PORTION / TOTAL IN BOX Per Box': Total_Pieces
+        'VALUES PER PORTION / TOTAL IN BOX Slice': Total_Pieces
+        'VALUES PER PORTION / TOTAL IN BOX Box of': Total_Pieces
+        'VALUES PER PORTION / NO. OF PORTIONS Per box': Number_of_Portions
+        'VALUES PER PORTION / NO. OF PORTIONS Piece': Number_of_Portions
+        'VALUES PER PORTION / NO. OF SERVINGS Serves': Serves
+        'VALUES PER PORTION / NO. OF SERVINGS Serving': Serves
+        'VALUES PER PORTION / NO. OF SERVINGS Servings': Serves
+        'VALUES PER PORTION (1 Cookie) / ENERGY kcal per Portion': energykCal_Per Portion
+        'VALUES PER PORTION (1 Cookie) / ENERGY kcal per Total': energykCal_Per Product As Sold
+        'VALUES PER PORTION (1 Cookie) / TOTAL PRODUCT WEIGHT g': Total_Weight
+        'VALUES PER PORTION (1 Cookie) / PORTION SIZE g': Serving_Size|g
+        'VALUES PER PORTION (1 Cookie) / PORTION SIZE Slice': Portion_Size@Slice
+        'VALUES PER PORTION (1 Cookie) / PORTION SIZE Piece': Portion_Size@Piece
+        'VALUES PER PORTION (1 Cookie) / RECOMMENDED PORTION SIZE Serving': Recommended_Portions
+        'VALUES PER PORTION (1 Cookie) / TOTAL SLICES SLICE': Total_Slices
+        'VALUES PER PORTION (1 Cookie) / TOTAL PORTION SIZE Slice': Total_Slices
+        'VALUES PER PORTION (1 Cookie) / TOTAL PORTION SIZE Box of': Total_Pieces
+        'VALUES PER PORTION (1 Cookie) / TOTAL PORTIONS Box of': Total_Portions
+        'VALUES PER PORTION (1 Cookie) / TOTAL IN BOX Pieces': Total_Pieces
+        'VALUES PER PORTION (1 Cookie) / TOTAL IN BOX Box of': Total_Pieces
+        'VALUES PER PORTION (1 Cookie) / NO. OF PORTIONS Per box': Number_of_Portions
+        'VALUES PER PORTION (1 Cookie) / NO. OF PORTIONS Piece': Number_of_Portions
+      pearlscan:
+        {
+          kcal: energykCal_Per Product As Sold,
+          total_weight: Total_Weight,
+          portion_size_g: Serving_Size,
+          portion_size: [Portion_Size],
+          total_slices: Total_Slices,
+          num_of_portions: [Number_of_Portions, Portion_Size],
+          total_pieces: [Total_Pieces, Total_Portions],
+          recommended_portions: [Recommended_Portions, Portion_Size],
+          total_portions: [Total_Portions, Total_Pieces],
+        }
+
+35_KrispyKreme:
+  chain: KrispyKreme
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
+  sources:
+    # No text layer: the page images are read by the model (parser vision_pairs). Each product has an allergen page (YES/NO
+    # diet cells, ticks) and a nutrition page; rows are paired in page order. Ingredient-declaration pages are not extracted.
+    # Key (page 2): a tick means the product contains the allergen; it does not say what a blank means (blank = not stated).
+    - pdf: UK_Drinks_Allergen_Nutrition_Book_310726.pdf
+      parser: vision_pairs
+      region: UK
+      category: food
+      approved: true
+      dpi: 200
+      name_fixes: { Original Glazed Birthday: Original Glazed } # Pearl Scan added "Birthday" to the name of the page 27/28 item
+      markers: { '✓': 'Yes', '': '' }
+      instructions: >-
+        It is a doughnut shop's allergen and nutrition guide; each page is one table of products grouped under grey headings.
+        The product name is the bold text beside the picture; some have an italic line under it in brackets.
+      # March 2026 batch: no allergen columns, so only the nutrition pages are read (a join with `matrix: []`). The guide's
+      # nutrition pages of the 31 July 2026 book (the pages that print "Nutrition Per 100"): 4, 6, 8, 10, 20, 22, 29, 32, 35, 37, 39, 40, 41, 44, 45, 50, 51, 52, 53, 54 (29 and 32 are per 100 ml).
+      joins:
+        - { matrix: [], nutrition: [4] }
+        - { matrix: [], nutrition: [6] }
+        - { matrix: [], nutrition: [8] }
+        - { matrix: [], nutrition: [10] }
+        - { matrix: [], nutrition: [20] }
+        - { matrix: [], nutrition: [22] }
+        - { matrix: [], nutrition: [29] }
+        - { matrix: [], nutrition: [32] }
+        - { matrix: [], nutrition: [35] }
+        - { matrix: [], nutrition: [37] }
+        - { matrix: [], nutrition: [39] }
+        - { matrix: [], nutrition: [40] }
+        - { matrix: [], nutrition: [41] }
+        - { matrix: [], nutrition: [44] }
+        - { matrix: [], nutrition: [45] }
+        - { matrix: [], nutrition: [50] }
+        - { matrix: [], nutrition: [51] }
+        - { matrix: [], nutrition: [52] }
+        - { matrix: [], nutrition: [53] }
+        - { matrix: [], nutrition: [54] }
+      tick_labels:
+        Wheat: wheat
+        Rye: rye
+        Barley: barley
+        Oat: oats
+        Soya: soya
+        Egg / Egg Products: egg
+        Milk / Milk Products: milk
+        Sulphites above 10ppm: sulphite
+        Sesame: sesame
+        Crustaceans: crustacean
+        Fish: fish
+        Lupin: lupin
+        Molluscs: mollusc
+        Mustard: mustard
+        Celery: celery
+        Peanut: peanut
+        Tree Nuts / Nut Derivatives: treeNuts
+      fields:
+        p100_kj: energykJ_Per 100g/ml
+        p100_kcal: energykCal_Per 100g/ml
+        p100_fat: fat_Per 100g/ml
+        p100_saturates: saturates_Per 100g/ml
+        p100_carbohydrate: carbohydrates_Per 100g/ml
+        p100_sugars: sugars_Per 100g/ml
+        p100_fibre: fibre_Per 100g/ml
+        p100_protein: protein_Per 100g/ml
+        p100_salt: salt_Per 100g/ml
+        pp_kj: energykJ_Per Portion
+        pp_kcal: energykCal_Per Portion
+        pp_fat: fat_Per Portion
+        pp_saturates: saturates_Per Portion
+        pp_carbohydrate: carbohydrates_Per Portion
+        pp_sugars: sugars_Per Portion
+        pp_fibre: fibre_Per Portion
+        pp_protein: protein_Per Portion
+        pp_salt: salt_Per Portion
+
+8_Pizzahut:
+  chain: Pizzahut
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
+  sources:
+    # March 2026 batch: the December 2025 booklet prints plain nutrition tables on pages 20-31 (the old portion_tables parser and the allergen mark_table
+    # source do not fit this layout), so the pages are read by the model. Per portion: weight, kcal, protein, carbohydrate, sugar, fat, saturates, salt;
+    # the pizza tables are per slice and add the number of slices.
+    - pdf: DINE-IN_AIN_Booklet_C3_2026_FINAL_V1.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: true
+      dpi: 200
+      pages: ['10-13'] # the nutrition pages of the July 2026 booklet; 1-9 are allergens and ingredients
+      instructions: >-
+        It is a nutrition page of a restaurant menu with one or more tables under a grey header row. section = the heading line above a group of rows ("Sides", "Dips & Bits
+        Station", "Pizza", "Desserts"). In a table of pizzas (the header says "Weight of Pizza (g)" and "Number of Slices per Pizza") the pizza name is a line of its own above its rows
+        (for example "Pepperoni", "NEW - Korean BBQ VEG"): name = that line exactly as printed, size = the row label as printed ("Individual Pan (9\")", "Sharing Handcrafted (14\") WITHOUT
+        Garlic Sprinkle": join a label that wraps onto a second line), portion = the weight cell followed by "g" (for example "400g"), slices = the Number of Slices cell. In every other table
+        each row is one dish: name = the dish exactly as printed (join a name that wraps), size = empty, portion = the weight cell followed by "g", slices = empty. All figures are per
+        portion (per slice in the pizza tables). kcal, protein, carbohydrate, sugar, fat, saturates and salt are the cells of that row exactly as printed (keep "<0.1" and similar), as strings.
+        Return every row of every table on the page, also the rows of small tables (dip pots, ice cream) and rows with a zero.
+      fields:
+        slices: Number_of_Slices
+        kcal: energykCal_Per Portion
+        protein: protein_Per Portion
+        carbohydrate: carbohydrates_Per Portion
+        sugar: sugars_Per Portion
+        fat: fat_Per Portion
+        saturates: saturates_Per Portion
+        salt: salt_Per Portion
+
+47_Coffee1:
+  chain: Coffee1
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
+  sources:
+    # Food guide (text layer): one block per product. Allergens are the bold capital words of the ingredient declaration and the capital
+    # words after "May contain" (the guide: allergens are in bold capitals in the declaration, those that may be present at the end), so an
+    # allergen not named is "No". Diet tags (V), (Vg), (GF) are kept in Diet as printed.
+    - pdf: C1-Core-Food-July-2026-Issue-Date-2307.pdf
+      parser: product_blocks
+      region: UK
+      category: food
+      approved: true
+      blank_cells: true # Lotus Biscuits print "Fibre" with both cells empty (July 2026)
+      skip_allergens: true # March 2026 batch: no allergen columns (docs/goal-batch-2026-03.md)
+      heading_notes: true # "Porridge is made with Whole Milk as standard." under a heading is the note of its rows
+      rule_width: 670 # the May 2026 guide is 888 pt wide (1.49 x the January 2026 guide): row rules are 731 pt, stripes behind some declarations 604 pt
+      pages: ['10-25'] # pages 1-9 of the May 2026 guide are an allergen summary and how-to text
+      name_size: 8.7 # names and tags are 9 pt, the ingredient declaration 8.1 pt
+      title_size: 10.4 # section titles are 10.9 pt
+      nutrition_x0: 640 # the labels start at 643-668 ("Portion weight (g)" at 643)
+      header_word: PRODUCT
+      markers: { '': 'No' }
+      furniture:
+        [
+          NUTRITIONAL,
+          GUIDE,
+          MAY,
+          '2025',
+          '*',
+          '=',
+          containing,
+          allergen,
+          P,
+          cross,
+          contamination,
+          risk,
+          at,
+          mfg,
+          site,
+          'Allergens,', # the 2026 page title: "Allergens, Ingredients and Nutrition Guide"
+          Ingredients,
+          and,
+          Nutrition,
+          Guide,
+        ]
+      diet_tags: [V, Vg, GF]
+      may_phrases: [May contain, Made in a factory that handles]
+      allergen_words: { METBISULPHITE: Sulphites, BUTTERMILK: Milk } # METBISULPHITE is printed so
+      bases: [Per 100g/ml, Per Portion]
+      nutrients:
+        {
+          KJ: energykJ,
+          Kcal: energykCal,
+          Fat: fat,
+          Sat: saturates,
+          Carbs: carbohydrates,
+          Sugar: sugars,
+          Fibre: fibre,
+          Protein: protein,
+          Salt: salt,
+        }
+    # Beverage guide (text layer; the column titles over the figures are rotated, so the nine figures of a group are in the printed order KJ, Kcal,
+    # Fat, Sat, Carb, Sugar, Fibre, Protein, Salt). Product name and allergens are printed once beside the size rows. The guide says it
+    # lists all allergens of its drinks, so an allergen not listed is "No".
+7_Starbucks:
+  chain: Starbucks
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
+  sources:
+    # Food guide (text layer): name, Y/N for vegetarian and vegan, ingredient declaration, nine figures, and a summary column of allergens. The guide
+    # says allergens are summarised in the last column, so an allergen not named there is "No". Divider pages hold no table.
+    - pdf: SUM2_2026_UK_AllergenBook_CORE_FOOD_v04.pdf
+      parser: guide_rows
+      skip_allergens: true # the March 2026 batch has no allergen columns (docs/goal-batch-2026-03.md)
+      region: UK
+      category: food
+      approved: true
+      pages: [4, 5, 7, 8, 9, 10, 11, 13, 14, 16, 17, 19, 20]
+      name_x1: 135
+      ingredients_x0: 130
+      figures_x0: 525
+      allergens_x0: 728
+      markers: { '': 'No' }
+      default_base: Per Portion # the bars of pages 17 and 19 carry no "per portion" label; the figures are read as per portion (Pearl Scan does too)
+      no_allergen_marks: ['-']
+      allergen_words: { BUTTERMILK: Milk }
+      diet_columns: [Suitable_for_Vegetarian, Suitable_for_Vegan]
+      bar_bases: { per portion: Per Portion }
+      nutrients:
+        [
+          energykJ,
+          energykCal,
+          fat,
+          saturates,
+          carbohydrates,
+          sugars,
+          fibre,
+          protein,
+          salt,
+        ]
+    # Castillo book (September 2026): the Ready-to-Eat range of selected Starbucks stores, same layout as the food guide.
+    - pdf: UK_SUM_AllergenBook_CASTILLO_v03.pdf
+      parser: guide_rows
+      skip_allergens: true # the March 2026 batch has no allergen columns (docs/goal-batch-2026-03.md)
+      region: UK
+      category: food
+      approved: true
+      pages: [6, 7, 8, 9, 10, 12, 13, 15, 17, 18, 20, 21] # new Ready-to-Eat range sold in selected stores (22 pages, 15/05/26): dividers 1-5, 11, 14, 16, 19 and 22 hold no table
+      name_x1: 102
+      ingredients_x0: 120
+      figures_x0: 560
+      allergens_x0: 740
+      markers: { '': 'No' }
+      default_base: Per Portion # the bars of pages 17 and 19 carry no "per portion" label; the figures are read as per portion (Pearl Scan does too)
+      no_allergen_marks: ['-']
+      allergen_words: { BUTTERMILK: Milk }
+      diet_columns: [Suitable_for_Vegetarian, Suitable_for_Vegan]
+      bar_bases: { per portion: Per Portion }
+      nutrients:
+        [
+          energykJ,
+          energykCal,
+          fat,
+          saturates,
+          carbohydrates,
+          sugars,
+          fibre,
+          protein,
+          salt,
+        ]
+    # Beverage guide (text layer): the name and the ingredient declaration are printed once, then one figure line per size (Tall, Grande, Venti), ten
+    # figures (the last is caffeine) and a summary column of allergens. Pages 63 and 64 (Modifiers) are a different table and are not read here.
+    - pdf: SUM2_26_UK_AllergenBook_CORE_BEVERAGE_v05.pdf
+      parser: guide_rows
+      skip_allergens: true # the March 2026 batch has no allergen columns (docs/goal-batch-2026-03.md)
+      region: UK
+      category: drinks
+      approved: true
+      pages: [5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 20, 21, 22, 23, 24, 26, 27, 28, 30, 31, 32, 34, 36, 37, 38, 39, 40, 41, 43, 44, 45, 46, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 63, 64, 65, 66, 67, 69, 70, 71, 72, 73, 74] # 3 August 2026 book (75 pages): dividers 1-4, 12, 19, 25, 29, 33, 35, 42, 47, 62, 68 and the last page 75 hold no table
+      menus: { 61: Frappuccino® Blended Beverage, 66: 'Syrups, Drizzles & Cream Cold Foams', 67: 'Syrups, Drizzles & Cream Cold Foams' } # pages printed without a running head (the Coconut Drink allergen update banner)
+      name_x1: 92
+      ingredients_x0: 94
+      figures_x0: 495
+      size_x0: 470
+      name_fixes: {
+          Hazelnut Flavour Sugar Free Syrup: Sugar Free Hazelnut Flavour Syrup,
+        } # Pearl Scan reordered the words of this name
+      allergens_x0: { 10: 728, 9: 705 } # the summary column starts further left on the nine-figure tables (syrup pumps, page 60)
+      markers: { '': 'No' }
+      default_base: Per Portion
+      no_allergen_marks: ['-']
+      allergen_words: { BUTTERMILK: Milk }
+      bar_bases: { per portion: Per Portion }
+      nutrients: # ten figure columns (the last is caffeine); the syrup pump table on page 60 has nine
+        10: [energykJ, energykCal, fat, saturates, carbohydrates, sugars, fibre, protein, salt, caffeine]
+        9: [energykJ, energykCal, fat, saturates, carbohydrates, sugars, fibre, protein, salt]
+    # Modifiers (pages 63 and 64): calories and a tick (a drawn shape) under each allergen. The legend says a tick means the allergen is present; the guide
+    # summarises the allergens of its beverages, so an unticked allergen is "No". The ticks of Wheat to Kamut are not read as gluten (none is ticked here).
+
+45_Brewhouse:
+  chain: Brewhouse
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
+  sources:
+    # September 2026: the matrix is one A4 page of 125 rows in tiny print (the March to June issue had three landscape pages and only the energy in kJ), with nine nutrition columns
+    # at the far right (Energy kJ and kcal, Fat, Saturates, Carbohydrates, Sugar, Fibre, Protein, Salt; their titles are rotated, so the order is from the rotated words). The text layer is
+    # intact, so the page is read as text (numeric_table), not by the model. The allergen marks (Y, M) and the dietary marks (V, VE) are not read and are dropped as words; the Menu
+    # category column (left of x 110) is the Category, the Recipe column the name. kJ prints a thousands comma ("1,846"): the export normalises it and flags it.
+    - pdf: 6a72028c8e8f2b17788ba3c6_brewhouse_kitchen_core_menu_allergen_matrix_2026_08_04.pdf
+      parser: numeric_table
+      region: UK
+      category: food
+      approved: true
+      section_x: 110
+      skip_words: ['Y', 'M', 'V', 'VE']
+      invalid_values: ['re:\d+,\d+']
+      column_gap: 6
+      columns:
+        - energykJ_Per Portion
+        - energykCal_Per Portion
+        - fat_Per Portion
+        - saturates_Per Portion
+        - carbohydrates_Per Portion
+        - sugars_Per Portion
+        - fibre_Per Portion
+        - protein_Per Portion
+        - salt_Per Portion
+
+49_CookhousePub:
+  chain: CookhousePub
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
+  sources:
+    # Pub menus read by the model (the text layer of the main menu is partly garbled, but it prints the figures). Only kcal is printed. A dish has a bold name, a description and
+    # "(429kcal)". Add-ons ("Add peppercorn sauce 1.79 (+39kcal)") are rows named by themselves, never with the name of the dish they go with; the figure is the digits only (the
+    # sign and thousands comma are not part of the number). The figures of the text layer are checked against the rows (`text_check`).
+    - pdf: cookhouse_and_pub_main_menu_priceless.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: true
+      golden: cookhouse_and_pub_main_menu_priceless__2026-09 # the March and June 2026 PDFs have the same name
+      dpi: 250 # at 200 the model missed one figure of page 2 (790)
+      pages: [2, 3, 4, 5, 6] # September 2026: the menu has six pages
+      text_check: &ck_check {
+          field: kcal,
+          pattern: '(\d[\d,]*)\s?kcal(?!\s*per (?:serve|portion))',
+          strip: ',',
+          ignore: [1800, 2000],
+        } # the footer: adults need around 1800 or 2000 kcal
+      drop_rows: ['Swap chips & onion rings for a fresh mixed salad'] # a choice that saves 398 kcal from the steak it goes with (research team, 2026-10-12), not a food
+      instructions: &ck_instructions >-
+        It is a pub menu page with section headings (for example "Scrummy STARTERS" or "Starters & SHARERS"; section = the heading as printed, with its mixed capitals;
+        a heading can have a sub-heading such as "ADD A DESSERT": then section = "<heading> - <sub-heading>"). A dish is a bold name, a description and the calories in
+        brackets, for example "(429kcal)", with a price or not. name = the bold name as printed, without the price, without footnote symbols (§ * ' ¥ and similar) and
+        without badges (House fave, EW). kcal = the digits of the figure only: no thousands comma, no plus or minus sign ("(1,706kcal serves 2, 853kcal per serve)" gives
+        1706 for the dish: the per-serve figure is not a row; "(+39kcal)" gives 39; "(-398kcal)" gives 398). EVERY figure in brackets with "kcal" on the page is one row, also
+        the figures of add-ons and options: a line such as "Add peppercorn sauce 1.79 (+39kcal)" or "Swap chips & onion rings for a fresh mixed salad (-398kcal)" or
+        "Upgrade your 4oz steak to an 8oz steak for 3.99 (+160kcal)" is a row named by the text of that line without its price and kcal (never with the name of the dish it is
+        printed under), notes = "Add-on to <the dish it goes with>" (or "Swap on <dish>"; add "printed as -398kcal" when the figure had a sign). A dish with several figures (one
+        per size, flavour or choice) gives one row per figure named "<dish> - <the choice as printed>". A line that changes the dish above it ("Vegan option available, just ask (150kcal)",
+        "Make it veggie, swap to ... (279kcal)") is a variant: name = "<that dish> - <the line as printed>" (an add-on, upgrade or swap that adds to the meal is not a variant and keeps
+        its own name). One sentence with several figures ("Swap your Skin-on Chips (158kcal) for Mash (110kcal) or Mini Jacket Potatoes (155kcal)") gives a row named by the first item
+        ("Skin-on Chips", 158) and a row for each next figure named by the whole phrase ("Swap your Skin-on Chips for Mash", 110). A name with alternatives ("Fruit Shoot Apple &
+        Blackcurrant or Orange") is one name, whole. Do not return prices, text without a kcal figure, the drinks list
+        without kcal, allergen keys or badges. Before you answer, count the brackets with "kcal" on the page and check that you return exactly that many rows.
+      fields: &ck_fields { kcal: energykCal_Per Portion, notes: notes }
+    - pdf: cookhouse_and_pub_kids_menu_default.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: true
+      golden: cookhouse_and_pub_kids_menu_default__2026-09 # the May 2025, March and June 2026 PDFs have the same name
+      dpi: 250
+      pages: [1, 2]
+      text_check: { <<: *ck_check, page_ignore: { '2': [77] } } # page 2 prints "(77 / 74kcal)" for two juices: the 77 has no "kcal" after it
+      instructions: *ck_instructions
+      fields: *ck_fields
+    - pdf: cookhouse_and_pub_breakfast_menu.pdf
+      parser: vision_table
+      region: UK
+      category: breakfast # new in September 2026: a two-page breakfast menu, page 1 is the cover and page 2 holds the dishes with their kcal
+      approved: true
+      dpi: 250
+      pages: [2]
+      text_check: *ck_check
+      instructions: *ck_instructions
+      fields: *ck_fields
+
+73_TopGolf:
+  chain: TopGolf
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
+  sources:
+    # Limited-time menu (12 pages; pages 11 and 12 print no figures) read by the model. A dish is a name in capitals, a price, "(839 kcal.)" and a description. Only kcal is
+    # printed. The figures of the text layer are checked against the rows (`text_check`).
+    - pdf: legacy_menu.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: true
+      dpi: 200
+      pages: [1, 2, 3, 4, 5, 6, 7, 9, 10] # September 2026 `legacy_menu.pdf` (12 pages): page 8 is read by the next source (sub-headings); 11 and 12 (wine, spirits) print no kcal figures
+      text_check: &tg_check {
+          field: kcal,
+          pattern: '(\d[\d,]*)\s?k?cal\b',
+          strip: ',',
+          page_ignore: { '1': [1498], '7': [142] }, # page 7's text layer holds a Fruit Tea that is not on the page (hidden text);  # page 1 prints "(1498 / 2699 kcal.)": the first figure has no unit after it
+        } # page 7's text layer holds a Fruit Tea that is not on the page (hidden text) # "(952 cal. / 1044 kcal.)": both figures are printed
+      instructions: &tg_instructions >-
+        It is a menu page with sections (a heading such as "BURGERS" or "SHAKES"; section = the heading as printed; "LIMITED TIME ONLY" is not a section). A dish is a name in
+        capitals (it may wrap over two lines: join them), a price, the calories in brackets ("(839 kcal.)") and a description. name = the name as printed (keep its capitals),
+        without the price and the description. kcal = the digits of the figure in brackets (no thousands comma). EVERY figure in brackets followed by "cal" or "kcal" on the page is exactly one
+        row ("(952 cal. / 1044 kcal.)" is two figures: one per variant, bap or wrap): a dish with several figures (one per size or flavour) gives one row per figure named "<dish> - <the size or flavour as printed>"; an option line such as "ADD
+        BACON (104 kcal.)" is a row named by its text, notes = "Add-on to <the dish>". A figure printed inside a dish's description ("Served with house fries (197 kcal.) or house salad (82 kcal.)") is a row named "<the dish> - <the item as printed>" (for
+        example "HOT HONEY CHICKEN - house fries"), notes = "In the description of <the dish>"; a figure in a section note that applies to a whole section ("Our Kids meals are served with
+        either house fries (270 kcal.) or house salad (82 kcal.)") is a row named by the item ("house fries"), notes = "Served with Kids meals". Do not return prices, descriptions,
+        allergen keys or text without a kcal figure. Before
+        you answer, count the brackets with "kcal" on the page and check that you return exactly that many rows.
+      fields: { kcal: energykCal_Per Portion, notes: notes }
+    - pdf: legacy_menu.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: true
+      dpi: 200
+      pages: [8]
+      text_check: *tg_check
+      # page 8 has sub-headings (VEGAN SHAKES under SHAKES): the same instructions plus the sub-heading rule
+      instructions: >-
+        It is a menu page with sections (a heading such as "BURGERS" or "SHAKES"; section = the heading as printed; "LIMITED TIME ONLY" is not a section). A heading can have a
+        sub-heading (for example "VEGAN SHAKES" under "SHAKES"): then section = "<heading> - <sub-heading>" (for example "SHAKES - VEGAN SHAKES"). A dish is a name in capitals (it may
+        wrap over two lines: join them), a price, the calories in brackets ("(839 kcal.)") and a description. name = the name as printed (keep its capitals), without the price and
+        the description. kcal = the digits of the figure in brackets (no thousands comma). EVERY figure in brackets followed by "cal" or "kcal" on the page is exactly one row: a dish
+        with several figures (one per size or flavour) gives one row per figure named "<dish> - <the size or flavour as printed>"; an option line such as "ADD BACON (104 kcal.)" is a row
+        named by its text, notes = "Add-on to <the dish>". Do not return prices, descriptions, allergen keys or text without a kcal figure. Before you answer, count the brackets with
+        "kcal" on the page and check that you return exactly that many rows.
+      fields: { kcal: energykCal_Per Portion, notes: notes }
+
+9_Subway: # id and key from Menu Tracker's food-chains/
+  chain: Subway
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
+  sources:
+    - pdf: UKI_IngredientsNutritionalInformationJune2026.pdf
+      parser: numeric_table
+      region: UK # "UK and ROI" on one table
+      category: food
+      approved: true
+      header: Energy
+      free_sections: true # headings such as "Subs", "Wraps" sit between rows
+      # Columns left to right: serving size (g), nine figures per serving, then the same ten per 100g (the second serving size is always 100).
+      columns:
+        - Serving_Size
+        - energykJ_Per Portion
+        - energykCal_Per Portion
+        - fat_Per Portion
+        - saturates_Per Portion
+        - carbohydrates_Per Portion
+        - sugars_Per Portion
+        - fibre_Per Portion
+        - protein_Per Portion
+        - salt_Per Portion
+        - '-'
+        - energykJ_Per 100g/ml
+        - energykCal_Per 100g/ml
+        - fat_Per 100g/ml
+        - saturates_Per 100g/ml
+        - carbohydrates_Per 100g/ml
+        - sugars_Per 100g/ml
+        - fibre_Per 100g/ml
+        - protein_Per 100g/ml
+        - salt_Per 100g/ml
+
+79_Tortilla:
+  chain: Tortilla
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
+  sources:
+    - pdf: tortilla-nutrition-guide-10-aug.pdf
+      parser: numeric_table
+      region: UK
+      category: food
+      approved: true
+      pages: ['4-17']
+      max_x: 392 # the Dietary, Contains and May Contain columns (allergens are not read) start at x 395
+      header: Kcal
+      wrapped_names: true
+      name_fixes: { 'Spiced Apple': 'Spiced Apple Margarita (Glass)' } # the name wraps onto a line under its figures
+      titles: ['Medium Burrito / Bowl', 'Large Burrito / Bowl', 'Medium Salad', 'Large Salad', 'Tres Tacos', 'Nachos Queso', 'Quesadilla', 'Protein Pots', 'Sides', 'Kids Burrito/Naked Burrito', 'Breakfast Roll', 'Breakfast Quesadilla', 'MeDiuM Burrito / Bowl', 'large Burrito / Bowl', 'MeDiuM salaD', 'large salaD', 'tres tacos', 'nacHos Queso', 'QuesaDilla', 'protein pots', 'siDes', 'KiDs Burrito/naKeD Burrito', 'BreaKfast roll', 'BreaKfast QuesaDilla', 'DrinKs', 'LARGE BALANCE BOWL', 'LARGE PROTEIN BOWL', 'Breakfast Quesadilla', 'Medium Burrito/Bowl', 'Large Burrito/Bowl', 'Balance Fuel Bowl', 'Plant Fuel Bowl', 'Cali Caesar Wrap', 'Desserts', 'Breakfast Burrito', 'Breakfast Bowl', 'Breakfast Roll/Bun', 'Hot Drinks', 'MeDiuM Burrito/Bowl', 'large Burrito/Bowl', 'plant Fuel Bowl', 'cali caesar wrap', 'BreaKFast Burrito', 'BreaKFast Bowl', 'BreaKFast roll/Bun']
+      furniture: [Energy, Menu Item, 'Fat Sat fat Carbs Sugars Fibre Protein Salt', '(g) (g) (g) (g) (g) (g) (g)', 'Menu Fat Sat fat Carbs Sugars Fibre Protein Salt', 'item (g) (g) (g) (g) (g) (g) (g)', 'Menu']
+      skip_lines: ['Hot DrinKs', 'Contains May', 'Menu Item Dietary', 'Allergens Contain', 'Kcal', 'Espresso Single / Double 2.0 V,VE', 'Americano 22.0 V,VE', 'English Breakfast Tea 15.0 V,VE', 'Peppermint Tea - V,VE', 'Cappuccino 116.0 V Milk', 'Iced Coffee 71.0 Milk', 'Latte 136.0 V Milk', 'Mocha 200.0 V Milk'] # the Hot Drinks table (kcal only, read by the next source)
+      columns:
+        - energykCal_Per Portion
+        - energykJ_Per Portion
+        - fat_Per Portion
+        - saturates_Per Portion
+        - carbohydrates_Per Portion
+        - sugars_Per Portion
+        - fibre_Per Portion
+        - protein_Per Portion
+        - salt_Per Portion
+    - pdf: tortilla-nutrition-guide-10-aug.pdf
+      parser: numeric_table
+      region: UK
+      category: food
+      approved: true
+      pages: ['18-21']
+      max_x: 392 # the Dietary, Contains and May Contain columns (allergens are not read) start at x 395
+      header: Kcal
+      wrapped_names: true
+      wrap_below: true # "(Canary Wharf only)" sits under the figures
+      wrap_lines: 2.5 # the breakfast names sit above the figures
+      nameless_rows: true
+      name_fixes: { 'Spiced Apple': 'Spiced Apple Margarita (Glass)' } # the name wraps onto a line under its figures
+      titles: ['Medium Burrito / Bowl', 'Large Burrito / Bowl', 'Medium Salad', 'Large Salad', 'Tres Tacos', 'Nachos Queso', 'Quesadilla', 'Protein Pots', 'Sides', 'Kids Burrito/Naked Burrito', 'Breakfast Roll', 'Breakfast Quesadilla', 'MeDiuM Burrito / Bowl', 'large Burrito / Bowl', 'MeDiuM salaD', 'large salaD', 'tres tacos', 'nacHos Queso', 'QuesaDilla', 'protein pots', 'siDes', 'KiDs Burrito/naKeD Burrito', 'BreaKfast roll', 'BreaKfast QuesaDilla', 'DrinKs', 'LARGE BALANCE BOWL', 'LARGE PROTEIN BOWL', 'Breakfast Quesadilla', 'Medium Burrito/Bowl', 'Large Burrito/Bowl', 'Balance Fuel Bowl', 'Plant Fuel Bowl', 'Cali Caesar Wrap', 'Desserts', 'Breakfast Burrito', 'Breakfast Bowl', 'Breakfast Roll/Bun', 'Hot Drinks', 'MeDiuM Burrito/Bowl', 'large Burrito/Bowl', 'plant Fuel Bowl', 'cali caesar wrap', 'BreaKFast Burrito', 'BreaKFast Bowl', 'BreaKFast roll/Bun']
+      furniture: [Energy, Menu Item, 'Fat Sat fat Carbs Sugars Fibre Protein Salt', '(g) (g) (g) (g) (g) (g) (g)', 'Menu Fat Sat fat Carbs Sugars Fibre Protein Salt', 'item (g) (g) (g) (g) (g) (g) (g)', 'Menu']
+      skip_lines: ['Hot DrinKs', 'Contains May', 'Menu Item Dietary', 'Allergens Contain', 'Kcal', 'Espresso Single / Double 2.0 V,VE', 'Americano 22.0 V,VE', 'English Breakfast Tea 15.0 V,VE', 'Peppermint Tea - V,VE', 'Cappuccino 116.0 V Milk', 'Iced Coffee 71.0 Milk', 'Latte 136.0 V Milk', 'Mocha 200.0 V Milk'] # the Hot Drinks table (kcal only, read by the next source)
+      columns:
+        - energykCal_Per Portion
+        - energykJ_Per Portion
+        - fat_Per Portion
+        - saturates_Per Portion
+        - carbohydrates_Per Portion
+        - sugars_Per Portion
+        - fibre_Per Portion
+        - protein_Per Portion
+        - salt_Per Portion
+    - pdf: tortilla-nutrition-guide-10-aug.pdf
+      parser: vision_table
+      region: UK
+      category: drinks
+      approved: true
+      dpi: 200
+      pages: [21]
+      instructions: >-
+        Page 21 has several tables. Return only the rows of the table headed "Hot Drinks": one row per drink (Espresso Single / Double, Americano, English Breakfast Tea,
+        Peppermint Tea, Cappuccino, Iced Coffee, Latte, Mocha). section = "Hot Drinks", name = the drink as printed, size = empty, portion = empty, kcal = the figure in the
+        Energy Kcal column exactly as printed ("-" when the cell shows a dash). Ignore the dietary and allergen columns and every other table on the page.
+      fields: { kcal: energykCal_Per Portion }
+
+85_RealGreek: # id and key from Menu Tracker's food-chains/
+  chain: The Real Greek
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
+  sources:
+    - pdf: TRG–Allergen–Menu-Spring–26.pdf
+      parser: numeric_table
+      region: UK
+      category: food
+      approved: false # no September 2026 PDF
+      max_x: 615 # the ALLERGENS column (letter codes) starts at x 622, right of the Salt column
+      wrapped_names: true
+      skip_lines: [ITEM] # the first column's header is not a section
+      columns:
+        - energykCal_Per Portion
+        - protein_Per Portion
+        - fat_Per Portion
+        - saturates_Per Portion
+        - carbohydrates_Per Portion
+        - sugars_Per Portion
+        - fibre_Per Portion
+        - salt_Per Portion
+    - pdf: TRG–Deliveroo-Allergen–Spring–Menu–26.pdf
+      parser: numeric_table
+      region: UK
+      category: food
+      approved: false # no September 2026 PDF
+      max_x: 615 # the ALLERGENS column (letter codes) starts at x 622, right of the Salt column
+      wrapped_names: true
+      skip_lines: [ITEM] # the first column's header is not a section
+      columns:
+        - energykCal_Per Portion
+        - protein_Per Portion
+        - fat_Per Portion
+        - saturates_Per Portion
+        - carbohydrates_Per Portion
+        - sugars_Per Portion
+        - fibre_Per Portion
+        - salt_Per Portion
+
+31_FlamingGrill:
+  chain: Flaming Grill
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
+  sources:
+    # Three nutrition guides (core, kids, no-gluten-containing main menu): a landscape table per page with the menu, the menu category, the dish, and for each of
+    # energy kJ, energy kcal, fat, saturated fat, carbohydrates, sugar, protein and salt a "Per Serving" figure and a "% Reference Intake". The model reads the dish names and figures.
+    - pdf: 521c6742f2ba49c6999a570467d1bbc2v=ae424d24.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: false # no June 2026 PDF
+      dpi: 200
+      pages: ['2-19']
+      instructions: &fg_instructions >-
+        It is a landscape nutrition table of a pub menu: one row per dish. Columns: Menu, Menu Cat., Dish Name, then for energy (kJ), energy (kcal), fat, saturated fat, carbohydrates,
+        sugar, protein and salt a "Per Serving" figure followed by a "% Reference Intake" figure. section = the Menu Cat. of the row (it may wrap over two lines: join them). name = the Dish Name
+        exactly as printed (a name can wrap over two or three lines: join them; a dish with options prints the option lines under it, each option is its own row named by the option text as printed,
+        and notes = "Option of <the dish it is printed under>"). Use only the "Per Serving" figures, exactly as printed, as strings; ignore every "% Reference Intake" figure and the percent signs.
+        Return every row of the page, also rows with blank figures.
+      fields: &fg_fields { kj: energykJ_Per Portion, kcal: energykCal_Per Portion, fat: fat_Per Portion, saturates: saturates_Per Portion, carbohydrate: carbohydrates_Per Portion, sugars: sugars_Per Portion, protein: protein_Per Portion, salt: salt_Per Portion, notes: notes }
+    - pdf: 04578ae0131a47f4bca421ba9a8094c6v=e6408b52.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: false # no June 2026 PDF
+      dpi: 200
+      pages: ['2-14']
+      unnamed: (no name printed) # the first row of page 2 is a row of figures with no menu, category or dish name
+      instructions: *fg_instructions
+      fields: *fg_fields
+    - pdf: 23b8547a88b64c909bb5d116246cedbfv=b03de5f4.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: false # no June 2026 PDF
+      dpi: 200
+      pages: ['2-6'] # pages 7-13 print the column headers and no rows
+      instructions: *fg_instructions
+      fields: *fg_fields
+
+25_Ask: # id and key from Menu Tracker's food-chains/
+  chain: Ask Italian
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
+  sources:
+    # Pages 39 and 44-57 of the allergen guide hold nutrition tables (per 100g and per portion; Valentine's specials on page 39). The kcal figures that sit in running text on pages 40-41
+    # (a kids menu) are read by the next source.
+    - pdf: b6039d513237130ab53a1ddc01afb713d1aa7dde.pdf
+      parser: numeric_table
+      region: UK
+      category: food
+      approved: false # no September 2026 PDF
+      pages: [35] # the Summer specials table
+      section_x: 150 # the Menu Section column is left of the Dish Description column
+      header: Energy
+      titles: ['SUMMER SPECIALS']
+      furniture: ['V2 23.04.26', '02/06/26 - 31/08/26', 'Menu Section Dish Description']
+      wrap_below: true # a long dish name wraps onto a line under its figures
+      column_gap: 12 # cells are centred in their columns: a one-digit cell sits up to 11 pt from the right edge of its column
+      columns:
+        - energykJ_Per 100g/ml
+        - energykCal_Per 100g/ml
+        - fat_Per 100g/ml
+        - saturates_Per 100g/ml
+        - carbohydrates_Per 100g/ml
+        - sugars_Per 100g/ml
+        - protein_Per 100g/ml
+        - salt_Per 100g/ml
+        - energykJ_Per Portion
+        - energykCal_Per Portion
+        - fat_Per Portion
+        - saturates_Per Portion
+        - carbohydrates_Per Portion
+        - sugars_Per Portion
+        - protein_Per Portion
+        - salt_Per Portion
+    - pdf: b6039d513237130ab53a1ddc01afb713d1aa7dde.pdf
+      parser: numeric_table
+      region: UK
+      category: food
+      approved: false # no September 2026 PDF
+      pages: ['40-50'] # the core menu tables
+      section_x: 150 # the Menu Section column is left of the Dish Description column
+      header: Energy
+      furniture: ['V2 23.04.26', 'Menu Section Dish Description']
+      wrap_below: true # a long dish name wraps onto a line under its figures
+      column_gap: 12 # cells are centred in their columns: a one-digit cell sits up to 11 pt from the right edge of its column
+      columns:
+        - energykJ_Per 100g/ml
+        - energykCal_Per 100g/ml
+        - fat_Per 100g/ml
+        - saturates_Per 100g/ml
+        - carbohydrates_Per 100g/ml
+        - sugars_Per 100g/ml
+        - protein_Per 100g/ml
+        - salt_Per 100g/ml
+        - energykJ_Per Portion
+        - energykCal_Per Portion
+        - fat_Per Portion
+        - saturates_Per Portion
+        - carbohydrates_Per Portion
+        - sugars_Per Portion
+        - protein_Per Portion
+        - salt_Per Portion
+    - pdf: b6039d513237130ab53a1ddc01afb713d1aa7dde.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: false # no September 2026 PDF
+      dpi: 200
+      pages: [36] # an image page: the text layer prints no figures, so no `text_check`; `reread` checks the model's read
+      instructions: >-
+        It is a children's and non-gluten menu page of a restaurant: dishes with a name in capitals, a diet word (Vegan, Vegetarian) sometimes, the calories in words ("34 kcal") and a description.
+        section = the heading printed above a group (for example "TO START", "MAINS", "DESSERTS"). name = the dish name as printed (without the diet word and the kcal figure). kcal = the digits before
+        "kcal" for that dish. A description can carry its own kcal figure for a variant ("Make this Vegan with MozzaRisella. 900 kcal"): that is its own row, name = the text of that sentence without the figure,
+        notes = "Variant of <the dish it is printed under>". Every "kcal" figure on the page is exactly one row. Ignore allergen marks and prices.
+      fields: { kcal: energykCal_Per Portion, notes: notes }
+
+    - pdf: b6039d513237130ab53a1ddc01afb713d1aa7dde.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: false # no September 2026 PDF
+      dpi: 200
+      pages: [37]
+      text_check: { field: kcal, pattern: '(\d[\d,]*)\s?kcal', strip: ',', ignore: [2000] }
+      instructions: >-
+        It is a children's and non-gluten menu page of a restaurant: dishes with a name in capitals, a diet word (Vegan, Vegetarian) sometimes, the calories in words ("34 kcal") and a description.
+        section = the heading printed above a group (for example "TO START", "MAINS", "DESSERTS"). name = the dish name as printed (without the diet word and the kcal figure). kcal = the digits before
+        "kcal" for that dish. A description can carry its own kcal figure for a variant ("Make this Vegan with MozzaRisella. 900 kcal"): that is its own row, name = the text of that sentence without the figure,
+        notes = "Variant of <the dish it is printed under>". Every "kcal" figure on the page is exactly one row. Ignore allergen marks and prices.
+      fields: { kcal: energykCal_Per Portion, notes: notes }
+
+    - pdf: c476e315ae38db7a9722b0d4ecfc58c1c3f1c7f4.pdf
+      parser: numeric_table
+      region: UK
+      category: food
+      approved: false # no September 2026 PDF
+      pages: [34] # the Summer specials table
+      section_x: 150 # the Menu Section column is left of the Dish Description column
+      header: Energy
+      titles: ['SUMMER SPECIALS']
+      furniture: ['V2 23.04.26', '02/06/26 - 31/08/26', 'Menu Section Dish Description']
+      wrap_below: true # a long dish name wraps onto a line under its figures
+      column_gap: 12 # cells are centred in their columns: a one-digit cell sits up to 11 pt from the right edge of its column
+      columns:
+        - energykJ_Per 100g/ml
+        - energykCal_Per 100g/ml
+        - fat_Per 100g/ml
+        - saturates_Per 100g/ml
+        - carbohydrates_Per 100g/ml
+        - sugars_Per 100g/ml
+        - protein_Per 100g/ml
+        - salt_Per 100g/ml
+        - energykJ_Per Portion
+        - energykCal_Per Portion
+        - fat_Per Portion
+        - saturates_Per Portion
+        - carbohydrates_Per Portion
+        - sugars_Per Portion
+        - protein_Per Portion
+        - salt_Per Portion
+    - pdf: c476e315ae38db7a9722b0d4ecfc58c1c3f1c7f4.pdf
+      parser: numeric_table
+      region: UK
+      category: food
+      approved: false # no September 2026 PDF
+      pages: ['39-49'] # the core menu tables
+      section_x: 150 # the Menu Section column is left of the Dish Description column
+      header: Energy
+      furniture: ['V2 23.04.26', 'Menu Section Dish Description']
+      wrap_below: true # a long dish name wraps onto a line under its figures
+      column_gap: 12 # cells are centred in their columns: a one-digit cell sits up to 11 pt from the right edge of its column
+      columns:
+        - energykJ_Per 100g/ml
+        - energykCal_Per 100g/ml
+        - fat_Per 100g/ml
+        - saturates_Per 100g/ml
+        - carbohydrates_Per 100g/ml
+        - sugars_Per 100g/ml
+        - protein_Per 100g/ml
+        - salt_Per 100g/ml
+        - energykJ_Per Portion
+        - energykCal_Per Portion
+        - fat_Per Portion
+        - saturates_Per Portion
+        - carbohydrates_Per Portion
+        - sugars_Per Portion
+        - protein_Per Portion
+        - salt_Per Portion
+    - pdf: c476e315ae38db7a9722b0d4ecfc58c1c3f1c7f4.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: false # no September 2026 PDF
+      dpi: 200
+      pages: [35] # an image page: the text layer prints no figures, so no `text_check`; `reread` checks the model's read
+      instructions: >-
+        It is a children's and non-gluten menu page of a restaurant: dishes with a name in capitals, a diet word (Vegan, Vegetarian) sometimes, the calories in words ("34 kcal") and a description.
+        section = the heading printed above a group (for example "TO START", "MAINS", "DESSERTS"). name = the dish name as printed (without the diet word and the kcal figure). kcal = the digits before
+        "kcal" for that dish. A description can carry its own kcal figure for a variant ("Make this Vegan with MozzaRisella. 900 kcal"): that is its own row, name = the text of that sentence without the figure,
+        notes = "Variant of <the dish it is printed under>". Every "kcal" figure on the page is exactly one row. Ignore allergen marks and prices.
+      fields: { kcal: energykCal_Per Portion, notes: notes }
+
+    - pdf: c476e315ae38db7a9722b0d4ecfc58c1c3f1c7f4.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: false # no September 2026 PDF
+      dpi: 200
+      pages: [36]
+      text_check: { field: kcal, pattern: '(\d[\d,]*)\s?kcal', strip: ',', ignore: [2000] }
+      instructions: >-
+        It is a children's and non-gluten menu page of a restaurant: dishes with a name in capitals, a diet word (Vegan, Vegetarian) sometimes, the calories in words ("34 kcal") and a description.
+        section = the heading printed above a group (for example "TO START", "MAINS", "DESSERTS"). name = the dish name as printed (without the diet word and the kcal figure). kcal = the digits before
+        "kcal" for that dish. A description can carry its own kcal figure for a variant ("Make this Vegan with MozzaRisella. 900 kcal"): that is its own row, name = the text of that sentence without the figure,
+        notes = "Variant of <the dish it is printed under>". Every "kcal" figure on the page is exactly one row. Ignore allergen marks and prices.
+      fields: { kcal: energykCal_Per Portion, notes: notes }
+
+69_TescoCafe: # id and key from Menu Tracker's food-chains/
+  chain: Tesco
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
+  sources:
+    # Allergen matrices of the Tesco cafes (drinks, breakfast, mains, kids, snacks, sides): the only nutrition is "kcal per serving", sometimes as a pair "275/355 kcal" (small / medium).
+    - pdf: Summer+2026+GB+Allergen+Matrix+V5.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: true
+      dpi: 200
+      pages: ['2-20'] # Summer 2026 V5: 20 pages
+      text_check: &tesco_check { field: kcal, pattern: '(\d+(?:/\d+)?)\s?kcal', ignore: [2000, '–', '-'], page_ignore: { '8': ['75', '50/75', '50 / 75'] } }
+      instructions: &tesco_instructions >-
+        It is a landscape allergen matrix of a cafe menu: a row per item with the item name on the left, "kcal per serving" next to it and allergen marks (Y or M) to the right. section = the page heading
+        ("Allergens - Drinks", "Allergens - Breakfast" ... written as "Drinks", "Breakfast", "Breakfast Extras", "Mains", "Kids", "Snacks & Bakery", "Sides and Condiments"), or a sub-heading printed in the first column.
+        name = the item exactly as printed (a name can wrap over two or three lines: join them; text in brackets that belongs to the name stays). kcal = the figure before "kcal" exactly as printed, with a slash
+        when two figures are printed ("275/355"); notes = the size header printed above the kcal column on the page ("Small/Medium") when the figure is a pair, else empty. Items with a blank kcal cell or the word
+        "kcal" only are not rows. Ignore every allergen mark. Return every item of the page.
+      fields: &tesco_fields { kcal: energykCal_Per Portion, notes: notes }
+    - pdf: Summer+2026+NI+Allergen+Matrix+V3.pdf
+      parser: vision_table
+      region: NI
+      category: food
+      approved: true
+      dpi: 200
+      pages: ['2-17'] # Summer 2026 V3: 17 pages
+      text_check: *tesco_check
+      instructions: *tesco_instructions
+      fields: *tesco_fields
+
+66_SohoCoffee: # id and key from Menu Tracker's food-chains/
+  chain: Soho Coffee
+  allergens: false # the March 2026 batch has nutrition only (docs/goal-batch-2026-03.md)
+  sources:
+    # Ingredient and nutrition guides (food and drinks): one product per row with vegetarian / vegan ticks, a long ingredient declaration and the nine nutrition figures
+    # "per portion basis". The names are not in a bold font and the declarations are long, so the model reads the name and the figures.
+    - pdf: 2026-Nutritional-Matrix-Food-V7.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: true
+      dpi: 200
+      pages: ['4-7', '9-15', '17-20', '22-23', '25', '27-28'] # dividers (MENU, COLD LUNCH, SPECIFIC) are 1-3, 8, 16, 21, 24, 26
+      instructions: &soho_instructions >-
+        It is a landscape ingredient and nutrition guide of a coffee shop: one product per row. Columns: Product (with a short name on the left), Vegetarian?, Vegan?, Ingredients (long text),
+        then Energy (kJ), Energy (kcal), Fat (g), Of which saturates (g), Carbohydrates (g), Of which sugars (g), Fibre (g), Protein (g), Salt (g). section = the group heading printed in the product column
+        or above the rows (for example "Pastries", "Iced Tea"), or the menu named in the page head if there is none. name = the Product exactly as printed (it wraps over several lines: join them; a bracket
+        such as "(whole milk)" belongs to the name). The words "ALLERGEN UPDATE" (a tag printed under some oat-milk names) are not part of the name: leave them out. Ignore the ingredients and the ticks. The nine figures are exactly as printed, as strings; leave a blank cell empty. Return every product of the page.
+      fields: &soho_fields { kj: energykJ_Per Portion, kcal: energykCal_Per Portion, fat: fat_Per Portion, saturates: saturates_Per Portion, carbohydrate: carbohydrates_Per Portion, sugars: sugars_Per Portion, fibre: fibre_Per Portion, protein: protein_Per Portion, salt: salt_Per Portion }
+20_ChefBrewer: # id and key from Menu Tracker's menutracker.ipynb ("20. Chef & Brewer Pub Co.")
+  chain: Chef & Brewer
+  allergens: false # no allergen columns (docs/goal-batch-2026-03.md)
+  sources:
+    # Four pub menus (picky bits, buffet, two kids menus) that print only calories as "750kcal". The model reads the dish names and figures; the text layer's kcal figures are checked against the rows (`text_check`).
+    - pdf: 07f9682a60004caeab5ee57427101994vfb21ad8c.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: false # no September 2026 PDF
+      dpi: 200
+      pages: [1, 2]
+      text_check: &cb_check { field: kcal, pattern: '(\d[\d,]*)\s?kcal', strip: ',', ignore: [2000] } # the footer: adults need around 2000 kcal a day
+      instructions: &cb_instructions >-
+        It is a pub menu page: section headings in capitals (for example "PICKY BITS", "SANDWICHES & WRAPS", "LIGHT BITES", "BIGGER BITES", "LITTLE ONES"), dishes with a bold capitals name, a description and the calories
+        as "750kcal" (sometimes "168kcal per sandwich" and "333kcal per wrap", or "per portion", "per skewer" or "per 2 spoonfuls"). section = the heading as printed (a sub-heading such as "CHOOSE YOUR STARTER" can follow it:
+        then section = "<heading> - <sub-heading>"). name = the dish name as printed, in the case it is printed, without price, symbols or badges. kcal = the digits only, without a thousands comma. A dish with several figures
+        (one per sandwich or wrap, per size or choice) gives one row per figure named "<dish> - <the label printed with the figure>" (for example "ROASTED PEPPER & HOUMOUS - per sandwich"). EVERY figure with "kcal" on the page
+        is exactly one row. Ignore prices, the number of items to choose, the line "Adults need around 2000kcal a day" and text without a kcal figure. Before you answer, count the "kcal" figures on the page and return exactly that many rows.
+      fields: &cb_fields { kcal: energykCal_Per Portion }
+    - pdf: adbf6a3f9b8f49969a4b65bdcd323e3dv4f5ec19f.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: false # no September 2026 PDF
+      dpi: 200
+      pages: [1] # page 2 is a pattern-only back page
+      text_check: *cb_check
+      instructions: *cb_instructions
+      fields: *cb_fields
+    - pdf: 8608c49eb4dc465ebf11794b69be6192v958d6f19.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: false # no September 2026 PDF
+      dpi: 200
+      pages: [1]
+      text_check: *cb_check
+      instructions: *cb_instructions
+      fields: *cb_fields
+    - pdf: f683166d4b8d490ba03a0c2a7179aacavcd8a4452.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: false # no September 2026 PDF
+      dpi: 200
+      pages: [1]
+      text_check: *cb_check
+      instructions: *cb_instructions
+      fields: *cb_fields
+
+62_Pho: # id and key from Menu Tracker's menutracker.ipynb
+  chain: Pho
+  allergens: false # no allergen columns (docs/goal-batch-2026-03.md)
+  sources:
+    # One table per page with calories, protein, carbs, fat, saturated fat, fibre and sugar per dish (no kJ, no salt). A "<" is printed apart from its figure ("< 0.5"), a few
+    # calorie cells hold two figures ("101 / 110": with or without chillies), the curries print a "*" after the fat figure (coconut milk), and a few cells are a dash: all kept as printed and flagged.
+    # The dish names carry Vietnamese letters in a second font that sits 4.7 pt higher than the figures, hence `line_gap`.
+    - pdf: Pho-Nutritional-Guidelines-2026_web.pdf
+      parser: numeric_table
+      region: UK
+      category: food
+      approved: false # no September 2026 PDF
+      header: Calories
+      pages: ['2-8']
+      wrapped_names: true
+      wrap_lines: 5
+      line_gap: 6
+      join_less_than: true
+      join_slash_pairs: true
+      invalid_values: ['re:^\d+(\.\d+)? / \d+(\.\d+)?$', 're:^\d+(\.\d+)?\*$', '-']
+      furniture: [MACROS, Total of which]
+      titles: ['Starters & Sides : món khai vị Excludes dipping sauces Total of which', 'Vietnamese noodle soup : phở Total of which', 'Curry : cà-ri Excludes rice (see below) Total of which', 'Rice bowls : món cơm Excludes rice (see below) Total of which', 'Vermicelli noodles : bún* Includes sauces Total of which', 'Vietnamese salads : gỏi Includes dressings Total of which']
+      columns: [energykCal_Per Portion, protein_Per Portion, carbohydrates_Per Portion, fat_Per Portion, saturates_Per Portion, fibre_Per Portion, sugars_Per Portion]
+
+76_Wasabi: # id from Menu Tracker (chain id 76, confirmed by the owner 2026-11-06)
+  chain: Wasabi
+  allergens: false # no allergen columns (docs/goal-batch-2026-03.md)
+  sources:
+    # One PDF, seven table layouts: figure columns differ by page group, so one source per group (columns checked against each header on the rendered pages).
+    # Kept out: the Y/N dietary columns (Vegetarian, Vegan, MSG, Alcohol, Gluten, Raw fish) and the allergen letter codes;  per page cuts them off.
+    # "n/a" cells are kept as printed; one decimal comma (4,3) is normalised by the export.
+
+    # Onigiri (page 4): ten figures, the Number of servings column is printed as N in every row and not read (it is a Y/N column)
+    - pdf: WAS_Nutritional_Guide-7-160726.pdf
+      parser: numeric_table
+      region: UK
+      category: food
+      approved: true
+      header: Energy
+      pages: [4]
+      header_section: false # the header block holds only column titles; the section is the page title
+      free_sections: true
+      wrapped_names: true
+      wrap_below: true # (excl. dressing) and similar sit under the figures
+      join_less_than: true
+      line_gap: 6
+      skip_words: ['100g']
+      invalid_values: ['n/a', 're:\d+,\d+']
+      max_x: {4: 574.8} # between the last figure and the first Y/N cell of each page
+      titles: ['sushi', 'すし', 'Onigiri']
+      furniture: ['SALMON MADE FRESH DAILY', 'We only ever use sustainably Our sushi is made from scratch every day', 'sourced Scottish, Norwegian or using the freshest and finest ingredients.', 'Iceland salmon giving our sushi the We take our motto very seriously and', 'freshest, sweetest taste! never keep any food back for the next', 'day, ensuring the food you get from', 'Wasabi is always at its best.']
+      columns: [energykCal_Per 100g/ml, energykJ_Per 100g/ml, energykCal_Per Portion, protein_Per 100g/ml, carbohydrates_Per 100g/ml, sugars_Per 100g/ml, fat_Per 100g/ml, saturates_Per 100g/ml, salt_Per 100g/ml, Serving_Size]
+
+    # Sushi boxes, salads, gyozas, soups, hot cabinet, drinks: eleven figures (kcal and kJ per 100g, kcal per portion, six nutrients per 100g, portion size, number of servings)
+    - pdf: WAS_Nutritional_Guide-7-160726.pdf
+      parser: numeric_table
+      region: UK
+      category: food
+      approved: true
+      header: Energy
+      pages: [5, 6, 7, 9, 10, 11, 12, 13, 19, 20, 21, 22, 23, 25, 26, 27]
+      header_section: false # the header block holds only column titles; the section is the page title
+      free_sections: true
+      wrapped_names: true
+      wrap_below: true # (excl. dressing) and similar sit under the figures
+      join_less_than: true
+      line_gap: 6
+      skip_words: ['100g']
+      invalid_values: ['n/a', 're:\d+,\d+']
+      max_x: {5: 569.0, 6: 569.0, 7: 580.3, 9: 568.9, 10: 568.9, 11: 604.8, 12: 636.9, 13: 645.3, 19: 636.9, 20: 636.9, 21: 637.0, 22: 568.8, 23: 636.9, 25: 636.9, 26: 635.0, 27: 636.4} # between the last figure and the first Y/N cell of each page
+      titles: ['sushi', 'すし', 'Sushi set boxes', 'Sushi set boxes continued', 'Rice boxes', 'Ramen', 'Miso', 'Other', 'salads', 'サラダ', 'Salads and bowls', 'Potto salads and protein pots', 'cold sides', 'ホットフード', 'Cold gyozas', 'soup', 'スープヌードル', 'Tom yum', 'bento', 'Hot cabinet', 'Hot cabinet continued', 'Hot cabinet - breakfast', 'sides', 'hot beverages', 'Coffee', 'Tea', 'Extras', 'breakfast', 'Chilled cabinet - breakfast pots']
+      columns: [energykCal_Per 100g/ml, energykJ_Per 100g/ml, energykCal_Per Portion, protein_Per 100g/ml, carbohydrates_Per 100g/ml, sugars_Per 100g/ml, fat_Per 100g/ml, saturates_Per 100g/ml, salt_Per 100g/ml, Serving_Size, Number_of_Portions]
+
+    # Platter sets: kcal per pack and per portion
+    - pdf: WAS_Nutritional_Guide-7-160726.pdf
+      parser: numeric_table
+      region: UK
+      category: food
+      approved: true
+      header: Energy
+      pages: [24]
+      header_section: false # the header block holds only column titles; the section is the page title
+      free_sections: true
+      wrapped_names: true
+      wrap_below: true # (excl. dressing) and similar sit under the figures
+      join_less_than: true
+      line_gap: 6
+      skip_words: ['100g', 'continued'] # page 24: the large title word "continued" runs sideways into the first "Energy" of the header block; the section stays "Hot cabinet"
+      invalid_values: ['n/a', 're:\d+,\d+']
+      max_x: {24: 636.9} # between the last figure and the first Y/N cell of each page
+      titles: ['sushi', 'すし', 'Sushi set boxes', 'Sushi set boxes continued', 'Rice boxes', 'Ramen', 'Miso', 'Other', 'salads', 'サラダ', 'Salads and bowls', 'Potto salads and protein pots', 'cold sides', 'ホットフード', 'Cold gyozas', 'soup', 'スープヌードル', 'Tom yum', 'bento', 'Hot cabinet', 'Hot cabinet continued', 'Hot cabinet - breakfast', 'sides', 'hot beverages', 'Coffee', 'Tea', 'Extras', 'breakfast', 'Chilled cabinet - breakfast pots']
+      columns: [energykCal_Per 100g/ml, energykJ_Per 100g/ml, energykCal_Per Portion, protein_Per 100g/ml, carbohydrates_Per 100g/ml, sugars_Per 100g/ml, fat_Per 100g/ml, saturates_Per 100g/ml, salt_Per 100g/ml, Serving_Size, Number_of_Portions]
+
+    # Platter sets: kcal per pack and per portion
+    - pdf: WAS_Nutritional_Guide-7-160726.pdf
+      parser: numeric_table
+      region: UK
+      category: food
+      approved: true
+      header: Energy
+      pages: [8]
+      header_section: false # the header block holds only column titles; the section is the page title
+      free_sections: true
+      wrapped_names: true
+      wrap_below: true # (excl. dressing) and similar sit under the figures
+      join_less_than: true
+      line_gap: 6
+      skip_words: ['100g']
+      invalid_values: ['n/a', 're:\d+,\d+']
+      max_x: {8: 598.2} # between the last figure and the first Y/N cell of each page
+      titles: ['sushi', 'すし', 'Platter sets']
+      columns: [energykCal_Per 100g/ml, energykJ_Per 100g/ml, energykCal_Per Product As Sold, energykCal_Per Portion, protein_Per 100g/ml, carbohydrates_Per 100g/ml, sugars_Per 100g/ml, fat_Per 100g/ml, saturates_Per 100g/ml, salt_Per 100g/ml, Serving_Size, Number_of_Portions]
+
+    # Bain marie: kcal per standard and per large portion, two portion sizes
+    - pdf: WAS_Nutritional_Guide-7-160726.pdf
+      parser: numeric_table
+      region: UK
+      category: food
+      approved: true
+      header: Energy
+      pages: [14, 15]
+      header_section: false # the header block holds only column titles; the section is the page title
+      free_sections: true
+      wrapped_names: true
+      wrap_below: true # (excl. dressing) and similar sit under the figures
+      join_less_than: true
+      line_gap: 6
+      skip_words: ['100g']
+      invalid_values: ['n/a', 're:\d+,\d+']
+      max_x: {14: 641.5, 15: 641.5} # between the last figure and the first Y/N cell of each page
+      titles: ['bento', 'ホットフード', 'Bain marie', 'Bain marie continued']
+      columns: [energykCal_Per 100g/ml, energykJ_Per 100g/ml, energykCal_Per Portion, energykCal_Per Large Portion, protein_Per 100g/ml, carbohydrates_Per 100g/ml, sugars_Per 100g/ml, fat_Per 100g/ml, saturates_Per 100g/ml, salt_Per 100g/ml, Serving_Size, Serving_Size_Large, Number_of_Portions]
+
+    # Bain marie, mixed bento: a second name column (the rice or noodle base) sits between the two name lines
+    - pdf: WAS_Nutritional_Guide-7-160726.pdf
+      parser: numeric_table
+      region: UK
+      category: food
+      approved: true
+      header: Energy
+      pages: [16, 17, 18]
+      header_section: false # the header block holds only column titles; the section is the page title
+      free_sections: true
+      wrapped_names: true
+      wrap_below: true # (excl. dressing) and similar sit under the figures
+      join_less_than: true
+      line_gap: 3
+      name_tail_x: 170 # the base column ("Rice", "Yakisoba noodles") is read after the dish name
+      skip_words: ['100g']
+      invalid_values: ['n/a', 're:\d+,\d+']
+      max_x: {}
+      titles: ['bento', 'ホットフード', 'Bain marie – mixed bento', 'Bain marie – mixed bento continued']
+      columns: [energykCal_Per 100g/ml, energykJ_Per 100g/ml, energykCal_Per Portion, protein_Per 100g/ml, carbohydrates_Per 100g/ml, sugars_Per 100g/ml, fat_Per 100g/ml, saturates_Per 100g/ml, salt_Per 100g/ml, Serving_Size, Number_of_Portions]
+
+    # Sauces, page 26: kcal per pot/sachet and per counter-salad portion, two portion sizes (the Number of servings column is printed as N in every row and not read (it is a Y/N column))
+    - pdf: WAS_Nutritional_Guide-7-160726.pdf
+      parser: numeric_table
+      region: UK
+      category: food
+      approved: true
+      header: Energy
+      pages: [28]
+      header_section: false # the header block holds only column titles; the section is the page title
+      free_sections: true
+      wrapped_names: true
+      wrap_below: true # (excl. dressing) and similar sit under the figures
+      join_less_than: true
+      line_gap: 6
+      skip_words: ['100g']
+      invalid_values: ['n/a', 're:\d+,\d+']
+      max_x: {28: 623.5} # between the last figure and the first Y/N cell of each page
+      titles: ['optional sauce & dressing', 'Sauce & dressing – sushi']
+      columns: [energykCal_Per 100g/ml, energykJ_Per 100g/ml, energykCal_Per Portion, energykCal_Per Large Portion, protein_Per 100g/ml, carbohydrates_Per 100g/ml, sugars_Per 100g/ml, fat_Per 100g/ml, saturates_Per 100g/ml, salt_Per 100g/ml, Serving_Size, Serving_Size_Large]
+
+    # Sauces and dressings, page 27: as page 26 with the number of servings
+    - pdf: WAS_Nutritional_Guide-7-160726.pdf
+      parser: numeric_table
+      region: UK
+      category: food
+      approved: true
+      header: Energy
+      pages: [29]
+      header_section: false # the header block holds only column titles; the section is the page title
+      free_sections: true
+      wrapped_names: true
+      wrap_below: true # (excl. dressing) and similar sit under the figures
+      join_less_than: true
+      line_gap: 6
+      skip_words: ['100g']
+      invalid_values: ['n/a', 're:\d+,\d+']
+      max_x: {29: 642.9} # between the last figure and the first Y/N cell of each page
+      titles: ['optional sauce & dressing', 'Sauce & dressing']
+      columns: [energykCal_Per 100g/ml, energykJ_Per 100g/ml, energykCal_Per Portion, energykCal_Per Large Portion, protein_Per 100g/ml, carbohydrates_Per 100g/ml, sugars_Per 100g/ml, fat_Per 100g/ml, saturates_Per 100g/ml, salt_Per 100g/ml, Serving_Size, Number_of_Portions]
+
+24_Zizzi: # id and key from Menu Tracker's menutracker.ipynb ("24. Zizzi"), September 2026
+  chain: Zizzi
+  allergens: false # nutrition only (docs/goal-batch-2026-03.md)
+  sources:
+    # Nutrition guide, 24 pages (UK V2, 16.06.26): per 100g and per portion on every table, eight figures each (energy kJ and kcal, fat, saturates, carbohydrate, sugar, protein, salt; no fibre).
+    - pdf: a7bddad7ab274475b481e054916a0f8208c4d24e.pdf
+      parser: numeric_table
+      region: UK
+      category: food
+      approved: true
+      header: Energy
+      wrapped_names: true
+      wrap_below: true # a long name continues on the line under its figures
+      wrap_below_lines: 2.5 # ...sometimes over two lines (ROI: Six Layer Lasagne even better with more beef ragu...)
+      header_section: false # group titles are not readable (see above): no menu_section
+      # The group titles (STARTERS, SALADS, PIZZA ...) are printed over the repeated word APERITIVO and come out interleaved or lost, so the guide's groups are NOT read: menu_section stays blank (limitation, see the report).
+      furniture: [APERITIVO, Menu Item Name, DISHES, PIZZA, SOFT DRINKS, SUPERIORE, '& TEA', DRINK, 'COCKTAILS', 'BUBBLES', 'GUESTS']
+      column_gap: 14 # centred one-digit cells (a salt of 1) sit up to 13 pt from their column's right edge
+      columns:
+        - energykJ_Per 100g/ml
+        - energykCal_Per 100g/ml
+        - fat_Per 100g/ml
+        - saturates_Per 100g/ml
+        - carbohydrates_Per 100g/ml
+        - sugars_Per 100g/ml
+        - protein_Per 100g/ml
+        - salt_Per 100g/ml
+        - energykJ_Per Portion
+        - energykCal_Per Portion
+        - fat_Per Portion
+        - saturates_Per Portion
+        - carbohydrates_Per Portion
+        - sugars_Per Portion
+        - protein_Per Portion
+        - salt_Per Portion
+    # The same guide for the Republic of Ireland and Belfast (28 pages, "ROI.BEL V1", 23.03.26).
+    - pdf: 486ec2f55581090d2098eaa1dece81923ce2ffd6.pdf
+      parser: numeric_table
+      region: ROI
+      category: food
+      approved: true
+      header: Energy
+      wrapped_names: true
+      wrap_below: true # a long name continues on the line under its figures
+      wrap_below_lines: 2.5 # ...sometimes over two lines (ROI: Six Layer Lasagne even better with more beef ragu...)
+      header_section: false # group titles are not readable (see above): no menu_section
+      # The group titles (STARTERS, SALADS, PIZZA ...) are printed over the repeated word APERITIVO and come out interleaved or lost, so the guide's groups are NOT read: menu_section stays blank (limitation, see the report).
+      furniture: [APERITIVO, Menu Item Name, DISHES, PIZZA, SOFT DRINKS, SUPERIORE, '& TEA', DRINK, 'COCKTAILS', 'BUBBLES', 'GUESTS']
+      column_gap: 14 # centred one-digit cells (a salt of 1) sit up to 13 pt from their column's right edge
+      columns:
+        - energykJ_Per 100g/ml
+        - energykCal_Per 100g/ml
+        - fat_Per 100g/ml
+        - saturates_Per 100g/ml
+        - carbohydrates_Per 100g/ml
+        - sugars_Per 100g/ml
+        - protein_Per 100g/ml
+        - salt_Per 100g/ml
+        - energykJ_Per Portion
+        - energykCal_Per Portion
+        - fat_Per Portion
+        - saturates_Per Portion
+        - carbohydrates_Per Portion
+        - sugars_Per Portion
+        - protein_Per Portion
+        - salt_Per Portion
+
+88_ChickenCottage: # id and key from Menu Tracker's menutracker.ipynb ("88. Chicken Cottage"), September 2026
+  chain: ChickenCottage
+  allergens: false
+  sources:
+    # The chain publishes menu-board images with calories only (BOXES, BURGERS, FRIED, GRILLED, SIDES .jpg). The pipeline reads PDFs, so each image was converted to a one-page PDF named
+    # ChickenCottage_<NAME>.pdf next to it in inputs/ (derived copies; the originals stay). They have no text layer: every page is read by the model and read a second time.
+    - pdf: ChickenCottage_BOXES.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: true
+      dpi: 144
+      instructions: &cc_instructions >-
+        It is a restaurant menu board photographed or exported as one image (one page). Items are a bold name (it can wrap over two lines: join them), an optional description and a calorie figure printed
+        as "526 kcal" or "(526 kcal)". section = the board's heading (WRAPS, BURGERS, BOX MEALS, FRIED CHICKEN, CHICKEN WINGS, FRIED CHICKEN, Boneless, NUGGETS, STRIPS, Sharing Deals, SIDES ... as printed;
+        a heading above a group of items applies to them; if the board has none use the board's title). name = the bold name exactly as printed. Where a heading has several sizes or counts each with its own
+        figure (5PC 1005 kcal, 8PC 1608 kcal ...) one row per figure, name = "<heading> - <the count as printed>" (for example "CHICKEN WINGS - 5PC"). Where a figure comes with "Mild or Spicy" it is one row
+        and notes = "Mild or Spicy". kcal = the digits of the figure only. A pair of figures printed with no labels ("297 kcal / 414 kcal") is two rows named "<item> - 1st figure" and "<item> - 2nd figure" (the board does not say which size each is), notes empty. A size or volume that is part of a section heading ("ICE CREAM 125ML") stays in the section: never add it to the item name. An item with NO calorie figure is not a row. A line of figures in a footer ("FRIES - 297KCAL  DRINK - 1KCAL PER 330ML CAN (PEPSI MAX)")
+        gives one row per item named by it ("FRIES", "DRINK"), notes = "Footer of the board" (add "per 330ml can" when printed). Do not return prices, descriptions or slogans. Before you answer, count the
+        calorie figures on the image and check that you return exactly that many rows.
+      fields: &cc_fields { kcal: energykCal_Per Portion, notes: notes }
+    - pdf: ChickenCottage_BURGERS.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: true
+      dpi: 144
+      instructions: *cc_instructions
+      fields: *cc_fields
+    - pdf: ChickenCottage_FRIED.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: true
+      dpi: 144
+      instructions: *cc_instructions
+      fields: *cc_fields
+    - pdf: ChickenCottage_GRILLED.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: true
+      dpi: 144
+      instructions: *cc_instructions
+      fields: *cc_fields
+    - pdf: ChickenCottage_SIDES.pdf
+      parser: vision_table
+      region: UK
+      category: food
+      approved: true
+      dpi: 144
+      instructions: *cc_instructions
+      fields: *cc_fields

@@ -2,6 +2,13 @@ import pytest
 
 
 @pytest.fixture(autouse=True)
+def private_usage_log(monkeypatch, tmp_path):
+    """Test calls must never write into the real work/llm_usage.csv (the end-of-round report's cost summary reads it)."""
+    from pipeline import llm
+    monkeypatch.setattr(llm, "USAGE_LOG", tmp_path / "llm_usage.csv")
+
+
+@pytest.fixture(autouse=True)
 def no_model_calls(monkeypatch):
     """Tests are offline: anything that would reach a real backend (`claude -p` or the Anthropic API) fails instead of spending money or quota."""
     from pipeline import llm

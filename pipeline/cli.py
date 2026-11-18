@@ -2,6 +2,7 @@ import argparse
 import csv
 import hashlib
 import json
+import re
 import sys
 from collections import Counter
 from pathlib import Path
@@ -335,12 +336,58 @@ def evaluate(chains_file: Path, outputs: Path, ground_truth: Path, golden: Path,
     return failures
 
 
+def usage_summary(log: Path) -> str:
+    """Markdown tables of the model calls in the usage log (`llm.USAGE_LOG`): totals per backend and per PDF (the image name is `<pdf stem>-<page>.png`), tokens and USD. For the end-of-round report."""
+    rows = list(csv.DictReader(log.open())) if log.exists() else []
+    if not rows:
+        return "No model calls were logged.\n"
+
+    def table(title: str, key) -> str:
+        groups: dict[str, list[dict]] = {}
+        for r in rows:
+            groups.setdefault(key(r), []).append(r)
+        lines = [f"| {title} | Calls | Input tokens | Output tokens | Cost |", "|---|---|---|---|---|"]
+        for name, g in sorted(groups.items()):
+            lines.append(f"| {name} | {len(g)} | {sum(int(r['input_tokens'] or 0) for r in g):,} | {sum(int(r['output_tokens'] or 0) for r in g):,} | ${sum(float(r['cost_usd'] or 0) for r in g):.2f} |")
+        return "\n".join(lines)
+
+    total = sum(float(r["cost_usd"] or 0) for r in rows)
+    return (f"Model calls logged in `work/llm_usage.csv`: {len(rows)} calls, {sum(int(r['input_tokens'] or 0) for r in rows):,} input tokens, "
+            f"{sum(int(r['output_tokens'] or 0) for r in rows):,} output tokens, ${total:.2f} in total ({rows[0]['timestamp'][:10]} to {rows[-1]['timestamp'][:10]}). "
+            "Calls through headless Claude Code are billed to the plan; their token counts are only the uncached input and the output, so they understate the real tokens.\n\n"
+            + table("Backend", lambda r: r["backend"]) + "\n\n" + table("PDF", lambda r: re.sub(r"-\d+(-crop\d+)?(-strip\d+)?\.png$", "", r["image"])) + f"\n\nTotal cost: ${total:.2f}\n")
+
+
+def interim_report(stopped: list[str], outputs: Path, budget, backend: str, usage_log: Path, written: list[Path] | None = None) -> str:
+    """Written when a run stopped (spend cap, plan limit or a bad answer): what finished, what stopped and why, and how to resume."""
+    cap = any("caps" in m and "raise the cap" in m for m in stopped)
+    limit = any(llm.RATE_LIMIT.search(m) for m in stopped)
+    reason = ("the spend cap was reached" if cap else "the plan's usage limit was reached" if limit else "a page could not be read (see the messages below)")
+    done = sorted(written) if written is not None else sorted(outputs.glob("*.csv"))   # `written`: the CSVs of this run only (an older chain's CSV is not "finished" by this run)
+    lines = [f"# Interim report: extraction stopped, {reason}", "",
+             f"Backend `{backend}`. This run used {budget.calls} calls, {budget.input_tokens:,} input and {budget.output_tokens:,} output tokens, ${budget.usd:.2f} (cap ${budget.max_usd:.2f}, {budget.max_calls} calls). "
+             "Every page answered before the stop is cached in `work/llm/` and every chain that finished has its CSV in `outputs/`; nothing was lost or deleted.", "",
+             "## Finished (CSV in outputs/)", ""]
+    lines += [f"- {p.stem}: {sum(1 for _ in p.open()) - 1} rows" for p in done] or ["- none"]
+    lines += ["", "## Stopped (no CSV; its old CSV, if any, moved to outputs/_stale/)", ""] + [f"- {m}" for m in stopped]
+    lines += ["", "## How to resume", "",
+              "Run the same command again; the cap resets at the start of every run and cached pages cost nothing, so the run continues with the pages that are missing:", "",
+              f"    uv run python -m pipeline.cli --backend {backend} run", "",
+              f"To change the cap for the run add `--max-usd <dollars>` (default for the API ${llm.DEFAULT_MAX_USD['sdk']:.0f}). If the spend looks wrong, `uv run python -m pipeline.cli usage` shows the token and cost summary from `work/llm_usage.csv`; "
+              "check the pages of the stopped chain with `pages --chain KEY` before raising the cap. When the run completes, delete nothing: this file is replaced by the next interim report or by the end-of-round report's usage section.", "",
+              "## Usage so far", "", usage_summary(usage_log)]
+    return "\n".join(lines)
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog="pipeline")
     parser.add_argument("--backend", choices=llm.BACKENDS, default=None,
                         help="how pages are read by the model: claude-code (headless `claude -p`, the plan login; default) or sdk (Anthropic API, ANTHROPIC_API_KEY); "
                              "or set PIPELINE_LLM_BACKEND")
+    parser.add_argument("--max-usd", type=float, default=None,
+                        help="spend cap of this run in USD (default: the API $20, headless $60); a re-run starts again from zero, cached pages cost nothing")
     sub = parser.add_subparsers(dest="cmd", required=True)
+    sub.add_parser("usage", help="token and cost summary of the logged model calls -> outputs/data-dictionary/_llm_usage.md (paste it into the end-of-round report)")
     sub.add_parser("manifest", help="page/text/parser report for every PDF -> work/manifest.csv")
     run_p = sub.add_parser("run", help="extract every approved chain -> outputs/<key>.csv")
     run_p.add_argument("--chain", help="only this chain key, e.g. 16_Beefeater")
@@ -366,6 +413,7 @@ def main(argv: list[str] | None = None) -> None:
     eval_p.add_argument("--lenient", action="store_true", help="a source with nothing to compare against only prints a notice (default: it fails, so a new batch cannot pass unchecked)")
     args = parser.parse_args(argv)
     apply_backend(args.backend)
+    llm.reset_budget(llm.BACKEND, args.max_usd)
     chains_file = ROOT / "config" / "chains.yaml"
 
     if args.cmd == "manifest":
@@ -380,13 +428,22 @@ def main(argv: list[str] | None = None) -> None:
             print("next: python -m pipeline.cli scaffold --chain KEY --pdf FILE  (drafts the config entry; see docs/start-here.md)")
     elif args.cmd == "run":
         stopped: list[str] = []
-        for path, rows in run(ROOT / "inputs", chains_file, ROOT / "outputs", args.chain, stopped).items():
+        done = run(ROOT / "inputs", chains_file, ROOT / "outputs", args.chain, stopped)
+        for path, rows in done.items():
             errors = sum("error:" in r["flags"] for r in rows)
             warns = sum("warn:" in r["flags"] for r in rows)
             print(f"{path.relative_to(ROOT)}: {len(rows)} rows, {errors} with errors, {warns} with warnings")
         if stopped:
-            print("\n".join(stopped) + "\nrun again to resume: finished pages are cached", file=sys.stderr)
+            report = ROOT / "outputs" / "data-dictionary" / "interim-report.md"
+            report.parent.mkdir(parents=True, exist_ok=True)
+            report.write_text(interim_report(stopped, ROOT / "outputs", llm.BUDGET, llm.BACKEND, llm.USAGE_LOG, list(done)))
+            print("\n".join(stopped) + f"\nrun again to resume (finished pages are cached; the cap resets): see {report.relative_to(ROOT)}", file=sys.stderr)
             sys.exit(1)
+    elif args.cmd == "usage":
+        text = usage_summary(llm.USAGE_LOG)
+        (ROOT / "outputs" / "data-dictionary").mkdir(parents=True, exist_ok=True)
+        (ROOT / "outputs" / "data-dictionary" / "_llm_usage.md").write_text(text)
+        print(text)
     elif args.cmd == "pages":
         vision_sources(chains_file, args.chain)
         written = run(ROOT / "inputs", chains_file, ROOT / "work" / "pages_check", args.chain)

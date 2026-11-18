@@ -122,7 +122,7 @@ Rule of thumb: if a PDF is a new layout, add an option or a parser with a test; 
 
 ## 6. Commands
 
-Run them with `uv run python -m pipeline.cli <command>` (or `.venv/bin/python -m pipeline.cli <command>`). `--backend claude-code|sdk` before the command chooses the model backend.
+Run them with `uv run python -m pipeline.cli <command>` (or `.venv/bin/python -m pipeline.cli <command>`). `--backend claude-code|sdk` before the command chooses the model backend; `--max-usd N` sets the run's spend cap (API default $20, headless $60; a re-run starts from zero). A stopped run writes `outputs/data-dictionary/interim-report.md` with the resume command (runbook section 4b).
 
 | Command | Use |
 |---|---|
@@ -135,6 +135,7 @@ Run them with `uv run python -m pipeline.cli <command>` (or `.venv/bin/python -m
 | `reread --chain KEY --pages N,M\|all --dpi D` | Read model-read pages again at another resolution and list differences; logged in `work/reread_log.csv` |
 | `flags` | Every flagged row of every chain -> `outputs/data-dictionary/_flags.csv` |
 | `report` | One line per PDF: rows, flags, golden rows, Pearl Scan, model-read and reread pages -> `outputs/data-dictionary/_verification.csv` |
+| `usage` | Token and cost summary of the logged model calls (`work/llm_usage.csv`) -> `outputs/data-dictionary/_llm_usage.md` |
 | `golden --chain KEY --pdf-stem STEM --rows "Name\|Size;Name"` | Write a golden file with every value column for chosen rows; check each cell against the page by hand |
 
 Tests: `uv run pytest` (about two minutes; they read PDFs from `inputs/`). If `pytest` is not found, use `.venv/bin/python -m pytest`.
@@ -163,7 +164,7 @@ If the layout changed, text-layer parsers usually stop with an error that says w
 
 **Read a page the model reads.** Render it (`pdftoppm -r 150 -f N -l N -png file.pdf out`), compare with the row in the CSV, and run `reread` on the page.
 
-**Choose the model backend.** Default `claude-code` (headless `claude -p`, plan login). `--backend sdk` or `PIPELINE_LLM_BACKEND=sdk` uses the Anthropic API (needs `ANTHROPIC_API_KEY` and `uv sync --extra sdk`). Both share one cache in `work/llm/`. Cost: `sdk-cost-estimate-2026-10.md`.
+**Choose the model backend.** Default `claude-code` (headless `claude -p`, plan login). `--backend sdk` or `PIPELINE_LLM_BACKEND=sdk` uses the Anthropic API (needs `ANTHROPIC_API_KEY` and `uv sync --extra sdk`) with a $20 cap per run. Both share one cache in `work/llm/`; every real call is logged to `work/llm_usage.csv` and `usage` summarises it for the end-of-round report. Cost estimate: `sdk-cost-estimate-2026-10.md`.
 
 **A run stopped.** Rate limit, cost cap or a failed check stops the chain and prints why; every finished page is cached, so run the same command again to continue.
 

@@ -1,9 +1,11 @@
+import yaml
 import pytest
 from pathlib import Path
 
 from pipeline.ingest import load_chains, manifest_row, page_texts, page_words, page_words_fine, sources_by_pdf, text_sha
 
-INPUTS = Path(__file__).resolve().parent.parent / "inputs"
+ROOT = Path(__file__).resolve().parent.parent
+INPUTS = ROOT / "inputs"
 BREAKFAST = [
     "beefeater_ss25_breakfast_menu_allergy_nutrition_v1.pdf",
     "brewers_fayre_allergy_nutrition_ss25_breakfast_menu.pdf",
@@ -26,9 +28,9 @@ def test_identical_pdfs_share_text_sha():
     assert len({text_sha(page_texts(INPUTS / f)) for f in BREAKFAST}) == 1
 
 
-def test_one_pdf_per_source_and_twenty_nine_chains_configured():
+def test_one_pdf_per_source_and_thirty_chains_configured():
     chains = load_chains()
-    assert set(chains) == {"11_PizzaExpress", "6_Dominos", "58_Vue", "59_Odeon", "26_PapaJohns", "16_Beefeater", "17_Brewersfayre", "21_TableTable", "46_Cineworld", "52_FiveGuys", "35_KrispyKreme", "8_Pizzahut", "47_Coffee1", "7_Starbucks", "45_Brewhouse", "49_CookhousePub", "73_TopGolf", "24_Zizzi", "88_ChickenCottage",
+    assert set(chains) == {"11_PizzaExpress", "6_Dominos", "58_Vue", "59_Odeon", "26_PapaJohns", "16_Beefeater", "17_Brewersfayre", "21_TableTable", "46_Cineworld", "52_FiveGuys", "35_KrispyKreme", "8_Pizzahut", "47_Coffee1", "7_Starbucks", "45_Brewhouse", "49_CookhousePub", "73_TopGolf", "24_Zizzi", "88_ChickenCottage", "44_Boswell",
                              "9_Subway", "79_Tortilla", "85_RealGreek", "31_FlamingGrill", "25_Ask", "69_TescoCafe", "66_SohoCoffee", "20_ChefBrewer", "62_Pho", "76_Wasabi"}
     assert all(len(users) == 1 or all("pages" in source for _, source in users)   # one PDF, several page ranges
                for users in sources_by_pdf(chains).values())
@@ -63,7 +65,8 @@ def test_every_pdf_in_inputs_is_assigned_to_a_source_and_every_source_has_its_pd
     used = {s["pdf"] for s in sources if s.get("approved")}   # sources without a PDF this batch are unapproved
     listed = {s["pdf"] for s in sources}                       # a PDF may also be listed by an unapproved source (Five Guys, September 2026: an allergen-only chart, no nutrition)
     present = {p.name for p in INPUTS.glob("*.pdf")}
-    assert present - listed == set() and used - present == set()
+    skipped = set(yaml.safe_load((ROOT / "config" / "skipped_pdfs.yaml").read_text()))   # allergen-only, superseded and pending PDFs, each with its reason
+    assert present - listed - skipped == set() and used - present == set() and skipped <= present
 
 
 def test_identical_pdfs_may_share_golden_rows_only_when_their_text_is_identical():

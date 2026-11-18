@@ -16,6 +16,8 @@ Source options (config/chains.yaml):
              a table whose titles differ stops the run
   allergen_text  printed allergen word -> the text given to the allergen reader ("OAT": "Oats (Gluten Free)": the guide says its oat milk is made
              with gluten free oats and lists OAT because of avenin, so gluten is not set)
+  title_min_size  smallest type size (pt) of a table title: product names printed bold in a size between body and title are not titles (Festive 2026)
+  bold_font  part of the font name of bold type when the PDF's fonts have no readable names (Festive 2026: "F6")
   furniture  texts printed at the top of every page
   markers    {"": "No"}: the guide lists every allergen of a drink, so an unlisted one is absent
 A group label that is not in `groups`, a table whose figure columns do not number nine per group, a product with no name, or text
@@ -34,6 +36,7 @@ COLUMN_GAP = 6        # right edges further apart than this (pt) are different f
 TITLE_RATIO = 1.05   # bold type this much larger than the body text is a title
 MIN_SIZE = 6          # the rotated column titles come out as tiny letters: ignore them
 NUMBER = re.compile(r"^<?\d+(\.\d+)?$")
+BOLD = "Bold"        # the part of a font name that marks bold type (`bold_font` option)
 
 
 def _centre(w: dict) -> float:
@@ -79,7 +82,7 @@ def _is_title(line: list[dict], body: float, min_size: float | None = None) -> b
     """A table's title: bold type larger than the page's body text (the pages are scaled differently, so the size is relative)."""
     if min_size is not None and line[0]["size"] < min_size:   # `title_min_size`: product names printed bold in a size between body and title
         return False
-    return "Bold" in line[0]["fontname"] and line[0]["size"] >= TITLE_RATIO * body and not _text(line).startswith("Per ") and line[0]["text"] != "PRODUCT"
+    return BOLD in line[0]["fontname"] and line[0]["size"] >= TITLE_RATIO * body and not _text(line).startswith("Per ") and line[0]["text"] != "PRODUCT"
 
 
 def parse_page(words: list[dict], rules: list[float], source: dict, page_no: int, titles_chars: list[dict] | None = None) -> list[dict]:
@@ -88,14 +91,14 @@ def parse_page(words: list[dict], rules: list[float], source: dict, page_no: int
     lines = [line for line in _lines(words) if not _text(line).startswith(furniture)]
     split = []   # "PRODUCT ALLERGENS Per 100g Per serving" on one line (the April 2026 guide, page 15): the group labels start the table, the header words follow
     for line in lines:
-        cut = next((i for i, w in enumerate(line) if w["text"] == "Per" and "Bold" in w["fontname"]), 0)
+        cut = next((i for i, w in enumerate(line) if w["text"] == "Per" and BOLD in w["fontname"]), 0)
         if cut and all(w["text"] in ("PRODUCT", "ALLERGENS", "SIZE") for w in line[:cut]):
             split += [line[cut:], line[:cut]]
         else:
             split.append(line)
     lines = split
-    heads = [i for i, line in enumerate(lines) if _text(line).startswith("Per ") and "Bold" in line[0]["fontname"]]   # the group labels start a table
-    sizes = [round(w["size"], 1) for w in words if "Bold" not in w["fontname"]]
+    heads = [i for i, line in enumerate(lines) if _text(line).startswith("Per ") and BOLD in line[0]["fontname"]]   # the group labels start a table
+    sizes = [round(w["size"], 1) for w in words if BOLD not in w["fontname"]]
     body_size = max(set(sizes), key=sizes.count) if sizes else 9.5
     given = (source.get("unlabelled_pages") or {}).get(page_no)   # a page whose group labels are missing from the PDF
     if not heads and given:
@@ -123,7 +126,7 @@ def parse_page(words: list[dict], rules: list[float], source: dict, page_no: int
         header_texts = {"PRODUCT", "ALLERGENS", "SIZE", *source.get("extra_headers", ()), *(x for e in source.get("extra_headers", ()) for x in e.split())}
         titles = [i for i in range(floor + 1, h) if _is_title(lines[i], body_size, source.get("title_min_size")) and not all(w["text"] in header_texts for w in lines[i])]   # "Vitamin" of "Vitamin Content" is a header word, however large
         if not titles and k == 0:   # (first table only, and never a line with figures) a title no larger than the body text (April 2026, page 22): bold capitals within two lines above the group labels
-            titles = [i for i in range(max(floor + 1, h - 2), h) if "Bold" in lines[i][0]["fontname"] and _text(lines[i]).isupper() and lines[i][0]["text"] != "PRODUCT" and not any(NUMBER.match(w["text"]) for w in lines[i])][:1]
+            titles = [i for i in range(max(floor + 1, h - 2), h) if BOLD in lines[i][0]["fontname"] and _text(lines[i]).isupper() and lines[i][0]["text"] != "PRODUCT" and not any(NUMBER.match(w["text"]) for w in lines[i])][:1]
         if not titles and k == 0:
             raise ValueError(f"page {page_no}: a table with group labels but no title above them")
         starts.append(titles[0] if titles else h)
@@ -176,14 +179,14 @@ def _table(above: list[list[dict]], body: list[list[dict]], rules: list[float], 
             row = {"y": _centre(line[0]), "figures": figures, "size": ""}
             rows.append(row)
         for w in rest:
-            if w["text"] in sizes and "Bold" not in w["fontname"]:   # names are bold ("Mini Marshmallows"), sizes are not
+            if w["text"] in sizes and BOLD not in w["fontname"]:   # names are bold ("Mini Marshmallows"), sizes are not
                 size_found = True
                 if not figures:
                     raise ValueError(f"page {page_no}, {title}: the size {w['text']!r} is on a line with no figures")
                 row["size"] = (row["size"] + " " + w["text"]).strip()
             elif VITAMIN.match(w["text"]):
                 extras.append(w)
-            elif "Bold" not in w["fontname"] and w["text"].replace(",", "").isupper():
+            elif BOLD not in w["fontname"] and w["text"].replace(",", "").isupper():
                 allergen_words.append(w)
             else:
                 name_words.append(w)
@@ -287,6 +290,15 @@ def expand_pages(spec: list) -> list[int]:
 
 
 def parse(pdf: Path, source: dict) -> list[dict]:
+    global BOLD
+    BOLD = source.get("bold_font", "Bold")
+    try:
+        return _parse(pdf, source)
+    finally:
+        BOLD = "Bold"
+
+
+def _parse(pdf: Path, source: dict) -> list[dict]:
     rows = []
     with pdfplumber.open(pdf) as doc:
         for n in expand_pages(source["pages"]):

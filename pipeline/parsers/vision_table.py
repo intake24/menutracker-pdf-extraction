@@ -15,6 +15,7 @@ Source options (config/chains.yaml):
 Rows carry method "llm".
 """
 import re
+from concurrent.futures import ThreadPoolExecutor
 import subprocess
 from pathlib import Path
 
@@ -123,4 +124,5 @@ def pages_of(pdf: Path, source: dict) -> list[int]:
 
 
 def parse(pdf: Path, source: dict) -> list[dict]:
-    return [row for n in pages_of(pdf, source) for row in page_rows(pdf, source, n)]
+    with ThreadPoolExecutor(max_workers=llm.workers()) as pool:   # one read per page, several at once; results come back in page order
+        return [row for rows in pool.map(lambda n: page_rows(pdf, source, n), pages_of(pdf, source)) for row in rows]
